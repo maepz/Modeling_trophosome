@@ -1,0 +1,10 @@
+setup.py
+src/project_package/__init__.py
+src/project_package/generate_initial_pop.py
+src/project_package/plot.py
+src/project_package/run_model.py
+src/project_package/simplify.py
+src/project_package.egg-info/PKG-INFO
+src/project_package.egg-info/SOURCES.txt
+src/project_package.egg-info/dependency_links.txt
+src/project_package.egg-info/top_level.txt
