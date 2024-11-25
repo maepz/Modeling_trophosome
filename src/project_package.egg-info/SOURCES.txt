@@ -1,6 +1,6 @@
 setup.py
 src/project_package/__init__.py
-src/project_package/generate_initial_pop.py
+src/project_package/generate_pop.py
 src/project_package/plot.py
 src/project_package/run_model.py
 src/project_package/simplify.py
