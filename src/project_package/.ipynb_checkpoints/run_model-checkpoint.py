@@ -1,7 +1,7 @@
 #### Run the Wright-Fisher model at individual or population level ####
 
 import numpy as np
-from project_package.simplify import remove_empty_leaves_and_rescale_edges,remove_empty_leaves, subsample_pop
+from project_package.simplify import remove_empty_leaves_and_rescale_edges,remove_empty_leaves, subsample_pop, merge_graphs
 from project_package.update_pop import update_pop,update_pop_with_tracers,update_pop2_with_tracers,update_pop2,update_pop3
 from project_package.generate_pop import SymPop
 

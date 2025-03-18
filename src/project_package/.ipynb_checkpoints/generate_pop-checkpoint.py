@@ -122,9 +122,11 @@ class SymPop:
         # self.pi=(self.pop_size/(self.pop_size-1))*np.concatenate(self.get_pi()).sum() 
         self.gen_deg = nx.generalized_degree(G)
         self.lineages = nx.number_connected_components(G)
-        self.max_degree_centrality = max([v for v in nx.degree_centrality(G).values()])
+        # self.max_degree_centrality = max([v for v in nx.degree_centrality(G).values()])
         self.Fst = 1-sum([(attr['abundance']/self.pop_size)**2 for node,attr in G.nodes(data=True) if attr['abundance']>0])
         self.Hd = self.pop_size/(self.pop_size-1) * self.Fst
+        self.Shannon=-sum([(attr['abundance']/self.pop_size)*np.log((attr['abundance']/self.pop_size)) for node,attr in G.nodes(data=True) if attr['abundance']>0])
+        self.eveness=self.Shannon/np.log(self.richness)
 
     def to_ete3(self):
         import ete3

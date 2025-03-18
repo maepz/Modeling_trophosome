@@ -1,0 +1,21 @@
+## params grow_and_steady
+mutation_rate=1e-12
+growth_factor=1.2
+steady_state_runtime=50
+max_runtime=inf
+pop_size_thr=1000000.0
+simplify=1
+verbose=0
+sampling_rate=1
+
+## params run_host_pop_gen
+n_worms=10
+infection_sym_count=10
+tot_host_pop_gen=100
+escape_rate=0.1
+n_trials=5
+cpus=4
+
+## init tree
+init_pop_strains=100
+is_init_pop_log_fisher=True

@@ -138,9 +138,9 @@ def visualize_pop(G,i='0',show_empty=False,view_node_labels=True,view_edge_label
     
     # define colors
     cmap = plt.get_cmap('Spectral')
-    norm = mcolors.Normalize(vmin=0, vmax=1)
-    node_fill = [cmap(norm(attr['fitness'])) if attr['abundance'] < fill_thr else 'none' for node,attr in H.nodes(data=True)]
-    node_outline = ['none' if attr['abundance'] < fill_thr else 'black' for node,attr in H.nodes(data=True)]
+    norm = mcolors.Normalize(vmin=0, vmax=1.5)
+    node_fill = [cmap(norm(attr['fitness'])) if attr['abundance'] <= fill_thr else 'none' for node,attr in H.nodes(data=True)]
+    node_outline = ['none' if attr['abundance'] <= fill_thr else 'black' for node,attr in H.nodes(data=True)]
    
     # draw network
     pos = nx.spring_layout(H)
