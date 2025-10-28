@@ -1,0 +1,15 @@
+Exception in thread Thread-21 (_handle_results):
+Traceback (most recent call last):
+  File "/home/qiulab/.conda/envs/mamba/envs/maeva_env/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+    self.run()
+  File "/home/qiulab/.conda/envs/mamba/envs/maeva_env/lib/python3.10/threading.py", line 953, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/qiulab/.conda/envs/mamba/envs/maeva_env/lib/python3.10/multiprocessing/pool.py", line 579, in _handle_results
+    task = get()
+  File "/home/qiulab/.conda/envs/mamba/envs/maeva_env/lib/python3.10/multiprocessing/connection.py", line 250, in recv
+    buf = self._recv_bytes()
+  File "/home/qiulab/.conda/envs/mamba/envs/maeva_env/lib/python3.10/multiprocessing/connection.py", line 421, in _recv_bytes
+    return self._recv(size)
+  File "/home/qiulab/.conda/envs/mamba/envs/maeva_env/lib/python3.10/multiprocessing/connection.py", line 379, in _recv
+    chunk = read(handle, remaining)
+MemoryError
