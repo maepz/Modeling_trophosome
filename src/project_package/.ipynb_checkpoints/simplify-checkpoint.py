@@ -11,7 +11,7 @@ def subsample_pop(G,n):
 
     tot=sum(abundances)
     weights=np.multiply(abundances,1/tot)
-    new_pop_abundances = np.random.multinomial(n, weights)
+    new_pop_abundances = np.random.multinomial(int(n), weights)
     new_pop_alleles = [alleles[i] for i in range(len(new_pop_abundances)) if new_pop_abundances[i] > 0]
     new_G=nx.Graph(G.subgraph(new_pop_alleles))
     

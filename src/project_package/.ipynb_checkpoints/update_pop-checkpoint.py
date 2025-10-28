@@ -19,9 +19,9 @@ def update_pop3(G,mutation_rate, new_avail_id, growth_factor=1):
 
     ########
     
-    new_pop_abundances = np.random.multinomial(n*growth_factor, weights)
+    new_pop_abundances = np.random.multinomial(int(n * growth_factor), weights)
     tot_new_pop=sum(new_pop_abundances)
-    mutated_ind_count=np.random.binomial(n, mutation_rate)
+    mutated_ind_count=np.random.binomial(int(n), mutation_rate)
 
     if mutated_ind_count>0:
         mutated_ind = np.random.multinomial(mutated_ind_count,new_pop_abundances/tot_new_pop)

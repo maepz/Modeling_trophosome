@@ -1,0 +1,3 @@
+Executing the following script ==> bash run_scaling_up_investigation.sh 100000 10
+Initial symbiont population follows log-fisher distribution. Number of strains =  100  Number of individuals =  3553
+test =  toy_example1_100000worms_10cpus n_worms =  100000 cpus =  10
