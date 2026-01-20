@@ -87,10 +87,44 @@ if __name__ == "__main__":
     is_init_pop_log_fisher=args.is_init_pop_log_fisher
 
 ####################
-# import seaborn as sns
-# %matplotlib inline
-# %reload_ext autoreload
-# %autoreload 2
+
+### print params   
+    
+myparams=['## params grow_and_steady',
+'mutation_rate='+str(mutation_rate),
+'growth_factor='+str(growth_factor),
+'steady_state_runtime='+str(steady_state_runtime),
+'max_runtime='+str(max_runtime),
+'pop_size_thr='+str(pop_size_thr),
+'simplify='+str(simplify),
+'verbose='+str(verbose),
+'sampling_rate='+str(sampling_rate),
+'',
+'## params run_host_pop_gen',
+'n_worms='+str(n_worms),
+'infection_sym_count='+str(infection_sym_count),
+'tot_host_pop_gen='+str(tot_host_pop_gen),
+'escape_rate='+str(escape_rate),
+'n_trials='+str(n_trials),
+'cpus='+str(cpus),
+'',
+'## init tree',
+'init_pop_strains='+str(init_pop_strains),
+'is_init_pop_log_fisher='+str(is_init_pop_log_fisher)]
+    
+dump_dir=out_dir+'/'+datetime.datetime.now().strftime('%Y_%m_%d')
+if os.path.isdir(out_dir)==False:
+    os.mkdir(out_dir)
+if os.path.isdir(dump_dir)==False:
+    os.mkdir(dump_dir)
+if os.path.isfile(dump_dir+'/'+'times.txt')==False:
+    with open(dump_dir+'/'+'times.txt','w') as fa:
+        fa.write('\t'.join(['test','n_worms','cpus','write_time','run_time'])+'\n')
+    
+with open(dump_dir+'/'+test+'.input_params.txt', 'w') as fa:
+    fa.write('\n'.join(myparams))
+
+##################
 
 if random_seed==False:
     np.random.seed(666)
@@ -116,30 +150,6 @@ with warnings.catch_warnings():
     # freelivingG=nx.relabel_nodes(freelivingG, {0:'0.0.0',1:'0.0.1'})
     # time_series_freeliving[0]=freelivingG
     
-    
- ### print params   
-    
-    myparams=['## params grow_and_steady',
-    'mutation_rate='+str(mutation_rate),
-    'growth_factor='+str(growth_factor),
-    'steady_state_runtime='+str(steady_state_runtime),
-    'max_runtime='+str(max_runtime),
-    'pop_size_thr='+str(pop_size_thr),
-    'simplify='+str(simplify),
-    'verbose='+str(verbose),
-    'sampling_rate='+str(sampling_rate),
-    '',
-    '## params run_host_pop_gen',
-    'n_worms='+str(n_worms),
-    'infection_sym_count='+str(infection_sym_count),
-    'tot_host_pop_gen='+str(tot_host_pop_gen),
-    'escape_rate='+str(escape_rate),
-    'n_trials='+str(n_trials),
-    'cpus='+str(cpus),
-    '',
-    '## init tree',
-    'init_pop_strains='+str(init_pop_strains),
-    'is_init_pop_log_fisher='+str(is_init_pop_log_fisher)]
         
     ###############################
     ## init results objects    
@@ -170,18 +180,6 @@ with warnings.catch_warnings():
     # time_df.loc[time_df.test==test,'time_run']=time_run
     ###########
     
-    
-    dump_dir=out_dir+'/'+datetime.datetime.now().strftime('%Y_%m_%d')
-    if os.path.isdir(out_dir)==False:
-        os.mkdir(out_dir)
-    if os.path.isdir(dump_dir)==False:
-        os.mkdir(dump_dir)
-    if os.path.isfile(dump_dir+'/'+'times.txt')==False:
-        with open(dump_dir+'/'+'times.txt','w') as fa:
-            fa.write('\t'.join(['test','n_worms','cpus','write_time','run_time'])+'\n')
-        
-    with open(dump_dir+'/'+test+'.input_params.txt', 'w') as fa:
-        fa.write('\n'.join(myparams))
     
     with open(dump_dir+'/'+test+'.time_series_hostassociated.graphs.pickledump', 'wb') as handle:
       pickle.dump(time_series_hostassociated, handle)
