@@ -2,7 +2,10 @@ import numpy as np
 import time
 
 def update_pop3(G,mutation_rate, new_avail_id, growth_factor=1):
-    ''' This function takes a population under the form of a networkx object and updates it to a new population following a Fisher-Wright process where the whole population is replaced by descendents and new alleles can arrise according to a specified mutation rate. This function is based un update_pop2 but add the seed/trial/host number to the strain name so two independent trials can be merged.
+    ''' This function takes a population under the form of a networkx object and updates it to a new population 
+    following a Fisher-Wright process where the whole population is replaced by descendents and new alleles 
+    can arrise according to a specified mutation rate. 
+    This function is based un update_pop2 but add the seed/trial/host number to the strain name so two independent trials can be merged.
     OPTIONS:
     growth_factor=1 Growth factor for the population. Varies from 0 to Inf. [0-1] population reduces, [1-Inf] population expands.
     '''

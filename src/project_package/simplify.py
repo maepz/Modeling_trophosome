@@ -3,6 +3,7 @@ from itertools import combinations
 import networkx as nx
 import numpy as np
 
+
 def subsample_pop(G,n):
     pop_attr=np.array([[node,attr['abundance'],attr['fitness']]for node,attr in G.nodes(data=True) if attr['abundance']>0])
     alleles = pop_attr[:,0]

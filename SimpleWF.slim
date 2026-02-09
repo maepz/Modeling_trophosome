@@ -1,0 +1,67 @@
+initialize() {
+initializeSLiMModelType("nonWF");
+
+defineConstant("N_INIT", 10);
+defineConstant("GROWTH_FACTOR", 1.2);
+defineConstant("N_MAX", 1e6);
+
+defineConstant("GENOME_SIZE", 1);
+initializeMutationRate(1e-6);
+
+// Background neutral mutations
+initializeMutationType("m1", 0.0, "f", 0.0);
+initializeGenomicElementType("g1", m1, 1.0);
+initializeGenomicElement(g1, 0, GENOME_SIZE - 1);
+initializeRecombinationRate(0.0);
+
+// Neutral markers for the four haplotypes
+initializeMutationType("m2", 0.0, "f", 0.0);  // haplo_1
+initializeMutationType("m3", 0.0, "f", 0.0);  // haplo_2
+initializeMutationType("m4", 0.0, "f", 0.0);  // haplo_3
+initializeMutationType("m5", 0.0, "f", 0.0);  // haplo_4
+}
+
+1 early() {
+sim.addSubpop("p1", N_INIT);
+inds = p1.individuals;
+
+// Zero-based indexing; assign haplotypes on genome1
+// addNewMutation(mutationType, selectionCoeff, position)
+inds[0].haploidGenome1.addNewMutation(m2, 0.0, 0);      // haplo_1: 1
+for (i in 1:2) inds[i].haploidGenome1.addNewMutation(m3, 0.0, 0);  // haplo_2: 2
+for (i in 3:4) inds[i].haploidGenome1.addNewMutation(m4, 0.0, 0);  // haplo_3: 2
+for (i in 5:9) inds[i].haploidGenome1.addNewMutation(m5, 0.0, 0);  // haplo_4: 5
+}
+
+// Clonal reproduction: produce exactly Nnext newborns each generation
+reproduction() {
+if (individual.index == 0) {
+Ncurr = p1.individualCount;
+Nnext = min(N_MAX, asInteger(ceil(Ncurr * GROWTH_FACTOR)));
+
+    parents = sample(p1.individuals, Nnext, replace=T);
+    for (parent in parents)
+        p1.addCloned(parent);
+}
+return;
+}
+
+// Non-overlapping generations: only newborns survive
+survival() {
+return (individual.age == 0);
+}
+
+// Report progress and stop at 1e6
+late() {
+// periodic progress
+if ((sim.cycle % 10) == 0)
+catn("Gen " + sim.cycle + " N=" + p1.individualCount);
+
+// stop condition
+if (p1.individualCount >= N_MAX) {
+    catn("Reached " + N_MAX + " at generation " + sim.cycle + ".");
+    sim.simulationFinished();
+}
+}
+
+100 late() {}

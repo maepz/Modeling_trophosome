@@ -3,6 +3,43 @@ from itertools import combinations
 import networkx as nx
 import numpy as np
 
+
+
+def subsample_from_freeliving(G,n):
+    from networkx.algorithms.approximation import steinertree
+    pop_attr=np.array([[node,attr['abundance'],attr['fitness']]for node,attr in G.nodes(data=True) if attr['abundance']>0])
+    alleles = pop_attr[:,0]
+    abundances = np.array(list(map(int,pop_attr[:,1])))
+    fitnesses = np.array(list(map(float,pop_attr[:,2])))
+
+    tot=sum(abundances)
+    weights=np.multiply(abundances,1/tot)
+    new_pop_abundances = np.random.multinomial(int(n), weights)
+    new_pop_alleles = [alleles[i] for i in range(len(new_pop_abundances)) if new_pop_abundances[i] > 0]
+    new_G=nx.Graph(G.subgraph(new_pop_alleles))
+    # new_G=steinertree(G, new_pop_alleles, weight='weight')  # omit weight if unweighted
+    
+    adj=[[alleles[i],{'abundance':new_pop_abundances[i],'fitness':fitnesses[i]}] for i in range(len(new_pop_abundances)) if new_pop_abundances[i] > 0]
+    new_G.update(nodes=adj)
+
+    # ### keep edges connecting sampled nodes even if not adjacents
+    # sub_nodes = set(new_pop_alleles)
+    # sub_edges = set()
+    
+    # for u, v in combinations(new_pop_alleles, 2):
+    #     try:
+    #         path = nx.shortest_path(new_G, u, v)  # add weight='weight' if weighted
+    #     except nx.NetworkXNoPath:
+    #         continue
+    #     sub_nodes.update(path)
+    #     sub_edges.update(zip(path, path[1:]))
+    
+    # H = new_G.edge_subgraph(sub_edges).copy()
+    # non_sampled = set(H.nodes) - set(new_pop_alleles)
+    # nx.set_node_attributes(H, {n: 0 for n in non_sampled}, 'abundance')
+
+    return(new_G)
+    
 def subsample_pop(G,n):
     pop_attr=np.array([[node,attr['abundance'],attr['fitness']]for node,attr in G.nodes(data=True) if attr['abundance']>0])
     alleles = pop_attr[:,0]

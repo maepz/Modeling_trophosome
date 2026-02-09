@@ -67,11 +67,13 @@ def generate_random_fisherlog_pop_unlinked_deprecated(i=10):
         
     return(G)
 
-def generate_random_fisherlog_pop_unlinked(i=10):
+def generate_random_fisherlog_pop_unlinked(i=10, seed=None):
     ''' generate a random initial population of i strains whose distribution follows a Fisher-log distribution. The strains are labelled "0.0.n". '''
 
     from collections import Counter
-    
+
+    if seed != None:
+        numpy.random.seed(seed)
     a = .995 # adjusted to match Ridgeia symbs CRISPR alleles/reads
     s = np.random.logseries(a, i)
     abundances=[k for k, v in Counter(s).items() for _ in range(v)] # species_count: individual_counts in these species
@@ -90,7 +92,6 @@ def generate_random_fisherlog_pop_binomial_tree(i=10,a=0.995):
     s = np.random.logseries(a, i)
     abundances=[k for k, v in Counter(s).items() for _ in range(v)] # species_count: individual_counts in these species
     fitnesses=np.random.normal(loc=0.8, scale=0.2, size=i) #average fitness 0.8, std 0.2
-    print(sum(abundances))
     G = nx.binomial_tree(n=round(np.log(sum(abundances))/np.log(2)))
     nx.relabel_nodes(G, lambda x: ".".join(['0.0',str(x)]), copy=False)
     G.add_nodes_from(['.'.join(['0.0',str(i)]), {'abundance':abundances[i],'fitness':fitnesses[i]}] for i in range(len(fitnesses)))

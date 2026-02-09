@@ -1,0 +1,152 @@
+initialize() {
+initializeSLiMModelType("nonWF");
+
+// Scaling
+defineConstant("scale_C", 1);
+
+// Demography (in cells)
+defineConstant("K_free_cells", 1000);
+defineConstant("hosts_per_gen", 1);
+defineConstant("migrants_per_host_cells", 2);
+defineConstant("host_K_cells", 100);
+defineConstant("host_lifespan_gens", 10);
+defineConstant("return_frac", 0.1);
+
+// Derived simulated capacities/counts
+defineConstant("K_free_sim", asInteger(ceil(K_free_cells / scale_C)));
+defineConstant("migrants_per_host_sim",
+    max(asInteger(1), asInteger(ceil(migrants_per_host_cells / scale_C))));
+defineConstant("host_K_sim", asInteger(ceil(host_K_cells / scale_C)));
+
+// Mutation/selection model
+defineConstant("GENOME_SIZE", 1);
+defineConstant("MU_per_cell", 0);
+defineConstant("MU_sim", MU_per_cell * scale_C);
+
+initializeMutationRate(MU_sim);
+initializeMutationType("m1", 0.0, "f", 0.0);
+initializeGenomicElementType("g1", m1, 1.0);
+initializeGenomicElement(g1, 0, GENOME_SIZE - 1);
+initializeRecombinationRate(0.0);
+}
+
+1 early() {
+// Initialize the free-living population
+sim.addSubpop("p1", K_free_sim);
+sim.setValue("nextHostID", 2); // next unused pID
+
+// Bookkeeping for hosts: parallel vectors of IDs and death times
+sim.setValue("hostIDs", integer(0));
+sim.setValue("hostDeath", integer(0));
+
+// Optional: a running counter for host names
+sim.setValue("hostCounter", 0);
+}
+
+// Clonal reproduction for all subpopulations
+reproduction() {
+subpop.addCloned(individual);
+}
+
+// Non-overlapping generations: only newborns survive
+survival() {
+return (individual.age == 0);
+}
+
+late() {
+// Density regulation: logistic scaling toward each subpop's K
+for (p in sim.subpopulations) {
+if (p == p1) {
+if (p.individualCount > 0)
+p.fitnessScaling = K_free_sim / p.individualCount;
+} else {
+if (p.individualCount > 0)
+p.fitnessScaling = host_K_sim / p.individualCount;
+}
+}
+
+// 1) Spawn new hosts and move migrants from p1 to seed them
+if (hosts_per_gen > 0 & p1.individualCount > 0) {
+    for (h in 1:hosts_per_gen) {
+        // Create an empty host subpopulation
+        nextID = sim.getValue("nextHostID");
+        hostName = paste("p", nextID, sep = "");
+        host = sim.addSubpop(hostName, 0);
+        sim.setValue("nextHostID", nextID + 1);
+
+        // Determine available migrants from p1
+        nAvail = p1.individualCount;
+        nSeeds = min(migrants_per_host_sim, nAvail);
+        if (nSeeds > 0) {
+            // Sample and move individuals from p1 into host
+            migrants = sample(p1.individuals, nSeeds);
+            host.takeMigrants(migrants);
+
+            // Record host death generation
+            hostIDs = sim.getValue("hostIDs");
+            hostDeath = sim.getValue("hostDeath");
+            sim.setValue("hostIDs", c(hostIDs, host.id));
+            sim.setValue("hostDeath", c(hostDeath, sim.cycle + host_lifespan_gens));
+        }
+    }
+}
+
+// 2) Process host deaths: return a fraction to p1, remove the rest
+hostIDs = sim.getValue("hostIDs");
+hostDeath = sim.getValue("hostDeath");
+if (size(hostIDs) > 0) {
+    // Build a keep vector we’ll filter with after the loop
+    keep = integer(size(hostIDs));  // zeros
+    keep = keep + 1;                // set to 1 (keep) initially
+
+    for (i in seqLen(size(hostIDs))) {
+        // find the subpopulation with this ID
+        idx = which(sim.subpopulations.id == hostIDs[i]);
+        if (size(idx) == 0) {
+            keep[i] = 0;  // subpop already gone
+            continue;
+        }
+        p = sim.subpopulations[idx];
+
+        if (sim.cycle >= hostDeath[i]) {
+            nHost = p.individualCount;
+            if (nHost > 0) {
+                nReturn = asInteger(round(nHost * return_frac));
+                if (nReturn > 0) {
+                    toReturn = sample(p.individuals, nReturn);
+                    p1.takeMigrants(toReturn);
+                }
+                // kill all remaining individuals in the host
+                if (p.individualCount > 0)
+                    sim.killIndividuals(p.individuals);
+            }
+            // drop this host from bookkeeping
+            keep[i] = 0;
+        }
+    }
+
+    // filter bookkeeping by keep vector
+    keepIdx = which(keep == 1);
+    hostIDs = hostIDs[keepIdx];
+    hostDeath = hostDeath[keepIdx];
+    sim.setValue("hostIDs", hostIDs);
+    sim.setValue("hostDeath", hostDeath);
+}
+}
+
+// Haploid-like selection on genome1; neutral by default
+mutationEffect(m1) {
+if (genome == genome.individual.genome1)
+return 1.0 + m.selectionCoeff;
+else
+return 1.0; // ignore copies on genome2
+}
+
+// Stop at a chosen time and report
+100 late() {
+catn("Generation " + sim.cycle +
+": free-living N=" + p1.individualCount +
+", active hosts=" + size(sim.getValue("hostIDs")));
+// community.treeSeqOutput("bacteria_hosts.trees"); // if needed
+sim.simulationFinished();
+}
