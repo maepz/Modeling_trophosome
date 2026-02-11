@@ -155,15 +155,17 @@ class SymPop:
         b=self.get_distance_matrix()/(3500000) # estimated symbiont genome size
         return(a*b)
 
-    def visualize_pop(self,i='0',show_empty=False,view_node_labels=True,view_edge_labels=True,abundance_threshold=1):
+    def visualize_pop(self,i='0',show_empty=False,view_node_labels=True,view_edge_labels=True,abundance_threshold=1,transparency_threshold='100%',replace_title=False):
         from project_package.plot import visualize_pop
         show_empty=show_empty
         view_node_labels=view_node_labels
         view_edge_labels=view_edge_labels
         abundance_threshold=abundance_threshold
+        transparency_threshold=transparency_threshold
+        replace_title=replace_title        
         visualize_pop(self.G,show_empty=show_empty,
                       view_node_labels=view_node_labels,view_edge_labels=view_edge_labels,
-                      abundance_threshold=abundance_threshold)
+                      abundance_threshold=abundance_threshold,transparency_threshold=transparency_threshold,replace_title=replace_title)
 
 def remove_empty_leaves_and_rescale_edges(self):
         from project_package.simplify import remove_empty_leaves_and_rescale_edges

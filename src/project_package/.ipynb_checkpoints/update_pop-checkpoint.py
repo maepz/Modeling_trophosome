@@ -1,10 +1,64 @@
 import numpy as np
 import time
 
+def update_pop4(G,mutation_rate, new_avail_id, growth_factor=1):
+    ''' This function takes a population under the form of a networkx object and updates it to a new population 
+    following a Fisher-Wright process where the whole population is replaced by descendents and new alleles 
+    can arrise according to a specified mutation rate. There is no within-host selection; that is the likelihood for the symbionts to end up un the next generation is not weighted by their fitness.
+    This function is based un update_pop3 but turns off intra-host selection.
+    OPTIONS:
+    growth_factor=1 Growth factor for the population. Varies from 0 to Inf. [0-1] population reduces, [1-Inf] population expands.
+    '''
+    pop_attr=np.array([[node,attr['abundance'],attr['fitness']]for node,attr in G.nodes(data=True) if attr['abundance']>0])
+    alleles = pop_attr[:,0]
+    abundances = np.array(list(map(int,pop_attr[:,1])))
+    fitnesses = np.array(list(map(float,pop_attr[:,2])))
+    n=sum(abundances)
+
+    abs_weights=abundances
+    sum_abs_wt=sum(abs_weights)
+    rel_weights=np.multiply(abs_weights,1/sum_abs_wt)
+    weights=rel_weights
+
+    ########
+    
+    new_pop_abundances = np.random.multinomial(int(n * growth_factor), weights)
+    tot_new_pop=sum(new_pop_abundances)
+    mutated_ind_count=np.random.binomial(int(n), mutation_rate)
+
+    if mutated_ind_count>0:
+        mutated_ind = np.random.multinomial(mutated_ind_count,new_pop_abundances/tot_new_pop)
+        new_pop_abundances=new_pop_abundances-mutated_ind
+    
+    adj=[[alleles[i],{'abundance':new_pop_abundances[i],'fitness':fitnesses[i]}] for i in range(len(alleles))]
+    G.update(nodes=adj)
+            
+    if mutated_ind_count>0: # if new alleles have arisen
+            
+        # Update pop with new alleles
+        mutated_alleles=np.nonzero(mutated_ind)[0]
+        mutated_alleles_count =len(mutated_alleles)
+
+        new_avail_prefix='.'.join(new_avail_id.split('.')[0:-1])
+        new_avail_idx=int(new_avail_id.split('.')[-1])
+        new_alleles_ids=['.'.join([new_avail_prefix,str(i)]) for i in range(new_avail_idx,new_avail_idx+mutated_ind_count)]
+        new_avail_id='.'.join([new_avail_prefix,str(new_avail_idx+mutated_ind_count)])
+        
+        new_alleles_parent_indices=np.repeat(mutated_alleles, mutated_ind[mutated_alleles]).astype(int)
+        mutated_alleles_parent_fitness=fitnesses[new_alleles_parent_indices]
+        new_alleles_fitnesses=np.sum([mutated_alleles_parent_fitness,np.random.normal(-0.01, 0.01,size=mutated_ind_count)], axis=0) # Assign fitness to the new alleles. The fitness of the new alleles is that of the parent allele +/- a selection coefficient sampled from a normal distribution with mean -0.01 and std 0.01
+        
+        new_alleles_nodes=[[new_alleles_ids[i],{'abundance':1,'fitness':new_alleles_fitnesses[i]}] for i in range(len(new_alleles_fitnesses))]
+        new_alleles_edges=np.array([alleles[new_alleles_parent_indices],new_alleles_ids,[{"distance":1}] * len(new_alleles_ids)]).transpose()
+
+        G.update(edges=new_alleles_edges, nodes=new_alleles_nodes)
+    
+    return(G, new_avail_id)
+
 def update_pop3(G,mutation_rate, new_avail_id, growth_factor=1):
     ''' This function takes a population under the form of a networkx object and updates it to a new population 
     following a Fisher-Wright process where the whole population is replaced by descendents and new alleles 
-    can arrise according to a specified mutation rate. 
+    can arrise according to a specified mutation rate. The likelihood for the symbionts to end up un the next generation is weighted by their fitness.
     This function is based un update_pop2 but add the seed/trial/host number to the strain name so two independent trials can be merged.
     OPTIONS:
     growth_factor=1 Growth factor for the population. Varies from 0 to Inf. [0-1] population reduces, [1-Inf] population expands.

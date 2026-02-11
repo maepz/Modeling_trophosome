@@ -1,9 +1,0 @@
-scaling_up_investigation_20251029002433
-PID=192342
-Wall-Clock Time: 20 minutes and 1 seconds
-Total CPU Time: 17 minutes and 51 seconds
-Total Peak Memory: 62791 MB
-Maximum Number of Processes: 1
-Maximum Number of Threads: 14
-Processes tree: 
-bash,192342 run_scaling_up_investigation.sh 10000 10 `-python,192345 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job.py --out_dir...

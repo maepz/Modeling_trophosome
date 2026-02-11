@@ -92,7 +92,6 @@ def generate_random_fisherlog_pop_binomial_tree(i=10,a=0.995):
     s = np.random.logseries(a, i)
     abundances=[k for k, v in Counter(s).items() for _ in range(v)] # species_count: individual_counts in these species
     fitnesses=np.random.normal(loc=0.8, scale=0.2, size=i) #average fitness 0.8, std 0.2
-    print(sum(abundances))
     G = nx.binomial_tree(n=round(np.log(sum(abundances))/np.log(2)))
     nx.relabel_nodes(G, lambda x: ".".join(['0.0',str(x)]), copy=False)
     G.add_nodes_from(['.'.join(['0.0',str(i)]), {'abundance':abundances[i],'fitness':fitnesses[i]}] for i in range(len(fitnesses)))
@@ -156,15 +155,17 @@ class SymPop:
         b=self.get_distance_matrix()/(3500000) # estimated symbiont genome size
         return(a*b)
 
-    def visualize_pop(self,i='0',show_empty=False,view_node_labels=True,view_edge_labels=True,abundance_threshold=1):
+    def visualize_pop(self,i='0',show_empty=False,view_node_labels=True,view_edge_labels=True,abundance_threshold=1,transparency_threshold='100%',replace_title=False):
         from project_package.plot import visualize_pop
         show_empty=show_empty
         view_node_labels=view_node_labels
         view_edge_labels=view_edge_labels
         abundance_threshold=abundance_threshold
+        transparency_threshold=transparency_threshold
+        replace_title=replace_title        
         visualize_pop(self.G,show_empty=show_empty,
                       view_node_labels=view_node_labels,view_edge_labels=view_edge_labels,
-                      abundance_threshold=abundance_threshold)
+                      abundance_threshold=abundance_threshold,transparency_threshold=transparency_threshold,replace_title=replace_title)
 
 def remove_empty_leaves_and_rescale_edges(self):
         from project_package.simplify import remove_empty_leaves_and_rescale_edges
