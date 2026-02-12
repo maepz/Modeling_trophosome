@@ -1,11 +1,11 @@
 import numpy as np
 import time
 
-def update_pop4(G,mutation_rate, new_avail_id, growth_factor=1):
+def update_pop_v1_4(G,mutation_rate, new_avail_id, growth_factor=1, intra_host_selection=False):
     ''' This function takes a population under the form of a networkx object and updates it to a new population 
     following a Fisher-Wright process where the whole population is replaced by descendents and new alleles 
     can arrise according to a specified mutation rate. There is no within-host selection; that is the likelihood for the symbionts to end up un the next generation is not weighted by their fitness.
-    This function is based un update_pop3 but turns off intra-host selection.
+    This function is based un update_pop_v1_3 but turns off intra-host selection.
     OPTIONS:
     growth_factor=1 Growth factor for the population. Varies from 0 to Inf. [0-1] population reduces, [1-Inf] population expands.
     '''
@@ -16,6 +16,9 @@ def update_pop4(G,mutation_rate, new_avail_id, growth_factor=1):
     n=sum(abundances)
 
     abs_weights=abundances
+    if intra_host_selection==True:
+        abs_weights=np.multiply(abundances,fitnesses)
+    
     sum_abs_wt=sum(abs_weights)
     rel_weights=np.multiply(abs_weights,1/sum_abs_wt)
     weights=rel_weights
@@ -55,11 +58,11 @@ def update_pop4(G,mutation_rate, new_avail_id, growth_factor=1):
     
     return(G, new_avail_id)
 
-def update_pop3(G,mutation_rate, new_avail_id, growth_factor=1):
+def update_pop_v1_3(G,mutation_rate, new_avail_id, growth_factor=1):
     ''' This function takes a population under the form of a networkx object and updates it to a new population 
     following a Fisher-Wright process where the whole population is replaced by descendents and new alleles 
     can arrise according to a specified mutation rate. The likelihood for the symbionts to end up un the next generation is weighted by their fitness.
-    This function is based un update_pop2 but add the seed/trial/host number to the strain name so two independent trials can be merged.
+    This function is based un update_pop_v1_2 but add the seed/trial/host number to the strain name so two independent trials can be merged.
     OPTIONS:
     growth_factor=1 Growth factor for the population. Varies from 0 to Inf. [0-1] population reduces, [1-Inf] population expands.
     '''
@@ -109,8 +112,9 @@ def update_pop3(G,mutation_rate, new_avail_id, growth_factor=1):
     
     return(G, new_avail_id)
     
-def update_pop2(G,mutation_rate,growth_factor=1):
-    ''' This function takes a population under the form of a networkx object and updates it to a new population following a Fisher-Wright process where the whole population is replaced by descendents and new alleles can arrise according to a specified mutation rate. This function is more memory efficient than update_pop
+def update_pop_v1_2(G,mutation_rate,growth_factor=1):
+    '''DEPRECATED.
+    This function takes a population under the form of a networkx object and updates it to a new population following a Fisher-Wright process where the whole population is replaced by descendents and new alleles can arrise according to a specified mutation rate. This function is more memory efficient than update_pop_v1_1
     OPTIONS:
     growth_factor=1 Growth factor for the population. Varies from 0 to Inf. [0-1] population reduces, [1-Inf] population expands.
     '''
@@ -158,8 +162,8 @@ def update_pop2(G,mutation_rate,growth_factor=1):
     
     return(G)
     
-def update_pop2_with_tracers(G,mutation_rate,growth_factor=1):
-    ''' This function takes a population under the form of a networkx object and updates it to a new population following a Fisher-Wright process where the whole population is replaced by descendents and new alleles can arrise according to a specified mutation rate. This function includes time and memory tracers and is more computationally efficient than update_pop.
+def update_pop_v1_2_with_tracers(G,mutation_rate,growth_factor=1):
+    ''' This function takes a population under the form of a networkx object and updates it to a new population following a Fisher-Wright process where the whole population is replaced by descendents and new alleles can arrise according to a specified mutation rate. This function includes time and memory tracers and is more computationally efficient than update_pop_v1_1.
     OPTIONS:
     growth_factor=1 Growth factor for the population. Varies from 0 to Inf. [0-1] population reduces, [1-Inf] population expands.
     '''
@@ -250,7 +254,7 @@ def update_pop2_with_tracers(G,mutation_rate,growth_factor=1):
     return(G,time_newG_copy,time_pop_dic,time_pop_weights, time_pop_attr, time_new_pop_init, time_new_pop_adj, time_new_pop_mut)
 
 
-def update_pop_with_tracers(G,mutation_rate,growth_factor=1):
+def update_pop_v1_1_with_tracers(G,mutation_rate,growth_factor=1):
     ''' This function takes a population under the form of a networkx object and updates it to a new population following a Fisher-Wright process where the whole population is replaced by descendents and new alleles can arrise according to a specified mutation rate
     OPTIONS:
     growth_factor=1 Growth factor for the population. Varies from 0 to Inf. [0-1] population reduces, [1-Inf] population expands.
@@ -319,8 +323,9 @@ def update_pop_with_tracers(G,mutation_rate,growth_factor=1):
     
     return(newG,time_newG_copy,time_pop_dic,time_pop_weights, time_pop_attr, time_new_pop_init, time_new_pop_adj, time_new_pop_mut)
     
-def update_pop(G,mutation_rate,growth_factor=1):
-    ''' This function takes a population under the form of a networkx object and updates it to a new population following a Fisher-Wright process where the whole population is replaced by descendents and new alleles can arrise according to a specified mutation rate
+def update_pop_v1_1(G,mutation_rate,growth_factor=1):
+    ''' DEPRECATED.
+    This function takes a population under the form of a networkx object and updates it to a new population following a Fisher-Wright process where the whole population is replaced by descendents and new alleles can arrise according to a specified mutation rate
     OPTIONS:
     growth_factor=1 Growth factor for the population. Varies from 0 to Inf. [0-1] population reduces, [1-Inf] population expands.
     '''
