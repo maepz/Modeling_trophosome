@@ -53,7 +53,7 @@ def generate_random_initial_pop_unlinked(n=100,i=20):
         
     return(G)
 
-def generate_random_fisherlog_pop_unlinked_deprecated(i=10):
+def generate_random_fisherlog_pop_unlinked_deprecated(i=10, seed=None):
     ''' generate a random initial population of i strains whose distribution follows a Fisher-log distribution'''
 
     from collections import Counter
@@ -73,7 +73,8 @@ def generate_random_fisherlog_pop_unlinked(i=10, seed=None):
     from collections import Counter
 
     if seed != None:
-        numpy.random.seed(seed)
+        np.random.seed(seed)
+        
     a = .995 # adjusted to match Ridgeia symbs CRISPR alleles/reads
     s = np.random.logseries(a, i)
     abundances=[k for k, v in Counter(s).items() for _ in range(v)] # species_count: individual_counts in these species

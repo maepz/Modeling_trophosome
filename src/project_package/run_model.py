@@ -8,6 +8,9 @@ from project_package.generate_pop import SymPop
 import networkx as nx
 import time
 import multiprocessing
+from scipy.special import stirling2
+from math import perm
+
 
 import matplotlib.pyplot as plt
 from project_package.plot import visualize_pop
@@ -24,6 +27,57 @@ from project_package.plot import visualize_pop
 
 #######################################################################################
 #######################################################################################
+def run_generation_of_host_pop_v3_1(freelivingG, n_worms, infection_sym_count,host_pop_gen,escape_rate,
+                     mutation_rate, steady_state_runtime,
+                     growth_factor,pop_size_thr, 
+                     t=0,nthreads=1):
+
+    ''' Similar to v1_4 but instead of iterating through WF, get mutated strains count and abundance in final population ang get phylogeny of new strains by cutting a coalescent tree
+    '''
+    ### Get free-living population paramaters
+
+    pop_attr=np.array([[node,attr['abundance'],attr['fitness']]for node,attr in freelivingG.nodes(data=True) if attr['abundance']>0])
+    alleles = pop_attr[:,0]
+    abundances = np.array(list(map(int,pop_attr[:,1])))
+    fitnesses = np.array(list(map(float,pop_attr[:,2])))
+    
+    ### parallel phase ###
+    
+    args=[{'freelivingG':freelivingG,'alleles':alleles,'abundances':abundances,'fitnesses':fitnesses,
+               'host_pop_gen':host_pop_gen, 'host_id':host_id,
+               'infection_sym_count':infection_sym_count,
+               'mutation_rate':mutation_rate,
+           'growth_factor':growth_factor,'steady_state_runtime':steady_state_runtime,
+               'pop_size_thr':pop_size_thr,'escape_rate':escape_rate, 'seed':None} for host_id in range(n_worms)]
+
+    with multiprocessing.Pool(processes=nthreads) as pool:
+        Graph_lists=pool.map(grow_from_freeliving_direct,args)
+    
+    Graph_list_init_intrahost,Graph_list_hostassociated,Graph_list_escapees=map(list, zip(*Graph_lists)) 
+
+    # get the initial host-associated symbiont meta-pop
+
+    merged_Graph_list_init_intrahost=merge_graphs(Graph_list_init_intrahost)
+    
+    # get the host-associated symbiont meta-pop
+
+    merged_Graph_hostassociated=merge_graphs(Graph_list_hostassociated)
+    merged_Graph_hostassociated=remove_empty_leaves_and_rescale_edges(merged_Graph_hostassociated)
+
+    # get the new free-living pop (after symbionts escape worm)
+    init_pop_attr=np.array([[node,attr['abundance']]for node,attr in merged_Graph_list_init_intrahost.nodes(data=True) if attr['abundance']>0])
+    init_pop_alleles = init_pop_attr[:,0]
+    init_pop_abundances = np.array(list(map(int,init_pop_attr[:,1])))
+        
+    adj_freelivingG=[[alleles[i],{'abundance':abundances[i]-init_pop_abundances[i],'fitness':fitnesses[i]}] for i in range(len(init_pop_abundances)) if init_pop_abundances[i] > 0]
+
+    freelivingG.update(nodes=adj_freelivingG)
+    
+    merged_Graph_freeliving=merge_graphs([freelivingG]+Graph_list_escapees)
+    merged_Graph_freeliving=remove_empty_leaves_and_rescale_edges(merged_Graph_freeliving)
+
+    return(merged_Graph_hostassociated, merged_Graph_freeliving)
+    
 
 def run_generation_of_host_pop_v2_2(freelivingG, n_worms, infection_sym_count,host_pop_gen,escape_rate,
                      mutation_rate, pop_size_thr, growth_factor,
@@ -244,6 +298,145 @@ def run_generation_of_host_pop_v1_3(freelivingG, n_worms, infection_sym_count,ho
 
     return(merged_Graph_hostassociated, merged_Graph_freeliving,results)
 
+def grow_from_freeliving_direct(args):
+
+    '''This function grows a trophosome from a freeliving population by 
+    1) estimating the expected abundance distribution of original strains and mutated strains
+    2) getting the ancestry of the mutated strains by truncating a colaescent tree
+    3) attaching the networkx phylogeny of new strains to the original strains
+
+    host_id (int) : the id of the individual host,
+    alleles (list of str): the alleles of the free-living population
+    abundances (list of int): the abundances of the free-living population
+    fitnesses (list of floats): the fitnesses of the free-living population
+    freelivingG (networkx/SymPop object) : the initial free-living population,
+    infection_sym_count (int) : the number of bacterial cells that infect the host,
+    host_pop_gen (int) : the generation of host population,
+    escape_rate (float) : the proportion of bacterial cells that can escape the host,
+    mutation_rate (float) : the mutation rate per bacterial cell per bacterial "generation", 
+    growth_factor (float) : the growth factor for the symbiont population when it is growing; 1.05 meaning 5% growth at eaxh generation,
+    steady_state_runtime (int) : the number of bacterial generations after the intra-host bacterial population reaches its maximum size,
+    pop_size_thr (int) : maximum symbiont population size in the host,
+    
+    The fixed arguments are:
+    stop_when_fixed=False : continue the population updating process even when the population is fixed,
+    t=0 : index of the initial bacterial generation within the host
+    '''
+
+    # Load arguments
+    
+    host_id=args['host_id']
+    freelivingG=args['freelivingG']
+    alleles=args['alleles']
+    abundances=args['abundances']
+    fitnesses=args['fitnesses']
+    infection_sym_count=args['infection_sym_count']
+    host_pop_gen=args['host_pop_gen']
+    escape_rate=args['escape_rate']
+    mutation_rate=args['mutation_rate']
+    growth_factor=args['growth_factor']
+    steady_state_runtime=args['steady_state_runtime']
+
+    pop_size_thr=args['pop_size_thr']
+    seed=args['seed']
+    t=0
+    simplify=1
+
+    rng = np.random.default_rng(seed)
+
+    # Infection: set new host and subsample bacteria from free-living population
+
+    tot=sum(abundances)
+    weights=np.multiply(abundances,1/tot)
+    new_pop_abundances = rng.multinomial(int(infection_sym_count), weights)
+    new_pop_alleles = [alleles[i] for i in range(len(new_pop_abundances)) if new_pop_abundances[i] > 0]
+    
+    subsampleG=nx.Graph(freelivingG.subgraph(new_pop_alleles))
+    adj=[[alleles[i],{'abundance':new_pop_abundances[i],'fitness':fitnesses[i]}] for i in range(len(new_pop_abundances)) if new_pop_abundances[i] > 0]
+    subsampleG.update(nodes=adj)
+    
+    initial_intrahost_pop=subsampleG.copy()
+    
+    new_avail_id=str(host_pop_gen)+'.'+str(host_id)+'.0'
+
+    # Get statistics/expected params of final population
+    
+    def crp_sample_cluster_sizes(n, theta, rng=None):
+        '''Chinese Restaurant Process sampler for Ewens(n, theta).
+    Returns a list of cluster sizes (allele counts) that sum to n.'''
+        rng = np.random.default_rng(rng)
+        tables = [] # list of counts per allele
+        for i in range(n): # i = number of customers already seated
+            total = i
+            if not tables:
+                tables = [1] # first customer opens first table
+                continue
+            # Probabilities: join existing table k with prob size_k/(theta+i), or open new with prob theta/(theta+i)
+            probs = np.array([c for c in tables] + [theta], dtype=float)
+            probs /= (theta + total)
+            choice = rng.choice(len(probs), p=probs)
+            if choice == len(tables):
+                tables.append(1)
+            else:
+                tables[choice] += 1
+        return tables
+        
+    G=subsampleG.copy()
+    
+    pop_attr=np.array([[node,attr['abundance'],attr['fitness']]for node,attr in G.nodes(data=True) if attr['abundance']>0])
+    alleles = pop_attr[:,0]
+    abundances = np.array(list(map(int,pop_attr[:,1])))
+    fitnesses = np.array(list(map(float,pop_attr[:,2])))
+    N0=sum(abundances)
+    
+    T_thresh=np.ceil(np.log(pop_size_thr / N0) / np.log(growth_factor) )
+    T_tot=T_thresh+steady_state_runtime
+    theta=pop_size_thr*mutation_rate
+    
+    Prob_no_mutation_over_T=np.power(1 - mutation_rate, T_tot) #The probability of zero mutations over T generations is (1−u)^T
+    
+    rel_weights=np.multiply(abundances,1/N0*Prob_no_mutation_over_T*pop_size_thr)
+    init_strains_distribution_expectation = [int(n) for n in rel_weights] # Original strains abundance distribution at the end of the worm's life
+    new_strains_total_expectation = int(pop_size_thr-sum(init_strains_distribution_expectation)) if sum(init_strains_distribution_expectation)<=pop_size_thr else 0
+    
+    new_strains_distribution_sample = crp_sample_cluster_sizes(new_strains_total_expectation, theta, rng=None)
+    new_strains_count=len(new_strains_distribution_sample)
+
+    # Create a coalescent tree for all new strains
+    
+    ts = msprime.sim_ancestry(new_strains_count, random_seed=seed, sequence_length=1, ploidy=1)
+
+    probability_of_exactly_k_distinct_founders=[(stirling2(new_strains_count, n, exact=True))*(perm(infection_sym_count, n))*1/(infection_sym_count**new_strains_count) for n in range(1,infection_sym_count+1)]
+    
+    T=None
+    while T == None:
+        
+        ## Sample from that probability distribution and cut the tree at n lineages dictated by the array index
+        distinct_founder_cell_count=rng.choice(range(1,infection_sym_count+1),p=probability_of_exactly_k_distinct_founders)
+    
+        # attribute each new strain to the strain type of a founder cell, with prob dictated by their relative abundance
+        infection_strains_relab=np.multiply(abundances,1/N0)
+        init_strain_indices = rng.choice(len(infection_strains_relab), size=distinct_founder_cell_count, p=infection_strains_relab)
+            
+        T=find_T_with_k_lineages_in_binary_tree(ts.first(), k=distinct_founder_cell_count,eps=1e-9)
+    
+    ts2=cut_tree_sequence_above_time(ts,T)
+    ts3=add_roots_abundances_and_propagate_fitnesses(ts2,root_fitnesses=fitnesses[init_strain_indices],root_ids=alleles[init_strain_indices], leaf_abundances=new_strains_distribution_sample)
+    
+    G=tstree_to_networkx_graph_with_strain_ids(ts3,new_avail_id)
+
+    # Update metadata for initial strains and add new strains 
+
+    final_intrahost_pop=initial_intrahost_pop.copy()
+
+    adj=[[alleles[i],{'abundance':init_strains_distribution_expectation[i],'fitness':fitnesses[i]}] for i in range(len(init_strains_distribution_expectation))]
+    final_intrahost_pop.update(nodes=adj)
+    
+    final_intrahost_pop=remove_empty_leaves_and_rescale_edges(merge_graphs([final_intrahost_pop,G])) 
+    final_escapees_pop=subsample_pop(final_intrahost_pop,SymPop(final_intrahost_pop).pop_size * escape_rate)
+        
+    return(initial_intrahost_pop,final_intrahost_pop,final_escapees_pop)
+    
 def grow_from_freeliving_with_coalescent_v2(args):
 
     '''This function grows one symbiont population within one host until it reaches a population size threshold (pop_size_thr). The cell
@@ -308,7 +501,7 @@ def grow_from_freeliving_with_coalescent_v2(args):
         mts_unique_list=[]
         while counter <= abundance: #coalesce:
             n=pop_size_thr/infection_sym_count   # here we set the size of the cell line population in the final adult    
-            mts_unique=cell_coalescent_tree_with_mutations_v2(n=n, mu=mutation_rate, fitness=fitness, tree_seed=tree_seed, mutation_seed=mutation_seed, fitness_seed=fitness_seed)
+            mts_unique=cell_coalescent_tree_with_mutations_v2(n=n, mu=mutation_rate, fitness=fitness, growth_factor=growth_factor, tree_seed=tree_seed, mutation_seed=mutation_seed, fitness_seed=fitness_seed)
             mts_unique_list+=[mts_unique]
             if counter == abundance:
                 strain_tree=merge_by_root_and_combine_ancestrals(mts_unique_list)
@@ -629,7 +822,7 @@ def run_until_fixation(G, mutation_rate, runtime, growth_factor=1, stop_when_fix
             return(results)
             break    
             
-def run_until_fixation_v1_4(G, mutation_rate, runtime, new_avail_id, growth_factor=1, stop_when_fixed=False, pop_size_thr=np.inf, simplify=0, verbose=0, t=0, sampling_rate=50):
+def run_until_fixation_v1_4(G, mutation_rate, runtime, new_avail_id, growth_factor=1, stop_when_fixed=False, pop_size_thr=np.inf, simplify=0, verbose=0, t=0, sampling_rate=50, intra_host_selection=False):
 
     ''' Run until fixation for update_pop_v1_4 code'''
     
@@ -638,7 +831,7 @@ def run_until_fixation_v1_4(G, mutation_rate, runtime, new_avail_id, growth_fact
     
     while True:
         t+=1
-        (G_plus1,new_avail_id)=update_pop_v1_4(G,mutation_rate, new_avail_id, growth_factor=growth_factor)
+        (G_plus1,new_avail_id)=update_pop_v1_4(G,mutation_rate, new_avail_id, growth_factor=growth_factor, intra_host_selection=False)
 
         if simplify==1:
             G_plus1=remove_empty_leaves(G_plus1)

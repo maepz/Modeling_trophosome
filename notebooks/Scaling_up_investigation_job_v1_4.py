@@ -13,8 +13,8 @@ import os
 sys.path.append("/home/qiulab/data/CRF_project/work/Modeling_trophosome/src/")
 
 from project_package.generate_pop import generate_initial_pop_unlinked, generate_random_fisherlog_pop_unlinked,generate_random_fisherlog_pop_binomial_tree, SymPop
-from project_package.update_pop import update_pop_v1_3
-from project_package.run_model import run_generation_of_host_pop_v1_3
+from project_package.update_pop import update_pop_v1_4
+from project_package.run_model import run_generation_of_host_pop_v1_4
 from project_package.plot import visualize_pop
 from project_package.simplify import merge_graphs
 
@@ -34,8 +34,9 @@ if __name__ == "__main__":
     )
     parser.add_argument("--test_name", required=True, type=str)
     parser.add_argument("--mutation_rate", required=False, default=1E-12, type=lambda x: float(x))
+    parser.add_argument("--intra_host_selection", required=False, default=False, type=bool)
     parser.add_argument("--growth_factor", required=False, default=1.2, type=lambda x: float(x))
-    parser.add_argument("--steady_state_runtime", required=False, default=50, type=lambda x: int(float(x)))
+    parser.add_argument("--steady_state_runtime", required=False, default=0, type=lambda x: int(float(x)))
     parser.add_argument("--max_runtime", required=False, default=np.inf)
     parser.add_argument("--pop_size_thr", required=False, default=1E4, type=lambda x: int(float(x)))
     parser.add_argument("--simplify", required=False, default=1, type=int)
@@ -73,6 +74,7 @@ if __name__ == "__main__":
     simplify=args.simplify
     verbose=args.verbose
     sampling_rate=args.sampling_rate
+    intra_host_selection=args.intra_host_selection
     
     ## params run_host_pop_gen
     n_worms=args.n_worms
@@ -99,6 +101,7 @@ myparams=['## params grow_and_steady',
 'simplify='+str(simplify),
 'verbose='+str(verbose),
 'sampling_rate='+str(sampling_rate),
+'intra_host_selection='+str(intra_host_selection),
 '',
 '## params run_host_pop_gen',
 'n_worms='+str(n_worms),
@@ -166,11 +169,11 @@ with warnings.catch_warnings():
     
         for host_pop_gen in range(1,tot_host_pop_gen+1):
         
-            merged_Graph_hostassociated, merged_Graph_freeliving,_=run_generation_of_host_pop_v1_3(myfreelivingG, n_worms, infection_sym_count,host_pop_gen,escape_rate,
+            merged_Graph_hostassociated, merged_Graph_freeliving,_=run_generation_of_host_pop_v1_4(myfreelivingG, n_worms, infection_sym_count,host_pop_gen,escape_rate,
                                  mutation_rate, steady_state_runtime,
-                                 max_runtime, growth_factor=growth_factor,
+                                 max_runtime, growth_factor=growth_factor, intra_host_selection=False,
                                  stop_when_fixed=True, pop_size_thr=pop_size_thr, simplify=simplify,
-                                 verbose=verbose, t=0,sampling_rate=sampling_rate,nthreads=cpus)
+                                 verbose=verbose, t=0, sampling_rate=sampling_rate, nthreads=cpus)
             
             time_series_hostassociated[trial]+=[merged_Graph_hostassociated]
             time_series_freeliving[trial]+=[merged_Graph_freeliving]

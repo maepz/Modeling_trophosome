@@ -7,6 +7,239 @@ import math
 import networkx as nx
 from collections import defaultdict, deque
 
+import numpy as np
+import tskit
+
+def add_roots_abundances_and_propagate_fitnesses(
+    ts,
+    root_fitnesses=None, # length = number of original roots, ordered by root child ID ascending
+    root_ids=None,
+    leaf_abundances=None, # length = number of leaves after adding roots, ordered by leaf node ID ascending
+    delta_time=0.05,
+    s_mean=-0.1,
+    s_std=0.1,
+    seed=None,
+    clamp_s=True
+    ):
+
+    '''
+    This script is for version 3. From a ts tree that has been cut to keep only k ancestral lineages, it adds new roots representing thises ancestral lineages, add their ids (from a variable), and propagate their fitnesses by adding the effect of mutaitons at each dichotomy according to s_mean ans s_std.'''
+    
+    def _pack_metadata_bytes(rows):
+        """
+        rows: list of bytes (one per row)
+        returns: (packed_bytes, offsets_array)
+        """
+        import numpy as np
+        n = len(rows)
+        offsets = np.zeros(n + 1, dtype=np.uint32)
+        parts = []
+        total = 0
+        for i, b in enumerate(rows):
+            if b is None:
+                b = b""
+            parts.append(b)
+            total += len(b)
+            offsets[i + 1] = total
+        return b"".join(parts), offsets
+
+    
+    tables = ts.tables.copy()
+    
+    # Metadata schemas
+    tables.edges.metadata_schema = tskit.MetadataSchema({
+        "codec": "json",
+        "schema": {
+            "type": "object",
+            "properties": {"distance": {"type": "integer"}},
+            "additionalProperties": False
+        }
+    })
+    tables.nodes.metadata_schema = tskit.MetadataSchema({
+        "codec": "json",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "fitness": {"type": "float"},
+                "abundance": {"type": "integer"},
+                "mutation_count": {"type": "integer"},
+                "strain_id" : {"type": "str"}
+            },
+            "additionalProperties": False
+        }
+    })
+    
+    # Original roots (nodes with no parent)
+    num_nodes = tables.nodes.num_rows
+    has_parent = np.zeros(num_nodes, dtype=bool)
+    has_child = np.zeros(num_nodes, dtype=bool)
+
+    child_col = tables.edges.child
+    parent_col = tables.edges.parent
+    if len(child_col) > 0:
+        has_parent[np.asarray(child_col, dtype=int)] = True
+        has_child[np.asarray(parent_col, dtype=int)] = True
+    
+    targets = np.where(~has_parent & ~has_child)[0]  
+
+    seq_len = ts.sequence_length
+    node_time = tables.nodes.time
+    
+    # Add a new parent above each singleton root
+    
+    new_root_pairs = []
+    for u in targets:
+        t_parent = float(node_time[u]) + float(delta_time)
+        pop = tables.nodes.population[u]
+        parent_id = tables.nodes.add_row(
+            flags=0,
+            time=t_parent,
+            population=pop,
+            individual=tskit.NULL,
+            metadata={"abundance":0, "fitness":None, "strain_id": "TBD"} # don’t pass raw bytes when using JSON metadata schema
+        )
+        tables.edges.add_row(
+            left=0.0,
+            right=seq_len,
+            parent=parent_id,
+            child=u,
+            metadata={"distance":1}
+        )
+        new_root_pairs.append((parent_id, u))
+    
+    tables.sort()
+    
+    # New roots
+    new_roots_list = list(map(int,np.array(range(tables.nodes.num_rows))[tables.nodes.flags==0]))
+    new_roots_list = [root for root in new_roots_list if root not in tables.edges.child]
+    new_leaves_list = list(map(int,np.array(range(tables.nodes.num_rows))[tables.nodes.flags==1]))
+    
+    # leaf_abundances validation and mapping
+    if leaf_abundances is not None:
+        leaf_abundances = list(leaf_abundances)
+        if len(leaf_abundances) != len(new_leaves_list):
+            raise ValueError(
+                f"leaf_abundances length {len(leaf_abundances)} != number of leaves {len(new_leaves_list)}. "
+                f"Leaves (by node ID): {new_leaves_list}"
+            )
+        leaf_abund_map = {leaf: int(a) for leaf, a in zip(new_leaves_list, leaf_abundances)}
+    else:
+        leaf_abund_map = None
+
+    root_id_map = {root: str(a) for root, a in zip(new_roots_list,root_ids)}
+    rng = np.random.default_rng(seed)
+    NODE_IS_SAMPLE = tskit.NODE_IS_SAMPLE
+    
+    # Build adjacency
+    N = tables.nodes.num_rows
+    children = [[] for _ in range(N)]
+    for e in tables.edges:
+        children[e.parent].append(e.child)
+            
+    node_meta = [None] * N
+    
+    def dfs(u, fitness, mut_count):
+    
+        # Leaf abundance base
+        if len(children[u]) == 0:
+            if leaf_abund_map is not None:
+                total_abund = leaf_abund_map.get(u, 0)
+            else:
+                total_abund = 0
+        else:
+            total_abund = 0
+    
+        node_meta[u] = {
+            "fitness": float(fitness),
+            "mutation_count": int(mut_count),
+            "abundance": leaf_abund_map.get(u, 0),
+            "strain_id": root_id_map.get(u, 0)
+        }
+    
+        for v in children[u]:
+            s = rng.normal(loc=s_mean, scale=s_std)
+            if clamp_s and s < -0.99:
+                s = -0.99
+            child_fitness = fitness * (1.0 + s)
+            dfs(v, child_fitness, mut_count + 1)
+            # total_abund = node_meta[v]["abundance"]
+    
+        node_meta[u]["abundance"] = int(total_abund)
+    
+    # Start DFS from each new root with its initial fitness
+    for r, f0 in zip(new_roots_list, root_fitnesses):
+        dfs(r, fitness=float(f0), mut_count=0)
+    
+    # Set node metadata: prefer packset_metadata, fallback to set_metadata
+    node_metadata_rows = [json.dumps(d).encode("utf-8") for d in node_meta]
+    if hasattr(tables.nodes, "packset_metadata"):
+        tables.nodes.packset_metadata(node_metadata_rows)
+    else:
+        node_metadata, node_metadata_offset = _pack_metadata_bytes(node_metadata_rows)
+        tables.nodes.set_metadata(node_metadata, node_metadata_offset)
+    
+    # Set edge metadata: distance=1 on every edge
+    edge_metadata_rows = [json.dumps({"distance": 1}).encode("utf-8") for _ in range(tables.edges.num_rows)]
+    if hasattr(tables.edges, "packset_metadata"):
+        tables.edges.packset_metadata(edge_metadata_rows)
+    else:
+        edge_metadata, edge_metadata_offset = _pack_metadata_bytes(edge_metadata_rows)
+        tables.edges.set_metadata(edge_metadata, edge_metadata_offset)
+    
+    # tables.sort()
+    return tables.tree_sequence()
+    
+def find_T_with_k_lineages_in_binary_tree(tree, k,eps=1e-9):
+    """
+    Return a time T such that the number of lineages in tree at time T is k.
+    Chooses T as a midpoint between node times where the count equals k.
+    Returns None if no such interval exists (e.g., simultaneous mergers skipping k).
+    """
+    ts = tree.tree_sequence
+    # Count leaves (terminals) in this tree
+    m = sum(1 for _ in tree.leaves()) # or: m = ts.num_samples if appropriate
+    if not (1 <= k <= m):
+        return None
+    
+    node_time = ts.tables.nodes.time
+    # Collect times of binary coalescences (each reduces lineages by 1)
+    coaltimes = sorted(node_time[u] for u in tree.nodes() if tree.num_children(u) == 2)
+    
+    if k == m:
+        # Just after the minimum leaf time
+        min_leaf_time = min(node_time[u] for u in tree.leaves())
+        return min_leaf_time + eps
+    
+    j = m - k  # need to be just after the j-th coalescence
+    if j > len(coaltimes):
+        # Not enough binary coalescences (e.g., polytomies/multi-mergers present)
+        return None
+
+    return coaltimes[j - 1] + eps
+
+def cut_tree_sequence_above_time(ts, T):
+    """
+    Remove all ancestry older than time T (i.e., drop edges with parent_time > T),
+    then simplify to the original samples. This yields trees whose roots are the
+    lineages present at time T.
+    """
+    tables = ts.tables.copy()
+    nt = tables.nodes.time
+    keep = np.ones(len(tables.edges), dtype=np.bool_)
+    for i, e in enumerate(tables.edges):
+        if nt[e.parent] > T:
+            keep[i] = False
+    tables.edges.set_columns(
+    left=tables.edges.left[keep],
+    right=tables.edges.right[keep],
+    parent=tables.edges.parent[keep],
+    child=tables.edges.child[keep],
+    )
+    ts2 = tables.tree_sequence()
+    # Remove unreachable nodes/edges while keeping the current samples
+    ts2 = ts2.simplify(samples=ts.samples(), keep_unary=True, filter_sites=False)
+    return ts2
+
 def cell_coalescent_tree_with_mutations_v2(n, mu, fitness, growth_factor, tree_seed=None, mutation_seed=None, fitness_seed=None):
 
     demography = msprime.Demography()
@@ -902,16 +1135,8 @@ epsilon=1e-9,
     
     # Validate parents under root
     p_keep = tree.parent(keep_leaf)
-    # print('keep_leaf',keep_leaf,'p_keep',p_keep, 'root',root)
-    # print(merged_ts.tables.nodes)
-    # print(merged_ts.tables.edges)
-    # print('tree.parent(p_keep)',tree.parent(p_keep))
-    # print(p_keep)
     if p_keep == tskit.NULL or tree.parent(p_keep) != root:
         raise ValueError("keep_leaf must be under an internal parent that is a direct child of the root")
-        # print("keep_leaf must be under an internal parent that is a direct child of the root")
-        # return(merged_ts)
-
     
     move_by_parent = {}
     p_moves = set()
@@ -1055,6 +1280,32 @@ epsilon=1e-9,
     final_ts = tables.tree_sequence()
     return(final_ts)
 
+def tstree_to_networkx_graph_with_strain_ids(ts,new_avail_id):
+    edges=ts.tables.edges
+    nodes=ts.tables.nodes
+
+    G = nx.from_pandas_edgelist(
+        pd.DataFrame({'source': edges.parent, 'target': edges.child, 'left': edges.left, 'right': edges.right,'distance':[d.metadata["distance"] for d in edges]}),
+        edge_attr=True,
+        create_using=nx.Graph
+    )
+    nx.set_node_attributes(G, {i: {'abundance':nodes[i].metadata["abundance"], 'fitness': nodes[i].metadata["fitness"], 'strain_id': nodes[i].metadata["strain_id"]} for i in range(len(nodes))})
+
+    #### relabel nodes
+    i=0
+    mylabel_dic={}
+    new_avail_prefix='.'.join(new_avail_id.split('.')[0:-1])
+    for node,attr in G.nodes(data=True):
+        if attr['strain_id']==0:
+            new_avail_id='.'.join([new_avail_prefix,str(i)])
+            i+=1
+            mylabel_dic[node]=new_avail_id
+        else:
+            mylabel_dic[node]=attr['strain_id']
+            
+    G=nx.relabel_nodes(G,mylabel_dic)
+    return(G)
+    
 def tstree_to_networkx_graph(ts,Trim=True):
     edges=ts.tables.edges
     nodes=ts.tables.nodes

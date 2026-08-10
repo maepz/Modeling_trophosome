@@ -13,8 +13,8 @@ import os
 sys.path.append("/home/qiulab/data/CRF_project/work/Modeling_trophosome/src/")
 
 from project_package.generate_pop import generate_initial_pop_unlinked, generate_random_fisherlog_pop_unlinked,generate_random_fisherlog_pop_binomial_tree, SymPop
-from project_package.update_pop import update_pop3
-from project_package.run_model import run_generation_of_host_pop
+from project_package.update_pop import update_pop_v1_3
+from project_package.run_model import run_generation_of_host_pop_v1_3
 from project_package.plot import visualize_pop
 from project_package.simplify import merge_graphs
 
@@ -166,7 +166,7 @@ with warnings.catch_warnings():
     
         for host_pop_gen in range(1,tot_host_pop_gen+1):
         
-            merged_Graph_hostassociated, merged_Graph_freeliving,_=run_generation_of_host_pop(myfreelivingG, n_worms, infection_sym_count,host_pop_gen,escape_rate,
+            merged_Graph_hostassociated, merged_Graph_freeliving,_=run_generation_of_host_pop_v1_3(myfreelivingG, n_worms, infection_sym_count,host_pop_gen,escape_rate,
                                  mutation_rate, steady_state_runtime,
                                  max_runtime, growth_factor=growth_factor,
                                  stop_when_fixed=True, pop_size_thr=pop_size_thr, simplify=simplify,
