@@ -129,6 +129,27 @@ class CheckpointRestartTests(unittest.TestCase):
                 self._assert_scientific_outputs_equal(baseline, resumed)
                 self.assertFalse((resumed / "checkpoints").exists())
 
+    def test_final_environment_mode_resumes_to_endpoint_only_output(self) -> None:
+        config = self._config(generations=3)
+        config = replace(
+            config,
+            output=replace(config.output, environment_counts_mode="final"),
+        )
+        with tempfile.TemporaryDirectory() as baseline_directory:
+            with tempfile.TemporaryDirectory() as resumed_directory:
+                baseline = Path(baseline_directory)
+                resumed = Path(resumed_directory)
+                simulation.run_simulation(config, baseline, REPOSITORY)
+                self._run_until_checkpoint(config, resumed, checkpoint_number=1)
+                simulation.run_simulation(config, resumed, REPOSITORY, resume=True)
+                self._assert_scientific_outputs_equal(baseline, resumed)
+                with (resumed / "environment_counts.csv").open() as handle:
+                    generations = {
+                        int(line.split(",", 2)[1])
+                        for line in handle.readlines()[1:]
+                    }
+                self.assertEqual(generations, {3})
+
     def test_scientific_configuration_mismatch_is_rejected(self) -> None:
         config = self._config()
         with tempfile.TemporaryDirectory() as directory:

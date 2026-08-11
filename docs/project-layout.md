@@ -212,6 +212,9 @@ python scripts/manage_project_layout.py list-cells --root "$HOME" --contains lob
 - Never reuse a cell ID after changing a scientific parameter.
 - One `(cell_id, replicate_id)` pair represents one stochastic run. Reusing the
   same replicate IDs across cells creates matched seed blocks for comparisons.
+- One seed block has one master seed; the simulation derives the many random
+  streams needed by its hosts, infections and biological processes from that
+  seed and stable logical coordinates.
 - The cell registry supports quick review but is not a substitute for the
   versioned TOML configuration.
 - Each completed run must retain its own `resolved_config.json` and provenance.

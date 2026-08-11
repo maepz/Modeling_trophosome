@@ -4,8 +4,8 @@
 
 - Model family: `wright_fisher_counts`
 - Scientific specification: `2.0.0`
-- Reference software release: `0.5.0`
-- Output schema: `2.1.0`
+- Reference software release: `0.6.0`
+- Output schema: `2.2.0`
 - Status: release candidate, distributionally validated
 
 This document defines the stochastic process. An implementation change that

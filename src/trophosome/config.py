@@ -77,6 +77,7 @@ class OutputConfig:
     checkpoint_interval: str = "1h"
     checkpoint_keep: int = 2
     retain_host_histories: bool = False
+    environment_counts_mode: Literal["all", "final"] = "all"
     host_counts_mode: Literal["summary", "panel", "full"] = "summary"
     host_panel_size: int = 100
 
@@ -197,6 +198,8 @@ class ModelConfig:
                 "scalable path; "
                 "write summaries or sampled lineages instead"
             )
+        if self.output.environment_counts_mode not in {"all", "final"}:
+            errors.append("environment_counts_mode must be 'all' or 'final'")
         if self.output.host_counts_mode not in {"summary", "panel", "full"}:
             errors.append("host_counts_mode must be 'summary', 'panel', or 'full'")
         if self.output.host_panel_size < 1:

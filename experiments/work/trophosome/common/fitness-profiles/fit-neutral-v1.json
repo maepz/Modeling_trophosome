@@ -1,0 +1,7 @@
+{
+  "fitness_profile_schema_version": "1.0.0",
+  "fitness_profile_id": "fit-neutral-v1",
+  "initial_within_host_fitness": 1.0,
+  "initial_free_living_fitness": 1.0,
+  "description": "Every starting strain has identical neutral fitness in both habitats"
+}

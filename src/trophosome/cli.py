@@ -127,7 +127,7 @@ Configuration sections:
 
 Start interpretation with:
   host_generation_summary.csv  one row per replicate and host generation
-  environment_counts.csv       abundance of every environmental strain over time
+  environment_counts.csv       labelled environmental strains at configured times
   resolved_config.json         exact parameter values used for the run
 
 See the README for a guide to all output tables and configuration parameters.

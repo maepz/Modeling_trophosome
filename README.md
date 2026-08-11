@@ -150,7 +150,7 @@ The main result tables are ordinary CSV files:
 | File | Contents |
 | --- | --- |
 | `host_generation_summary.csv` | Environmental and mean host diversity for every replicate and host generation |
-| `environment_counts.csv` | Count, frequency and fitness of every environmental strain through time |
+| `environment_counts.csv` | Labelled environmental counts, frequencies and fitness; every generation in `all` mode or only each replicate endpoint in `final` mode |
 | `infection_counts.csv` | Strains that founded every individual host infection |
 | `host_adult_summaries.csv` | Diversity and mean fitness of the adult symbionts in every host |
 | `host_adult_counts.csv` | Complete adult strain counts when panel or full retention is requested |

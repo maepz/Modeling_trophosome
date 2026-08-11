@@ -1,0 +1,9 @@
+{
+  "selection_profile_schema_version": "1.0.0",
+  "selection_profile_id": "sel-neutral-v1",
+  "within_host_selection": false,
+  "free_living_selection": false,
+  "mutation_effect_mean": 0.0,
+  "mutation_effect_sd": 0.0,
+  "description": "Phase 1 neutral profile: selection is disabled and mutations have no fitness effect"
+}

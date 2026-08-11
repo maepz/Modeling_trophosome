@@ -256,6 +256,7 @@ def initialize_layout(
         layout.work / "common" / "architecture-profiles",
         layout.work / "common" / "fitness-profiles",
         layout.work / "common" / "initial-populations",
+        layout.work / "common" / "selection-profiles",
         layout.work / "common" / "environments",
         layout.work / "common" / "shared-analysis",
         layout.work / "registry",

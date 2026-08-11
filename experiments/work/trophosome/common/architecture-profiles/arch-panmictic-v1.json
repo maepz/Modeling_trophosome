@@ -1,0 +1,6 @@
+{
+  "architecture_profile_schema_version": "1.0.0",
+  "architecture_profile_id": "arch-panmictic-v1",
+  "architecture_mode": "panmictic",
+  "description": "One well-mixed within-host symbiont population with no lobes or spatial subdivision"
+}

@@ -4,7 +4,7 @@
 launched.
 
 **Model:** exact-count `wright_fisher_counts` prototype, model specification
-2.0.0 and output schema 2.1.0.
+2.0.0 and output schema 2.2.0.
 
 ## Purpose
 
@@ -391,11 +391,11 @@ experiment manifest before confirmatory runs.
 Begin with:
 
 \[
-H\in\{10,100,1000\}.
+H\in\{100,1000,10000,100000\}.
 \]
 
-These levels represent few, intermediate, and many hosts and include the current
-biological-scale example of 1,000 hosts.
+These levels span the resolved scientifically relevant domain from 100 to
+100,000 hosts on a logarithmic scale.
 
 ### Escape
 
@@ -405,12 +405,10 @@ Store the corresponding `f = e/K` in each configuration.
 For general mapping, begin with:
 
 \[
-f\in\{10^{-5},10^{-4},10^{-3}\},
+f\in\{10^{-5},10^{-4},10^{-3},10^{-2}\}.
 \]
 
-and add `10^-2` where required for few-host matched-return comparisons.
-
-Across `H = 10` to `H = 1,000`, these levels cover very weak to strong host
+Across `H = 100` to `H = 100,000`, these levels cover very weak to strong host
 feedback without assuming that a linear change in escape has a linear biological
 effect.
 
@@ -428,8 +426,7 @@ reach the pooled release and regulated environment. Ideally, retained levels
 should bracket regimes with approximately 0.1, 1, 10, and 100 newly returned or
 newly established strains per environmental update.
 
-The biological interpretation of (u) must be resolved before production. It
-must be a whole-genome or explicitly defined target-region probability per
+The biological interpretation of (u) is a whole-genome mutation probability per
 bacterial cell generation, not an unconverted per-site rate.
 
 ### Derived variables used for design and interpretation
@@ -456,16 +453,14 @@ With `K = N_E = 10^9`, use the following exact comparisons:
 
 | Total return `R` | Feedback \(\alpha\) | Host number `H` | Cells per host `e` | Escape fraction `f` |
 |---:|---:|---:|---:|---:|
-| `10^7` | 0.009901 | 10 | `10^6` | `10^-3` |
-| `10^7` | 0.009901 | 100 | `10^5` | `10^-4` |
-| `10^7` | 0.009901 | 1,000 | `10^4` | `10^-5` |
-| `10^8` | 0.090909 | 10 | `10^7` | `10^-2` |
-| `10^8` | 0.090909 | 100 | `10^6` | `10^-3` |
-| `10^8` | 0.090909 | 1,000 | `10^5` | `10^-4` |
+| `10^9` | 0.5 | 100 | `10^7` | `10^-2` |
+| `10^9` | 0.5 | 1,000 | `10^6` | `10^-3` |
+| `10^9` | 0.5 | 10,000 | `10^5` | `10^-4` |
+| `10^9` | 0.5 | 100,000 | `10^4` | `10^-5` |
 
-Within each three-row block, total return and immediate environmental feedback
-are identical. Only the number of independent hosts and the release depth per
-host differ.
+Across all four rows, total return and immediate environmental feedback are
+identical. Only the number of independent hosts and the release depth per host
+differ.
 
 If the three cases have equivalent environmental outcomes, host abundance and
 escape operate mainly through (R). If they differ, pooling across independent
@@ -485,7 +480,7 @@ Use:
 - `K = 10^9`;
 - `B = 10`;
 - growth factor 1.2;
-- 100 steady bacterial generations;
+- 500 steady bacterial generations;
 - `c = 1`;
 - the frozen 100-strain starting spectrum;
 - three independently seeded replicates per cell; and
@@ -494,10 +489,18 @@ Use:
 | Pilot block | Host and return settings | Mutation settings | Cells |
 |---|---|---|---:|
 | No return | `H = 100, e = 0` | `u = 0, 10^-10` | 2 |
-| Matched `R = 10^7` | All three `H,e` pairs in the table above | `u = 0, 10^-10` | 6 |
-| Matched `R = 10^8` | All three `H,e` pairs in the table above | `u = 0, 10^-10` | 6 |
-| Mutation bracket | `H = 100, e = 10^6, R = 10^8` | Additional `u = 10^-12, 10^-11, 10^-9` | 3 |
-| **Total** |  |  | **17** |
+| Matched `R = 10^9` | All four `H,e` pairs in the table above | `u = 0` | 4 |
+| Mutation bracket | `H = 100, e = 10^7, R = 10^9` | `u = 10^-12, 10^-11, 10^-10, 10^-9` | 4 |
+| Feedback boundaries | Very weak `H=100, f=10^-5`; strong `H=1,000, f=10^-2` | `u = 0` | 2 |
+| **Initial core** |  |  | **12** |
+
+Five extension cells are pre-specified but are not launched automatically. Once
+the mutation bracket selects an informative `u*`, three cells complete the
+mutation-enabled `R=10^9` comparison at `H=1,000`, 10,000, and 100,000. Two
+additional mutation-free cells compare `H=100, f=10^-3` with
+`H=10,000, f=10^-5`; both have `R=10^8` and `alpha=0.090909`. This produces a
+17-cell design only if the 12-cell core passes its resource and information
+gates.
 
 The pilot should measure:
 
@@ -550,9 +553,10 @@ Before any production run:
 
 ### Stage 1: first pilot
 
-Run the 17-cell, three-replicate, five-generation matrix above. Use it only for
+Run the 12-cell, three-replicate, five-generation core above. Use it only for
 feasibility, mutation-supply calibration, early effect sizes, and variance
-estimation.
+estimation. Add the five extension cells only after applying the declared
+decision rule.
 
 ### Stage 2: equilibrium and precision pilot
 
@@ -994,9 +998,10 @@ model and equivalence tests.
 
 ### 7. Does pooling across hosts matter at constant total return?
 
-Use the exact `R = 10^7` and `R = 10^8` blocks. Interpret environmental
-differences through founder coverage, among-host composition variance, occupancy,
-and release-pool representativeness.
+Use the exact `R = 10^9` four-host-level block and, if the expansion rule is
+met, the `R = 10^8` endpoint pair. Interpret environmental differences through
+founder coverage, among-host composition variance, occupancy, and release-pool
+representativeness.
 
 ## Output and retention policy
 
@@ -1004,7 +1009,7 @@ Retain the agreed output specification.
 
 | Output | Required content and use |
 |---|---|
-| `environment_counts.csv` | Labelled environmental counts, frequencies, and fitness metadata by replicate and generation. Source for all environmental diversity and composition analyses. |
+| `environment_counts.csv` | Labelled environmental counts, frequencies, and fitness metadata. Phase 1 pilot configurations use `environment_counts_mode = "final"`, so only the endpoint of each replicate is retained. |
 | `infection_counts.csv` | Infection founders by host and generation. Source for founder coverage and representativeness. |
 | `host_adult_summaries.csv` | Richness, diversity, and mean fitness for every adult host. |
 | `host_adult_counts.csv` | Full adult counts for sentinel/mechanistic runs or a reproducibly selected host panel for large mapping runs. |
@@ -1025,14 +1030,16 @@ Recommended adult-count modes are:
 
 Raw results should be written outside Git. After quality control, make each run
 directory immutable, generate SHA-256 checksums, and then compress or transfer
-it to the research data store. Do not delete detailed raw tables after deriving
-summaries unless a separately approved retention policy provides a recoverable
-archive.
+it to the research data store. The other required scientific tables remain
+available, but successful Phase 1 pilot runs retain only the final labelled
+environmental state rather than a complete environmental composition history.
+The verified final state is stored both as `environment_counts.csv` and as the
+checksummed `final_environment_repNNN.npz` recovery-independent artifact.
 
-The current runner writes labelled environmental counts every generation and
-does not use `snapshot_interval` to thin that table. Production storage must
-either accommodate this behavior or a separately tested retention change must
-be implemented without removing the agreed output categories.
+The runner supports `environment_counts_mode = "all"` for a specifically
+approved time-series analysis and `environment_counts_mode = "final"` for the
+agreed pilot retention policy. Checkpoints still contain the most recent
+environmental state while a run is active, regardless of this output setting.
 
 ## Reproducibility safeguards
 
@@ -1067,33 +1074,18 @@ continues from the newest valid state. Recovery checkpoints are removed after a
 successful verified run, leaving the final environmental state and scientific
 output tables.
 
-## Scientific choices that must be resolved before production
+## Resolved Phase 1 choices
 
-1. **Mutation unit and biological range:** whole-genome versus target-region
-   mutation probability per bacterial generation.
-2. **Neutral configuration:** approval to set `within_host_selection=false` and
-   all initial fitness values and mutation fitness effects to neutral values.
-3. **Starting diversity:** approval of 100 strains and the frozen Fisher
-   log-series abundance vector.
-4. **Host abundance range:** whether 10--1,000 hosts covers the scientifically
-   relevant domain.
-5. **Escape range:** whether `10^-5`--`10^-2` includes plausible release
-   fractions.
-6. **Fixed life-history settings:** biological support for `B = 10`, `K = 10^9`,
-   growth factor 1.2, and 100 steady bacterial generations.
-7. **Environmental capacity ratio:** whether `c = 1` is the primary value and
-   which alternatives should be examined.
-8. **Biological relevance margins:** approval or revision of 5% for Hill
-   diversities, 0.02 for evenness, and 0.05 for composition distance.
-9. **Time horizon:** whether equilibrium is required in very weak-feedback cells
-   or whether change over a finite biologically meaningful interval is the
-   primary target.
-10. **Data and computing budget:** maximum acceptable runtime, raw storage, and
-    archival volume.
-11. **Hamilton regulation interpretation:** acceptance that very weak returns
-    can be masked by whole-cell apportionment in the effective reservoir.
-12. **Source freeze:** archive the exact code snapshot before long runs;
-    validated checkpoint restart is now available.
+The first-pilot manifest freezes whole-genome mutation probabilities, a fully
+neutral fitness profile, the 100-strain Fisher log-series vector, host abundance
+from 100 to 100,000, escape from `10^-5` to `10^-2`, `B=10`, `K=10^9`, growth
+factor 1.2, 500 steady bacterial generations, and primary `c=1`. Sensitivities
+will consider `c=0.5` and `c=H`. Biological relevance margins are 5% for Hill
+diversities, 0.02 for evenness, and 0.05 for composition distance. The computing
+limits are 48 hours and 100 GB, with expansion permitted only below 70% of each
+budget. Whole-cell Hamilton apportionment at very weak return is an accepted
+part of the effective-reservoir interpretation. Checkpoint restart is enabled at
+a user-defined interval, defaulting to one hour.
 
 ## Confirmatory and exploratory separation
 
@@ -1121,8 +1113,7 @@ output tables.
 
 ## Recommended immediate next step
 
-Review and resolve the twelve scientific choices above. Then create, but do not
-yet execute, the frozen initial-population vector, experiment manifest, and 17
-pilot TOML configurations. The pilot should begin only after the neutral switches,
-mutation interpretation, parameter ranges, relevance margins, source snapshot,
-and storage budget have been approved.
+Commit and freeze the prepared 12-cell core, then run the maintained validation
+suite and begin the Mac timing gate. The prepared manifest remains labelled
+`prepared-not-launched` until the source snapshot is committed and the first
+cell is explicitly started.

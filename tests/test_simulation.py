@@ -57,10 +57,10 @@ class SimulationTests(unittest.TestCase):
             self.assertEqual(len(rows), 2)
             provenance = json.loads((output / "provenance.json").read_text())
             self.assertEqual(provenance["seed"], 666)
-            self.assertEqual(provenance["software_version"], "0.5.0")
+            self.assertEqual(provenance["software_version"], "0.6.0")
             self.assertEqual(provenance["model_family"], "wright_fisher_counts")
             self.assertEqual(provenance["model_spec_version"], "2.0.0")
-            self.assertEqual(provenance["output_schema_version"], "2.1.0")
+            self.assertEqual(provenance["output_schema_version"], "2.2.0")
             self.assertEqual(len(provenance["config_sha256"]), 64)
             with np.load(output / "final_environment_rep000.npz") as final:
                 self.assertEqual(
@@ -72,6 +72,41 @@ class SimulationTests(unittest.TestCase):
                 header = next(csv.reader(handle))
             self.assertIn("within_host_fitness", header)
             self.assertIn("free_living_fitness", header)
+
+    def test_final_environment_mode_writes_only_each_replicate_endpoint(self) -> None:
+        config = load_config(REPOSITORY / "configs" / "smoke.toml")
+        config = replace(
+            config,
+            replicates=2,
+            host=replace(config.host, host_generations=3),
+            output=replace(config.output, environment_counts_mode="final"),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            run_simulation(config, output, REPOSITORY)
+            with (output / "environment_counts.csv").open() as handle:
+                rows = list(csv.DictReader(handle))
+            self.assertEqual(
+                {(int(row["replicate"]), int(row["generation"])) for row in rows},
+                {(0, 3), (1, 3)},
+            )
+            for replicate in range(2):
+                observed = {
+                    int(row["strain_id"]): int(row["count"])
+                    for row in rows
+                    if int(row["replicate"]) == replicate
+                }
+                with np.load(
+                    output / f"final_environment_rep{replicate:03d}.npz"
+                ) as final:
+                    expected = dict(
+                        zip(
+                            final["genotype_ids"].tolist(),
+                            final["counts"].tolist(),
+                            strict=True,
+                        )
+                    )
+                self.assertEqual(observed, expected)
 
     def test_zero_return_leaves_dormant_reservoir_unchanged(self) -> None:
         config = load_config(REPOSITORY / "configs" / "smoke.toml")

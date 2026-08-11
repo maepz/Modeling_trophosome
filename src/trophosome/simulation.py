@@ -963,7 +963,10 @@ def run_simulation(
                         }
                     )
 
-            if first_generation == 1:
+            if (
+                first_generation == 1
+                and config.output.environment_counts_mode == "all"
+            ):
                 write_environment(0)
             for host_generation in range(
                 first_generation, config.host.host_generations + 1
@@ -1240,7 +1243,11 @@ def run_simulation(
                 )
                 all_summaries.append(summary)
                 summary_writer.writerow(asdict(summary))
-                write_environment(host_generation)
+                if (
+                    config.output.environment_counts_mode == "all"
+                    or host_generation == config.host.host_generations
+                ):
+                    write_environment(host_generation)
 
                 at_replicate_end = (
                     host_generation == config.host.host_generations

@@ -23,6 +23,7 @@ class ConfigTests(unittest.TestCase):
         self.assertFalse(config.evolution.free_living_selection)
         self.assertEqual(config.output.checkpoint_interval, "1h")
         self.assertEqual(config.output.checkpoint_keep, 2)
+        self.assertEqual(config.output.environment_counts_mode, "all")
 
     def test_checkpoint_interval_requires_a_positive_duration(self) -> None:
         text = (REPOSITORY / "configs" / "smoke.toml").read_text()
@@ -44,6 +45,20 @@ class ConfigTests(unittest.TestCase):
             path = Path(directory) / "invalid.toml"
             path.write_text(text)
             with self.assertRaisesRegex(ConfigurationError, "checkpoint_keep"):
+                load_config(path)
+
+    def test_environment_counts_mode_is_validated(self) -> None:
+        text = (REPOSITORY / "configs" / "smoke.toml").read_text()
+        text = text.replace(
+            'host_counts_mode = "summary"',
+            'environment_counts_mode = "invalid"\nhost_counts_mode = "summary"',
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid.toml"
+            path.write_text(text)
+            with self.assertRaisesRegex(
+                ConfigurationError, "environment_counts_mode"
+            ):
                 load_config(path)
 
     def test_legacy_single_fitness_config_defaults_environment_to_neutral(self) -> None:
