@@ -22,6 +22,7 @@ tmp/
 
 # Machine-specific experiment paths
 layout.local.json
+hpc_environment_probe_*.txt
 
 # Local editor/OS metadata
 .idea/
