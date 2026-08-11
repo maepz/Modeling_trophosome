@@ -298,7 +298,11 @@ def main() -> int:
     args = parser.parse_args()
 
     repository = args.repository.resolve()
-    python = (args.python or repository / ".venv" / "bin" / "python").resolve()
+    # Keep a virtual-environment interpreter path as written.  Resolving its
+    # symlink to the base interpreter would bypass the environment's packages.
+    python = Path(
+        os.path.abspath(args.python or repository / ".venv" / "bin" / "python")
+    )
     if not python.is_file():
         parser.error(f"Python interpreter does not exist: {python}")
     seed_blocks = set(args.seed_block or ["sb0001"])
