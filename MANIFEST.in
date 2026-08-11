@@ -1,0 +1,5 @@
+include CHANGELOG.md
+include CITATION.cff
+recursive-include configs *.toml
+recursive-include docs *.json *.md *.png *.svg
+recursive-include scripts *.py

@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this model, please cite the software release."
+title: "Trophosome symbiont evolution model"
+type: software
+authors:
+  - family-names: "Perez"
+    given-names: "Maeva"
+repository-code: "https://github.com/maepz/Modeling_trophosome"
+version: "0.5.0"
+date-released: "2026-08-11"

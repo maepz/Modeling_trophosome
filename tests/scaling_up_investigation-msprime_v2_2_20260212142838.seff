@@ -1,9 +1,0 @@
-scaling_up_investigation-msprime_v2_2_20260212142838
-PID=1430037
-Wall-Clock Time: 1 hours 44 minutes and 46 seconds
-Total CPU Time: 21 minutes and 34 seconds
-Total Peak Memory: 7642 MB
-Maximum Number of Processes: 1
-Maximum Number of Threads: 64
-Processes tree: 
-bash,1430037 run_scaling_up_investigation-msprime_v2_2.sh `-python,1465987 ... |-python,1494958 ... |-python,1494959 ... |-python,1494960 ... |-python,1494961 ... |-python,1494962 ... |-python,1494963 ... |-python,1494964 ... |-python,1494965 ... |-python,1494966 ... |-python,1494967 ... |-{python},1494968 |-{python},1494969 `-{python},1494970

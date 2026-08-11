@@ -1,0 +1,12 @@
+source,model,within_host_population_size,runtime_seconds,individual_hosts,workers,mutation_rate,growth_factor,steady_generations,host_generations,initial_strains
+Investigate_scaling_up_server.ipynb cell 57,V1.3 selected (historical),10000,5.594924,100,10,1e-12,1.2,50,20,100
+Investigate_scaling_up_server.ipynb cell 57,V1.3 selected (historical),100000,20.405120,100,10,1e-12,1.2,50,20,100
+Investigate_scaling_up_server.ipynb cell 57,V1.3 selected (historical),100000,20.447577,100,10,1e-12,1.2,50,20,100
+Investigate_scaling_up_server.ipynb cell 57,V1.3 selected (historical),1000000,21.802859,100,10,1e-12,1.2,50,20,100
+Investigate_scaling_up_server.ipynb cell 57,V1.3 selected (historical),10000000,23.858385,100,10,1e-12,1.2,50,20,100
+Investigate_scaling_up_server.ipynb cell 57,V1.3 selected (historical),100000000,26.965534,100,10,1e-12,1.2,50,20,100
+Investigate_scaling_up_server.ipynb cell 57,V3.1 endpoint,10000,3.250643,100,10,1e-12,1.2,0,20,100
+Investigate_scaling_up_server.ipynb cell 57,V3.1 endpoint,100000,3.324980,100,10,1e-12,1.2,0,20,100
+Investigate_scaling_up_server.ipynb cell 57,V3.1 endpoint,1000000,3.362762,100,10,1e-12,1.2,0,20,100
+Investigate_scaling_up_server.ipynb cell 57,V3.1 endpoint,10000000,3.994671,100,10,1e-12,1.2,0,20,100
+Investigate_scaling_up_server.ipynb cell 57,V3.1 endpoint,100000000,3.812379,100,10,1e-12,1.2,0,20,100

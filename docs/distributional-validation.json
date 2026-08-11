@@ -1,0 +1,217 @@
+{
+  "created_at": "2026-08-11T00:20:51.031429+00:00",
+  "model_family": "wright_fisher_counts",
+  "model_spec_version": "2.0.0",
+  "output_schema_version": "2.0.0",
+  "software_version": "0.4.0",
+  "seed": 20260810,
+  "python": "3.14.6",
+  "numpy": "2.5.2",
+  "passed": true,
+  "checks": [
+    {
+      "name": "neutral Wright-Fisher drift",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 24.050166666666666,
+        "expected_mean": 24.0,
+        "mean_z": 2.119928588943993,
+        "observed_variance": 16.839477954820715,
+        "expected_variance": 16.799999999999997,
+        "variance_z": 0.2877953384083915
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Offspring count follows Binomial(N, parental frequency)."
+    },
+    {
+      "name": "fitness-weighted Wright-Fisher reproduction",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 27.675766666666668,
+        "expected_mean": 27.692307692307693,
+        "mean_z": 0.741935487219579,
+        "observed_variance": 14.857668001155595,
+        "expected_variance": 14.911242603550296,
+        "variance_z": 0.4400312413133517
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Selection uses abundance multiplied by relative fitness."
+    },
+    {
+      "name": "free-living fitness-weighted reproduction",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 27.696133333333332,
+        "expected_mean": 27.692307692307693,
+        "mean_z": 0.17159630242303045,
+        "observed_variance": 14.917962314299364,
+        "expected_variance": 14.911242603550296,
+        "variance_z": 0.05519187320131982
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Environmental selection uses abundance multiplied by free-living fitness, independently of within-host fitness."
+    },
+    {
+      "name": "independent dual-habitat mutation fitness effects",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "within_host_effect_mean": -0.010048512448370309,
+        "free_living_effect_mean": -0.010157376603750516,
+        "within_host_effect_variance": 0.0004012206042533649,
+        "free_living_effect_variance": 0.0004029321030919408,
+        "effect_correlation": -0.008312887603018147,
+        "maximum_z": 1.4397955409550511
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "New strains inherit two independently sampled fitness effects from the same declared normal distribution."
+    },
+    {
+      "name": "mutation-event count",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 4.9966,
+        "expected_mean": 5.0,
+        "mean_z": 0.2776088375154326,
+        "observed_variance": 4.4642705823527455,
+        "expected_variance": 4.5,
+        "variance_z": 0.9724153709227011
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Every offspring mutates independently with the declared probability."
+    },
+    {
+      "name": "mutation-parent assignment",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 1.9915666666666667,
+        "expected_mean": 2.0000000000000004,
+        "mean_z": 1.054166666666717,
+        "observed_variance": 1.8993588575174731,
+        "expected_variance": 1.9200000000000004,
+        "variance_z": 1.3166516695870059
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Mutant parent identities follow reproductive parental weights."
+    },
+    {
+      "name": "with-replacement population sampling",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 4.993,
+        "expected_mean": 5.0,
+        "mean_z": 0.6062177826490787,
+        "observed_variance": 4.012284742824761,
+        "expected_variance": 4.0,
+        "variance_z": 0.3761356251909523
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Reservoir-style sampling follows the Multinomial/Binomial law."
+    },
+    {
+      "name": "without-replacement population sampling",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 5.0004333333333335,
+        "expected_mean": 5.0,
+        "mean_z": 0.04311612227463755,
+        "observed_variance": 3.051068181161595,
+        "expected_variance": 3.0303030303030303,
+        "variance_z": 0.8392424088609163
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Finite-population sampling follows the Hypergeometric law."
+    },
+    {
+      "name": "optimized reservoir-founder sampling",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 1.5969,
+        "expected_mean": 1.6,
+        "mean_z": 0.4745886376642564,
+        "observed_variance": 1.2774529717657257,
+        "expected_variance": 1.2800000000000002,
+        "variance_z": 0.24370373248343316
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "The inverse-CDF optimization preserves reservoir founder sampling."
+    },
+    {
+      "name": "environmental apportionment label neutrality",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 29.985466666666667,
+        "expected_mean": 30.0,
+        "mean_z": 1.0857669742999667,
+        "observed_variance": 5.42283621009589,
+        "expected_variance": 5.375,
+        "variance_z": 1.0899753771360965
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Capacity-regulation ties are exchangeable with respect to strain ID."
+    },
+    {
+      "name": "multi-generation neutral drift distribution",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "total_variation_distance": 0.008202064254033494,
+        "maximum_bin_z": 1.7621058888812462
+      },
+      "criteria": {
+        "maximum_total_variation_distance": 0.015,
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Three exact count transitions match the recursively calculated Wright-Fisher endpoint distribution."
+    },
+    {
+      "name": "cell-level reference trajectory",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "richness_mean_difference": 0.0009999999999998899,
+        "richness_z": 0.06955025110910566,
+        "founder_cells_mean_difference": -0.0002666666666666373,
+        "founder_cells_z": 0.008050176264061655,
+        "largest_mutant_clone_mean_difference": 0.0025333333333334984,
+        "largest_mutant_clone_z": 0.10833913460027206,
+        "richness_total_variation_distance": 0.006466666666666685,
+        "maximum_mean_z": 0.10833913460027206
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0,
+        "maximum_richness_total_variation_distance": 0.03
+      },
+      "interpretation": "Growth, mutation timing, drift, and mutant jackpot clones agree with an explicit individual-cell implementation."
+    }
+  ]
+}

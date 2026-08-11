@@ -1,9 +1,0 @@
-scaling_up_investigation_v3_1_20260224162608
-PID=2504284
-Wall-Clock Time: 9 minutes and 50 seconds
-Total CPU Time: 3 minutes and 17 seconds
-Total Peak Memory: 15964 MB
-Maximum Number of Processes: 1
-Maximum Number of Threads: 64
-Processes tree: 
-bash,2504284 run_scaling_up_investigation_v3_1.sh `-python,2527265 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537379 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537380 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537381 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537382 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537383 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537384 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537385 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537386 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537387 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-python,2537388 /home/qiulab/data/CRF_project/work/Modeling_trophosome/notebooks/Scaling_up_investigation_job_v3_1.py ... |-{python},2537389 |-{python},2537390 `-{python},2537391

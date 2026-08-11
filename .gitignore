@@ -1,0 +1,29 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+dist/
+build/
+
+# Generated simulation outputs and scheduler logs
+outputs/
+output/
+results/
+tmp/
+*.graphs.pickledump
+*.out
+*.err
+*.seff
+
+# Machine-specific experiment paths
+layout.local.json
+
+# Local editor/OS metadata
+.idea/
+.vscode/
+.Rhistory

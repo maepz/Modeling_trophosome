@@ -1,11 +1,9 @@
-from glob import glob
-from os.path import basename, splitext
-from setuptools import find_packages, setup
+"""Compatibility shim for tools that still invoke ``setup.py`` directly.
 
-setup(
-    name='project_package',
-    version='0.1',
-    packages=find_packages(where='src'),
-    package_dir={'': 'src'},
-    py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
-)
+Package metadata and dependencies live in ``pyproject.toml``.
+"""
+
+from setuptools import setup
+
+
+setup()

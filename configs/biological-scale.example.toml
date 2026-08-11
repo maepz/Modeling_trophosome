@@ -1,0 +1,45 @@
+# Starting point for a staged biological-scale pilot, not a validated parameter set.
+model = "wright_fisher_counts"
+seed = 666
+replicates = 1
+
+[environment]
+# Counts are a reservoir representation here, not a finite environmental census.
+initial_counts = [400000, 300000, 200000, 100000]
+initial_within_host_fitness = [1.0, 1.0, 1.0, 1.0]
+initial_free_living_fitness = [1.0, 1.0, 1.0, 1.0]
+sampling_mode = "reservoir"
+capacity_ratio = 1.0
+
+[host]
+population_size = 1000
+infection_bottleneck = 10
+carrying_capacity = 1000000000
+growth_factor = 1.2
+steady_generations = 100
+host_generations = 100
+escape_fraction = 0.0001
+
+[evolution]
+# Must be a per-genome, per-bacterial-generation probability. Convert a per-site
+# rate using a declared genome target before using this configuration.
+mutation_probability = 1e-10
+mutation_effect_mean = -0.01
+mutation_effect_sd = 0.01
+within_host_selection = true
+free_living_selection = false
+fitness_floor = 0.0
+max_materialized_mutants = 100000
+
+[output]
+snapshot_interval = 100
+checkpoint_interval = "1h"
+checkpoint_keep = 2
+retain_host_histories = false
+host_counts_mode = "panel"
+host_panel_size = 100
+
+[execution]
+workers = 1
+host_batch_size = 32
+in_flight_batches_per_worker = 2

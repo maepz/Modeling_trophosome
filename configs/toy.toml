@@ -1,0 +1,41 @@
+model = "wright_fisher_counts"
+seed = 666
+replicates = 5
+
+[environment]
+initial_counts = [30000, 25000, 20000, 15000, 10000]
+initial_within_host_fitness = [1.0, 0.99, 1.01, 0.98, 1.02]
+initial_free_living_fitness = [1.01, 0.98, 1.0, 1.02, 0.99]
+sampling_mode = "reservoir"
+capacity_ratio = 1.0
+
+[host]
+population_size = 10
+infection_bottleneck = 10
+carrying_capacity = 1000000
+growth_factor = 1.2
+steady_generations = 50
+host_generations = 100
+escape_fraction = 0.01
+
+[evolution]
+mutation_probability = 1e-12
+mutation_effect_mean = -0.01
+mutation_effect_sd = 0.01
+within_host_selection = true
+free_living_selection = false
+fitness_floor = 0.0
+max_materialized_mutants = 100000
+
+[output]
+snapshot_interval = 25
+checkpoint_interval = "1h"
+checkpoint_keep = 2
+retain_host_histories = false
+host_counts_mode = "panel"
+host_panel_size = 5
+
+[execution]
+workers = 1
+host_batch_size = 5
+in_flight_batches_per_worker = 2
