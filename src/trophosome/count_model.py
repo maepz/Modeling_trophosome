@@ -420,6 +420,34 @@ def sample_population(
         raise ValueError("sample size exceeds a finite population")
     if replace:
         sampled = rng.multinomial(sample_size, state.counts / state.size)
+    elif state.size >= 1_000_000_000:
+        # NumPy's fast multivariate implementation rejects source totals at
+        # or above 1e9.  Sequential conditional hypergeometric draws are an
+        # exact construction of the same multivariate distribution and scale
+        # with strain richness rather than the number of bacterial cells.
+        sampled = np.zeros(len(state.counts), dtype=np.int64)
+        remaining_population = state.size
+        remaining_sample = sample_size
+        for index, count_value in enumerate(state.counts[:-1]):
+            count = int(count_value)
+            if remaining_sample == 0:
+                break
+            if remaining_sample == remaining_population:
+                sampled[index:] = state.counts[index:]
+                remaining_sample = 0
+                break
+            drawn = int(
+                rng.hypergeometric(
+                    count,
+                    remaining_population - count,
+                    remaining_sample,
+                )
+            )
+            sampled[index] = drawn
+            remaining_sample -= drawn
+            remaining_population -= count
+        if remaining_sample:
+            sampled[-1] = remaining_sample
     else:
         sampled = rng.multivariate_hypergeometric(state.counts, sample_size)
     keep = sampled > 0

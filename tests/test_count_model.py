@@ -213,6 +213,32 @@ class CountModelTests(unittest.TestCase):
         )
         self.assertIsNone(subtract_population(self.population, sample))
 
+    def test_billion_cell_population_can_be_sampled_without_replacement(
+        self,
+    ) -> None:
+        population = PopulationState.from_counts(
+            [500_000_000, 300_000_000, 200_000_000],
+            [1.0, 1.0, 1.0],
+        )
+        sample = sample_population(
+            population,
+            10_000_000,
+            np.random.default_rng(17),
+            replace=False,
+        )
+        self.assertEqual(sample.size, 10_000_000)
+        source = dict(
+            zip(
+                population.genotype_ids.tolist(),
+                population.counts.tolist(),
+                strict=True,
+            )
+        )
+        for genotype_id, count in zip(
+            sample.genotype_ids.tolist(), sample.counts.tolist(), strict=True
+        ):
+            self.assertLessEqual(count, source[genotype_id])
+
     def test_seeded_trajectory_is_reproducible_and_hits_capacity(self) -> None:
         host = HostConfig(
             population_size=1,

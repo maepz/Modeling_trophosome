@@ -13,8 +13,10 @@ import csv
 import hashlib
 import json
 import os
+import resource
 import signal
 import subprocess
+import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -239,13 +241,25 @@ def _run_one(
         raise
     finally:
         elapsed = time.monotonic() - started
+        if not memory_measurements:
+            child_peak = int(
+                resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
+            )
+            # ru_maxrss is bytes on macOS and KiB on Linux.
+            peak_rss_kib = (
+                child_peak // 1024 if sys.platform == "darwin" else child_peak
+            )
+            memory_mode = "cumulative-child-peak"
+        else:
+            memory_mode = "process-tree-polling"
         summary.update(
             {
                 "completed_at": datetime.now(UTC).isoformat(),
                 "elapsed_seconds": elapsed,
                 "peak_process_tree_rss_kib": (
-                    peak_rss_kib if memory_measurements else None
+                    peak_rss_kib if peak_rss_kib else None
                 ),
+                "memory_measurement_mode": memory_mode,
                 "memory_measurements": memory_measurements,
                 "output_bytes": _directory_size(output),
             }
