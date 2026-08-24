@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -16,6 +18,75 @@ VARIANT = "v210-m010"
 
 
 class Phase1PilotV21ArtifactTests(unittest.TestCase):
+    def test_hpc_launcher_activates_environment_without_mamba_run(self) -> None:
+        launcher = REPOSITORY / "scripts/hpc/launch_phase1_first_pilot_v2_1.sh"
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary = Path(temporary_directory)
+            command_directory = temporary / "commands"
+            environment_bin = temporary / "environment" / "bin"
+            command_directory.mkdir()
+            environment_bin.mkdir(parents=True)
+            capture_path = temporary / "python-arguments.txt"
+
+            fake_mamba = command_directory / "mamba"
+            fake_mamba.write_text(
+                "#!/usr/bin/env bash\n"
+                'if [[ "$1 $2 $3 $4" != "shell hook -s bash" ]]; then\n'
+                "  exit 97\n"
+                "fi\n"
+                "cat <<'HOOK'\n"
+                "mamba() {\n"
+                '  if [[ "$1" != "activate" || "$2" != "trophosome" ]]; then\n'
+                "    return 98\n"
+                "  fi\n"
+                '  export PATH="$FAKE_MAMBA_ENV_BIN:$PATH"\n'
+                "}\n"
+                "HOOK\n",
+                encoding="utf-8",
+            )
+            fake_mamba.chmod(0o755)
+
+            fake_python = environment_bin / "python"
+            fake_python.write_text(
+                '#!/usr/bin/env bash\nprintf \'%s\\n\' "$@" > "$FAKE_PYTHON_CAPTURE"\n',
+                encoding="utf-8",
+            )
+            fake_python.chmod(0o755)
+
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "PATH": f"{command_directory}:{environment['PATH']}",
+                    "FAKE_MAMBA_ENV_BIN": str(environment_bin),
+                    "FAKE_PYTHON_CAPTURE": str(capture_path),
+                    "TROPHOSOME_MAMBA_ENV": "trophosome",
+                    "TROPHOSOME_PILOT_JOBS": "3",
+                }
+            )
+            subprocess.run(
+                ["bash", str(launcher), "--prepare-only", "--cell", "c0001"],
+                cwd=REPOSITORY,
+                env=environment,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            arguments = capture_path.read_text(encoding="utf-8").splitlines()
+            self.assertEqual(
+                arguments,
+                [
+                    str(REPOSITORY / "scripts/run_phase1_first_pilot_v2_1.py"),
+                    "--repository",
+                    str(REPOSITORY),
+                    "--jobs",
+                    "3",
+                    "--prepare-only",
+                    "--cell",
+                    "c0001",
+                ],
+            )
+
     def test_generated_variant_verifies_separately(self) -> None:
         subprocess.run(
             [

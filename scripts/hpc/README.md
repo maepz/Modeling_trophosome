@@ -41,7 +41,9 @@ After transferring one clean, frozen repository revision to
 confirm that the `trophosome` environment contains the expected software:
 
 ```bash
-mamba run -n trophosome trophosome --version
+eval "$(mamba shell hook -s bash)"
+mamba activate trophosome
+trophosome --version
 git status --short
 ```
 
@@ -90,7 +92,7 @@ The `trophosome` environment must contain the reporting dependencies before the
 simulations finish. Verify them without writing files:
 
 ```bash
-mamba run -n trophosome python -c 'import matplotlib, reportlab; print("reporting dependencies available")'
+python -c 'import matplotlib, reportlab; print("reporting dependencies available")'
 ```
 
 Once all 60 completion markers are present, the launcher automatically:
