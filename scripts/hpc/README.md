@@ -48,7 +48,48 @@ git status --short
 ```
 
 The version should be `0.7.0`, and the Git status should be empty. Then perform
-the non-simulating preflight:
+the one-time machine-local storage setup below.
+
+### Create the machine-local storage layout
+
+The repository stores portable experiment definitions, but raw simulation
+outputs and checkpoints belong in the server's external scratch directory. A
+machine-local `layout.local.json` records this mapping and is intentionally
+ignored by Git. Create it once after cloning the repository or moving it to a
+new machine:
+
+```bash
+TROPHOSOME_HPC_ROOT=/home/qiulab/data/CRF_project
+TROPHOSOME_REPOSITORY="$(pwd -P)"
+
+python scripts/manage_project_layout.py init \
+  --root "$TROPHOSOME_HPC_ROOT" \
+  --project trophosome \
+  --work-root "$TROPHOSOME_REPOSITORY/experiments/work" \
+  --scratch-root "$TROPHOSOME_HPC_ROOT/scratch" \
+  --data-root "$TROPHOSOME_REPOSITORY/experiments/data" \
+  --phase p01
+```
+
+The command is additive and safe to repeat. It should report these locations:
+
+```text
+Work:    .../Modeling_trophosome/experiments/work/trophosome
+Scratch: /home/qiulab/data/CRF_project/scratch/trophosome
+Data:    .../Modeling_trophosome/experiments/data/trophosome
+```
+
+Review the generated mapping with:
+
+```bash
+python -m json.tool experiments/work/trophosome/layout.local.json
+```
+
+Do not commit `layout.local.json`: its absolute paths are specific to this
+server. Initialization creates the required empty directories but does not run
+the model or modify the frozen pilot configurations and manifests.
+
+Then perform the non-simulating preflight:
 
 ```bash
 bash scripts/hpc/launch_phase1_first_pilot_v2_1.sh --prepare-only

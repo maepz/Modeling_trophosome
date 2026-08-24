@@ -63,7 +63,9 @@ def _load_rows(repository: Path) -> tuple[Path, Path, list[dict[str, str]]]:
     layout_path = work / "layout.local.json"
     if not layout_path.is_file():
         raise RuntimeError(
-            "machine-local layout is missing; initialize layout.local.json first"
+            f"machine-local layout is missing: {layout_path}. "
+            "Create it using the instructions under 'Create the machine-local "
+            "storage layout' in scripts/hpc/README.md, then rerun this command."
         )
     layout = json.loads(layout_path.read_text(encoding="utf-8"))
     scratch = Path(layout["scratch"])
