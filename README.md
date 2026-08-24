@@ -14,7 +14,8 @@ During each modelled host-population generation:
 2. those symbionts reproduce inside the host and may mutate or experience
    selection;
 3. some symbionts leave the hosts and mix with the environmental population;
-4. the updated environment supplies the next generation of hosts.
+4. the focal environment can exchange bacteria with a fixed regional source;
+5. the updated focal environment supplies the next generation of hosts.
 
 The model records both the abundance of labelled strains and the mutations that
 created new strains. This makes it possible to ask whether repeated host passage
@@ -113,6 +114,7 @@ The supplied configurations have different purposes:
 | `configs/toy.toml` | Small exploratory or demonstration run |
 | `configs/biological-scale.example.toml` | Starting point for staged scaling tests; not biologically calibrated |
 | `configs/phase2-selection.example.toml` | Example with both habitat-specific fitness traits and selection |
+| `configs/migration.example.toml` | Small example of exchange with a fixed regional source; selection remains off |
 
 ### Parameters most biologists will change
 
@@ -121,6 +123,9 @@ The supplied configurations have different purposes:
 | `replicates` | Number of independent stochastic repetitions of the same experiment |
 | `initial_counts` | Starting relative abundances of environmental strains |
 | `capacity_ratio` | Effective environmental reservoir size relative to one within-host carrying capacity |
+| `migration.mode` | Whether regional exchange is disabled or uses a fixed regional source |
+| `migration.fraction` | Fraction of the focal reservoir replaced by regional immigrants in each host generation |
+| `migration.regional_counts` | Fixed regional strain composition, aligned by position with `initial_counts` |
 | `population_size` | Number of individual hosts in each host generation |
 | `infection_bottleneck` | Number of symbiont cells that initially infect each host |
 | `carrying_capacity` | Adult symbiont population size within one host |
@@ -139,9 +144,11 @@ Two units deserve particular attention:
   defined target region, per bacterial generation. A per-site mutation rate must
   first be converted using the length of the sequence being represented.
 
-A **bacterial generation** is one within-host reproductive step. A **host
-generation** is one complete passage from environmental infection through host
-release and environmental updating.
+A **within-host bacterial generation** is one reproductive step inside a host.
+When free-living selection is enabled, the model also adds one free-living
+bacterial generation after migration. A **host generation** is one complete
+passage from environmental infection through host release and environmental
+updating.
 
 ## Understand the output files
 
@@ -156,6 +163,8 @@ The main result tables are ordinary CSV files:
 | `host_adult_counts.csv` | Complete adult strain counts when panel or full retention is requested |
 | `pooled_host_counts_and_occupancy.csv` | Abundance of each strain across all hosts and the number of hosts containing it |
 | `release_counts.csv` | Strains released by each host before environmental mixing |
+| `migration_counts.csv` | Realized emigrant and immigrant counts for each strain and host generation |
+| `strain_origins.csv` | Which initial strains began in the focal reservoir, fixed regional source, or both |
 | `strain_lineage_events.csv` | Parentage, origin and fitness of every newly mutated strain |
 | `resolved_config.json` | Exact parameter values interpreted by the software |
 | `provenance.json` | Seed, software version and computing information needed for reproduction |
@@ -167,6 +176,11 @@ The presence and size of `host_adult_counts.csv` are controlled by
 reproducible sample of hosts, and `full` retains every host. Use `panel` for most
 large experiments to keep data volumes manageable.
 
+`expected_host_feedback_after_migration` in the generation summary is the
+expected fraction of host-derived bacteria remaining after exchange. It is not
+an observed ancestry fraction because individual-cell provenance is not tracked
+through neutral capacity regulation and migration.
+
 While a run is active, `checkpoints/` contains the two newest validated recovery
 points. `checkpoint_interval = "1h"` requests a checkpoint at the first completed
 host-generation boundary after one hour has elapsed; it cannot interrupt a host
@@ -174,6 +188,14 @@ generation partway through. At every replicate boundary a checkpoint is written
 regardless of elapsed time. After successful completion, the software verifies
 the outputs and final states and deletes all recovery checkpoints. Failed or
 interrupted runs retain them for `--resume`.
+
+## Generate a pilot report
+
+A completed pilot matrix can be converted into a self-contained biological PDF
+with `trophosome report`. The command also creates an editable Markdown copy and
+its figures. See the [pilot reporting tutorial](docs/pilot-reporting-tutorial.md)
+for the standardized input tables, a complete example and instructions for
+adding future experimental cells.
 
 ## Model versions and scientific documentation
 
@@ -228,11 +250,13 @@ parentage separately, and streams host results in bounded batches. Census size
 is an integer; runtime depends mainly on bacterial transitions, extant richness,
 and materialised mutation events.
 
-The environment is a non-depleting infection reservoir with effective capacity
-`capacity_ratio * carrying_capacity`. Host releases are mixed into it. In the
-Phase 1 profile the pool is returned to capacity by neutral Hamilton regulation;
-in the Phase 2 profile it undergoes one free-living Wright--Fisher selection
-transition. The realised host-feedback fraction is reported each generation.
+The focal environment is a non-depleting infection reservoir with effective
+capacity `capacity_ratio * carrying_capacity`. Host releases are mixed into it
+and it is returned to capacity by neutral Hamilton regulation. When migration is
+enabled, a fixed number of focal cells emigrate and the same number are replaced
+by immigrants sampled from an unchanged regional source. Optional free-living
+Wright--Fisher selection acts after this exchange. The realised host-feedback
+and migration fractions are reported each generation.
 
 The current research priorities are:
 

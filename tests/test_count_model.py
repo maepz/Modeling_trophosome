@@ -9,6 +9,7 @@ from trophosome.count_model import (
     IdAllocator,
     LineageRecorder,
     PopulationState,
+    fixed_pool_migration_step,
     free_living_selection_step,
     merge_populations,
     population_size_schedule,
@@ -171,6 +172,55 @@ class CountModelTests(unittest.TestCase):
         np.testing.assert_array_equal(merged.genotype_ids, [0, 1, 2])
         np.testing.assert_array_equal(merged.counts, [35, 70, 10])
         np.testing.assert_allclose(merged.free_living_fitness, [0.8, 1.2, 1.1])
+
+    def test_declared_zero_counts_preserve_aligned_strain_ids(self) -> None:
+        population = PopulationState.from_counts(
+            [30, 0, 70, 0],
+            [1.0, 0.9, 1.1, 0.8],
+            [0.8, 0.9, 1.0, 1.1],
+        )
+        np.testing.assert_array_equal(population.genotype_ids, [0, 2])
+        np.testing.assert_array_equal(population.counts, [30, 70])
+        np.testing.assert_allclose(population.within_host_fitness, [1.0, 1.1])
+        np.testing.assert_allclose(population.free_living_fitness, [0.8, 1.0])
+
+    def test_fixed_pool_migration_exchanges_equal_exact_counts(self) -> None:
+        focal = PopulationState.from_counts(
+            [30, 70, 0], [1.0, 1.0, 1.0], [0.9, 1.0, 1.1]
+        )
+        regional = PopulationState.from_counts(
+            [0, 0, 100], [1.0, 1.0, 1.0], [0.9, 1.0, 1.1]
+        )
+        migrated, emigrants, immigrants = fixed_pool_migration_step(
+            focal,
+            regional,
+            100,
+            np.random.default_rng(7),
+            np.random.default_rng(8),
+        )
+        self.assertEqual(migrated.size, focal.size)
+        np.testing.assert_array_equal(migrated.genotype_ids, [2])
+        np.testing.assert_array_equal(migrated.counts, [100])
+        assert emigrants is not None
+        assert immigrants is not None
+        np.testing.assert_array_equal(emigrants.counts, [30, 70])
+        np.testing.assert_array_equal(immigrants.genotype_ids, [2])
+        self.assertEqual(emigrants.size, immigrants.size)
+
+    def test_zero_migration_returns_an_unchanged_copy(self) -> None:
+        migrated, emigrants, immigrants = fixed_pool_migration_step(
+            self.population,
+            self.population,
+            0,
+            np.random.default_rng(7),
+            np.random.default_rng(8),
+        )
+        self.assertIsNone(emigrants)
+        self.assertIsNone(immigrants)
+        np.testing.assert_array_equal(
+            migrated.genotype_ids, self.population.genotype_ids
+        )
+        np.testing.assert_array_equal(migrated.counts, self.population.counts)
 
     def test_proportional_rescale_has_exact_capacity(self) -> None:
         scaled = proportional_rescale(self.population, 33)

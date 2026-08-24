@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate or verify the frozen 12-cell Phase 1 first-pilot files."""
+"""Generate or verify the staged 12-core plus 8-extension pilot files."""
 
 from __future__ import annotations
 
@@ -31,6 +31,7 @@ class PilotCell:
     hosts: int
     escape_fraction: str
     mutation_probability: str
+    extension: bool = False
 
     @property
     def cell_id(self) -> str:
@@ -48,6 +49,10 @@ class PilotCell:
     def feedback_alpha(self) -> float:
         return self.total_return / (ENVIRONMENT_CAPACITY + self.total_return)
 
+    @property
+    def pilot_tier(self) -> str:
+        return "extension" if self.extension else "core"
+
 
 CELLS = (
     PilotCell(1, "No return, mutation off", "NR", ("no-return",), 100, "0", "0"),
@@ -64,7 +69,7 @@ CELLS = (
         3,
         "Matched return R=1e9, H=100",
         "MR0",
-        ("matched-r1e9-u0", "mutation-bracket", "feedback-bracket"),
+        ("matched-r1e9-u0", "mutation-bracket", "feedback-h100"),
         100,
         "1e-2",
         "0",
@@ -73,7 +78,7 @@ CELLS = (
         4,
         "Matched return R=1e9, H=1000",
         "MR0",
-        ("matched-r1e9-u0",),
+        ("matched-r1e9-u0", "feedback-h1000"),
         1_000,
         "1e-3",
         "0",
@@ -118,7 +123,7 @@ CELLS = (
         9,
         "Mutation bracket u=1e-10",
         "MUT",
-        ("mutation-bracket",),
+        ("mutation-bracket", "matched-r1e9-u1e-10"),
         100,
         "1e-2",
         "1e-10",
@@ -136,7 +141,7 @@ CELLS = (
         11,
         "Very weak feedback boundary",
         "FB0",
-        ("feedback-bracket",),
+        ("feedback-h100",),
         100,
         "1e-5",
         "0",
@@ -145,10 +150,90 @@ CELLS = (
         12,
         "Strong feedback boundary",
         "FB0",
-        ("feedback-bracket",),
+        ("feedback-h1000",),
         1_000,
         "1e-2",
         "0",
+    ),
+    PilotCell(
+        13,
+        "Matched return R=1e9, H=1000, u=1e-10",
+        "MRM",
+        ("matched-r1e9-u1e-10",),
+        1_000,
+        "1e-3",
+        "1e-10",
+        True,
+    ),
+    PilotCell(
+        14,
+        "Matched return R=1e9, H=10000, u=1e-10",
+        "MRM",
+        ("matched-r1e9-u1e-10",),
+        10_000,
+        "1e-4",
+        "1e-10",
+        True,
+    ),
+    PilotCell(
+        15,
+        "Matched return R=1e9, H=100000, u=1e-10",
+        "MRM",
+        ("matched-r1e9-u1e-10",),
+        100_000,
+        "1e-5",
+        "1e-10",
+        True,
+    ),
+    PilotCell(
+        16,
+        "Matched return R=1e8, H=100",
+        "MRLOW",
+        ("matched-r1e8-u0", "feedback-h100"),
+        100,
+        "1e-3",
+        "0",
+        True,
+    ),
+    PilotCell(
+        17,
+        "Matched return R=1e8, H=10000",
+        "MRLOW",
+        ("matched-r1e8-u0",),
+        10_000,
+        "1e-5",
+        "0",
+        True,
+    ),
+    PilotCell(
+        18,
+        "Alpha series H=100, alpha=0.909; f=0.1 sensitivity",
+        "FBA",
+        ("feedback-h100", "escape-range-sensitivity"),
+        100,
+        "1e-1",
+        "0",
+        True,
+    ),
+    PilotCell(
+        19,
+        "Alpha series H=1000, alpha=0.001; f=1e-6 sensitivity",
+        "FBA",
+        ("feedback-h1000", "escape-range-sensitivity"),
+        1_000,
+        "1e-6",
+        "0",
+        True,
+    ),
+    PilotCell(
+        20,
+        "Alpha series H=1000, alpha=0.091",
+        "FBA",
+        ("feedback-h1000", "matched-r1e8-u0"),
+        1_000,
+        "1e-4",
+        "0",
+        True,
     ),
 )
 
@@ -235,24 +320,124 @@ def _tsv_text(rows: list[dict[str, object]], fields: list[str]) -> str:
     return stream.getvalue()
 
 
+def _csv_text(rows: list[dict[str, object]], fields: list[str]) -> str:
+    stream = io.StringIO()
+    writer = csv.DictWriter(stream, fieldnames=fields, lineterminator="\n")
+    writer.writeheader()
+    writer.writerows(rows)
+    return stream.getvalue()
+
+
 def _sha256(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()
 
 
+def _mnemonic_number(value: str) -> str:
+    return value.lower().replace("e-", "em").replace("e+", "e").replace(".", "p")
+
+
+def _cell_mnemonic(cell: PilotCell) -> str:
+    return "-".join(
+        (
+            f"h{cell.hosts}",
+            f"f{_mnemonic_number(cell.escape_fraction)}",
+            f"u{_mnemonic_number(cell.mutation_probability)}",
+            "c1",
+            "b10",
+            "k1000000000",
+            "ts500",
+            "archpanmictic",
+            "selneutral",
+            "fitneutral",
+        )
+    )
+
+
+def _parameter_rows(cell: PilotCell) -> list[dict[str, object]]:
+    host_mode = "full" if cell.hosts <= 100 else "panel"
+    values = (
+        ("H", cell.hosts, "integer", "hosts", "input"),
+        (
+            "f",
+            cell.escape_fraction,
+            "float" if "e" in cell.escape_fraction else "integer",
+            "fraction",
+            "input",
+        ),
+        ("e", cell.escape_cells_per_host, "integer", "cells_per_host", "derived"),
+        ("R", cell.total_return, "integer", "cells", "derived"),
+        (
+            "alpha",
+            format(cell.feedback_alpha, ".12g"),
+            "float" if cell.feedback_alpha else "integer",
+            "fraction",
+            "derived",
+        ),
+        (
+            "u",
+            cell.mutation_probability,
+            "float" if "e" in cell.mutation_probability else "integer",
+            "probability_per_genome_per_bacterial_generation",
+            "input",
+        ),
+        ("host_counts_mode", host_mode, "string", "", "technical"),
+        ("B", B, "integer", "cells_per_infection", "nuisance"),
+        ("K", K, "integer", "cells_per_host", "nuisance"),
+        ("growth_factor", GROWTH_FACTOR, "float", "ratio", "nuisance"),
+        (
+            "steady_generations",
+            STEADY_GENERATIONS,
+            "integer",
+            "bacterial_generations",
+            "nuisance",
+        ),
+        ("host_generations", HOST_GENERATIONS, "integer", "host_passages", "technical"),
+        ("c", CAPACITY_RATIO, "float", "ratio", "nuisance"),
+        ("N_E", ENVIRONMENT_CAPACITY, "integer", "cells", "derived"),
+        ("sampling_mode", "reservoir", "string", "", "nuisance"),
+        ("within_host_selection", "false", "boolean", "", "nuisance"),
+        ("free_living_selection", "false", "boolean", "", "nuisance"),
+        ("mutation_effect_mean", "0.0", "float", "fitness_units", "nuisance"),
+        ("mutation_effect_sd", "0.0", "float", "fitness_units", "nuisance"),
+        ("environment_counts_mode", "final", "string", "", "technical"),
+        (
+            "planned_seed_blocks",
+            len(SEED_BLOCKS),
+            "integer",
+            "seed_blocks",
+            "technical",
+        ),
+        (
+            "seed_block_set",
+            "phase1-first-pilot-sb0001-sb0003",
+            "string",
+            "",
+            "technical",
+        ),
+    )
+    return [
+        {
+            "cell_id": cell.cell_id,
+            "parameter_name": name,
+            "value": value,
+            "value_type": value_type,
+            "unit": unit,
+            "role": role,
+        }
+        for name, value, value_type, unit, role in values
+    ]
+
+
 def build_files(repository: Path) -> dict[Path, str]:
     work = repository / "experiments" / "work" / "trophosome"
-    population_path = (
-        work / "common" / "initial-populations" / "ip001-fisher100.json"
-    )
+    population_path = work / "common" / "initial-populations" / "ip001-fisher100.json"
     population = json.loads(population_path.read_text(encoding="utf-8"))
     counts = [int(value) for value in population["scaled_counts"]]
     count_checksum = str(population["scaled_counts_sha256"])
     if len(counts) != 100 or sum(counts) != ENVIRONMENT_CAPACITY:
         raise ValueError("ip001-fisher100 does not contain 100 counts summing to N_E")
 
-    config_directory = (
-        work / "p01-neutral-feedback" / "configs" / "s01-pilot"
-    )
+    config_directory = work / "p01-neutral-feedback" / "configs" / "s01-pilot"
     design_directory = work / "p01-neutral-feedback" / "design"
     manifest_directory = work / "p01-neutral-feedback" / "manifests"
     files: dict[Path, str] = {}
@@ -268,6 +453,8 @@ def build_files(repository: Path) -> dict[Path, str]:
         }
         for seed_block_id, master_seed in SEED_BLOCKS
     ]
+    registry_cell_rows: list[dict[str, object]] = []
+    registry_parameter_rows: list[dict[str, object]] = []
     for cell in CELLS:
         config_path = config_directory / f"{cell.cell_id}.toml"
         text = _config_text(
@@ -319,6 +506,7 @@ def build_files(repository: Path) -> dict[Path, str]:
                 "label": cell.label,
                 "experimental_group": cell.group,
                 "comparison_sets": "|".join(cell.comparison_sets),
+                "pilot_tier": cell.pilot_tier,
                 "H": cell.hosts,
                 "f": cell.escape_fraction,
                 "e": cell.escape_cells_per_host,
@@ -329,12 +517,38 @@ def build_files(repository: Path) -> dict[Path, str]:
                 "status": "planned",
             }
         )
+        registry_cell_rows.append(
+            {
+                "cell_id": cell.cell_id,
+                "phase_id": "p01",
+                "stage_id": "s01",
+                "label": cell.label,
+                "mnemonic": _cell_mnemonic(cell),
+                "cell_dirname": cell.cell_id,
+                "experimental_group": cell.group,
+                "comparison_set": "|".join(cell.comparison_sets),
+                "confirmatory": "false",
+                "architecture_profile_id": "arch-panmictic-v1",
+                "selection_profile_id": "sel-neutral-v1",
+                "fitness_profile_id": "fit-neutral-v1",
+                "initial_population_id": "ip001-fisher100",
+                "config_path": str(config_path.relative_to(work)),
+                "status": "prepared",
+                "notes": (
+                    "Exploratory first-pilot "
+                    f"{cell.pilot_tier} cell; not confirmatory; "
+                    "not yet launched."
+                ),
+            }
+        )
+        registry_parameter_rows.extend(_parameter_rows(cell))
 
     matrix_fields = [
         "cell_id",
         "label",
         "experimental_group",
         "comparison_sets",
+        "pilot_tier",
         "H",
         "f",
         "e",
@@ -346,6 +560,38 @@ def build_files(repository: Path) -> dict[Path, str]:
     ]
     files[design_directory / "phase1-first-pilot-cells.tsv"] = _tsv_text(
         matrix_rows, matrix_fields
+    )
+    files[design_directory / "phase1-first-pilot-core-cells.tsv"] = _tsv_text(
+        [row for row in matrix_rows if row["pilot_tier"] == "core"], matrix_fields
+    )
+    files[design_directory / "phase1-first-pilot-extension-cells.tsv"] = _tsv_text(
+        [row for row in matrix_rows if row["pilot_tier"] == "extension"],
+        matrix_fields,
+    )
+    files[work / "registry" / "cells.csv"] = _csv_text(
+        registry_cell_rows,
+        [
+            "cell_id",
+            "phase_id",
+            "stage_id",
+            "label",
+            "mnemonic",
+            "cell_dirname",
+            "experimental_group",
+            "comparison_set",
+            "confirmatory",
+            "architecture_profile_id",
+            "selection_profile_id",
+            "fitness_profile_id",
+            "initial_population_id",
+            "config_path",
+            "status",
+            "notes",
+        ],
+    )
+    files[work / "registry" / "cell_parameters.csv"] = _csv_text(
+        registry_parameter_rows,
+        ["cell_id", "parameter_name", "value", "value_type", "unit", "role"],
     )
 
     files[manifest_directory / "phase1-first-pilot-seed-blocks.tsv"] = _tsv_text(
@@ -370,6 +616,8 @@ def build_files(repository: Path) -> dict[Path, str]:
     manifest = {
         "experiment_manifest_schema_version": "1.0.0",
         "experiment_id": "phase1-first-pilot-core12",
+        "design_id": "phase1-first-pilot-20cell",
+        "execution_strategy": "run core 12, assess safety, then run extension 8",
         "status": "prepared-not-launched",
         "confirmatory": False,
         "model_family": "wright_fisher_counts",
@@ -405,6 +653,7 @@ def build_files(repository: Path) -> dict[Path, str]:
             {
                 **asdict(cell),
                 "cell_id": cell.cell_id,
+                "pilot_tier": cell.pilot_tier,
                 "escape_cells_per_host": cell.escape_cells_per_host,
                 "total_return": cell.total_return,
                 "feedback_alpha": cell.feedback_alpha,

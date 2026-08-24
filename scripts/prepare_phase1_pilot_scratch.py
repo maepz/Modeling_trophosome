@@ -16,26 +16,30 @@ def expected_runs(
     layout = json.loads((work / "layout.local.json").read_text(encoding="utf-8"))
     scratch = Path(layout["scratch"])
     runs_path = (
-        work
-        / "p01-neutral-feedback"
-        / "manifests"
-        / "phase1-first-pilot-runs.tsv"
+        work / "p01-neutral-feedback" / "manifests" / "phase1-first-pilot-runs.tsv"
     )
     with runs_path.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle, delimiter="\t"))
     expected = []
     for row in rows:
         run_directory = scratch / row["scratch_relative_path"]
+        cell_number = int(row["cell_id"].rsplit("c", 1)[1])
         metadata: dict[str, object] = {
             "scratch_manifest_schema_version": "1.0.0",
-            "experiment_id": "phase1-first-pilot-core12",
+            "experiment_id": (
+                "phase1-first-pilot-core12"
+                if cell_number <= 12
+                else (
+                    "phase1-first-pilot-extension5"
+                    if cell_number <= 17
+                    else "phase1-first-pilot-alpha-extension3"
+                )
+            ),
             "run_id": row["run_id"],
             "cell_id": row["cell_id"],
             "seed_block_id": row["seed_block_id"],
             "master_seed": int(row["master_seed"]),
-            "within_run_replicate_index": int(
-                row["within_run_replicate_index"]
-            ),
+            "within_run_replicate_index": int(row["within_run_replicate_index"]),
             "config_path": str(work / row["config_path"]),
             "config_sha256": row["config_sha256"],
             "output_path": str(run_directory),
@@ -64,7 +68,14 @@ def main() -> int:
             path = run_directory / "run.json"
             content = json.dumps(metadata, indent=2, sort_keys=True) + "\n"
             if path.exists() and path.read_text(encoding="utf-8") != content:
-                raise SystemExit(f"refusing to replace different run manifest: {path}")
+                other_artifacts = [
+                    item for item in run_directory.iterdir() if item.name != "run.json"
+                ]
+                if other_artifacts:
+                    raise SystemExit(
+                        "refusing to replace different run manifest after launch: "
+                        f"{path}"
+                    )
             path.write_text(content, encoding="utf-8")
         print(f"Prepared {len(runs)} run directories below {scratch}")
         return 0

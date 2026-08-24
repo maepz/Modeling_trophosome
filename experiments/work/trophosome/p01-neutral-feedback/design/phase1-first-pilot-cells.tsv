@@ -1,13 +1,21 @@
-cell_id	label	experimental_group	comparison_sets	H	f	e	R	alpha	u	host_counts_mode	status
-p01-s01-c0001	No return, mutation off	NR	no-return	100	0	0	0	0	0	full	planned
-p01-s01-c0002	No return, within-host mutation on	NRM	no-return|mutation-gating	100	0	0	0	0	1e-10	full	planned
-p01-s01-c0003	Matched return R=1e9, H=100	MR0	matched-r1e9-u0|mutation-bracket|feedback-bracket	100	1e-2	10000000	1000000000	0.5	0	full	planned
-p01-s01-c0004	Matched return R=1e9, H=1000	MR0	matched-r1e9-u0	1000	1e-3	1000000	1000000000	0.5	0	panel	planned
-p01-s01-c0005	Matched return R=1e9, H=10000	MR0	matched-r1e9-u0	10000	1e-4	100000	1000000000	0.5	0	panel	planned
-p01-s01-c0006	Matched return R=1e9, H=100000	MR0	matched-r1e9-u0	100000	1e-5	10000	1000000000	0.5	0	panel	planned
-p01-s01-c0007	Mutation bracket u=1e-12	MUT	mutation-bracket	100	1e-2	10000000	1000000000	0.5	1e-12	full	planned
-p01-s01-c0008	Mutation bracket u=1e-11	MUT	mutation-bracket	100	1e-2	10000000	1000000000	0.5	1e-11	full	planned
-p01-s01-c0009	Mutation bracket u=1e-10	MUT	mutation-bracket	100	1e-2	10000000	1000000000	0.5	1e-10	full	planned
-p01-s01-c0010	Mutation bracket u=1e-9	MUT	mutation-bracket	100	1e-2	10000000	1000000000	0.5	1e-9	full	planned
-p01-s01-c0011	Very weak feedback boundary	FB0	feedback-bracket	100	1e-5	10000	1000000	0.000999000999001	0	full	planned
-p01-s01-c0012	Strong feedback boundary	FB0	feedback-bracket	1000	1e-2	10000000	10000000000	0.909090909091	0	panel	planned
+cell_id	label	experimental_group	comparison_sets	pilot_tier	H	f	e	R	alpha	u	host_counts_mode	status
+p01-s01-c0001	No return, mutation off	NR	no-return	core	100	0	0	0	0	0	full	planned
+p01-s01-c0002	No return, within-host mutation on	NRM	no-return|mutation-gating	core	100	0	0	0	0	1e-10	full	planned
+p01-s01-c0003	Matched return R=1e9, H=100	MR0	matched-r1e9-u0|mutation-bracket|feedback-h100	core	100	1e-2	10000000	1000000000	0.5	0	full	planned
+p01-s01-c0004	Matched return R=1e9, H=1000	MR0	matched-r1e9-u0|feedback-h1000	core	1000	1e-3	1000000	1000000000	0.5	0	panel	planned
+p01-s01-c0005	Matched return R=1e9, H=10000	MR0	matched-r1e9-u0	core	10000	1e-4	100000	1000000000	0.5	0	panel	planned
+p01-s01-c0006	Matched return R=1e9, H=100000	MR0	matched-r1e9-u0	core	100000	1e-5	10000	1000000000	0.5	0	panel	planned
+p01-s01-c0007	Mutation bracket u=1e-12	MUT	mutation-bracket	core	100	1e-2	10000000	1000000000	0.5	1e-12	full	planned
+p01-s01-c0008	Mutation bracket u=1e-11	MUT	mutation-bracket	core	100	1e-2	10000000	1000000000	0.5	1e-11	full	planned
+p01-s01-c0009	Mutation bracket u=1e-10	MUT	mutation-bracket|matched-r1e9-u1e-10	core	100	1e-2	10000000	1000000000	0.5	1e-10	full	planned
+p01-s01-c0010	Mutation bracket u=1e-9	MUT	mutation-bracket	core	100	1e-2	10000000	1000000000	0.5	1e-9	full	planned
+p01-s01-c0011	Very weak feedback boundary	FB0	feedback-h100	core	100	1e-5	10000	1000000	0.000999000999001	0	full	planned
+p01-s01-c0012	Strong feedback boundary	FB0	feedback-h1000	core	1000	1e-2	10000000	10000000000	0.909090909091	0	panel	planned
+p01-s01-c0013	Matched return R=1e9, H=1000, u=1e-10	MRM	matched-r1e9-u1e-10	extension	1000	1e-3	1000000	1000000000	0.5	1e-10	panel	planned
+p01-s01-c0014	Matched return R=1e9, H=10000, u=1e-10	MRM	matched-r1e9-u1e-10	extension	10000	1e-4	100000	1000000000	0.5	1e-10	panel	planned
+p01-s01-c0015	Matched return R=1e9, H=100000, u=1e-10	MRM	matched-r1e9-u1e-10	extension	100000	1e-5	10000	1000000000	0.5	1e-10	panel	planned
+p01-s01-c0016	Matched return R=1e8, H=100	MRLOW	matched-r1e8-u0|feedback-h100	extension	100	1e-3	1000000	100000000	0.0909090909091	0	full	planned
+p01-s01-c0017	Matched return R=1e8, H=10000	MRLOW	matched-r1e8-u0	extension	10000	1e-5	10000	100000000	0.0909090909091	0	panel	planned
+p01-s01-c0018	Alpha series H=100, alpha=0.909; f=0.1 sensitivity	FBA	feedback-h100|escape-range-sensitivity	extension	100	1e-1	100000000	10000000000	0.909090909091	0	full	planned
+p01-s01-c0019	Alpha series H=1000, alpha=0.001; f=1e-6 sensitivity	FBA	feedback-h1000|escape-range-sensitivity	extension	1000	1e-6	1000	1000000	0.000999000999001	0	panel	planned
+p01-s01-c0020	Alpha series H=1000, alpha=0.091	FBA	feedback-h1000|matched-r1e8-u0	extension	1000	1e-4	100000	100000000	0.0909090909091	0	panel	planned

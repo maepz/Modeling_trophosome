@@ -6,7 +6,24 @@ output schema have independent versions recorded in every simulation.
 
 ## [Unreleased]
 
-No changes yet.
+### Added
+
+- An optional fixed, non-depleting regional source that exchanges an exact
+  configured fraction of the focal environmental population after host return.
+- Aligned focal and regional root-strain vectors, including focal-only,
+  regional-only and shared initial strains.
+- Per-generation realized emigrant and immigrant counts, initial-strain origin
+  metadata, and post-return and post-migration richness summaries.
+- Distributional validation of without-replacement focal emigration and
+  with-replacement immigration from the fixed regional composition.
+
+### Changed
+
+- Environmental stage order is now explicit: neutral regulation after host
+  return, fixed-pool exchange, then optional free-living selection.
+- Software version is `0.7.0`, model specification is `2.1.0`, and output schema
+  is `2.3.0`.
+- Existing configuration files remain migration-free by default.
 
 ## [0.5.0] - 2026-08-11
 

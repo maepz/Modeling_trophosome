@@ -79,7 +79,19 @@ class PopulationState:
         else:
             free_living_array = np.asarray(free_living_fitness, dtype=np.float64)
         ids = np.arange(len(count_array), dtype=np.int64)
-        return cls(ids, count_array, within_host_array, free_living_array)
+        if not (len(count_array) == len(within_host_array) == len(free_living_array)):
+            raise ValueError("population arrays must have equal length")
+        if np.any(count_array < 0):
+            raise ValueError("declared genotype counts must be non-negative")
+        keep = count_array > 0
+        if not np.any(keep):
+            raise ValueError("population must contain at least one extant genotype")
+        return cls(
+            ids[keep],
+            count_array[keep],
+            within_host_array[keep],
+            free_living_array[keep],
+        )
 
     @classmethod
     def _trusted(
@@ -526,6 +538,48 @@ def merge_populations(*populations: PopulationState) -> PopulationState:
         within_host_fitness[starts].copy(),
         free_living_fitness[starts].copy(),
     )
+
+
+def fixed_pool_migration_step(
+    focal: PopulationState,
+    regional_pool: PopulationState,
+    replacement_count: int,
+    emigration_rng: np.random.Generator,
+    immigration_rng: np.random.Generator,
+) -> tuple[PopulationState, PopulationState | None, PopulationState | None]:
+    """Exchange focal cells with a fixed, non-depleting regional pool.
+
+    ``replacement_count`` focal cells emigrate as an exact without-replacement
+    sample. The same number of immigrants is independently sampled with
+    replacement from the fixed regional source. The returned population has the
+    same census size as ``focal``. The two optional population results record
+    the realized emigrant and immigrant strain counts for output and validation.
+    """
+
+    if replacement_count < 0 or replacement_count > focal.size:
+        raise ValueError("migration replacement count must be between 0 and N_E")
+    if replacement_count == 0:
+        return merge_populations(focal), None, None
+
+    emigrants = sample_population(
+        focal,
+        replacement_count,
+        emigration_rng,
+        replace=False,
+    )
+    residents = subtract_population(focal, emigrants)
+    immigrants = sample_population(
+        regional_pool,
+        replacement_count,
+        immigration_rng,
+        replace=True,
+    )
+    migrated = (
+        immigrants if residents is None else merge_populations(residents, immigrants)
+    )
+    if migrated.size != focal.size:
+        raise RuntimeError("migration did not preserve focal population capacity")
+    return migrated, emigrants, immigrants
 
 
 def proportional_rescale(

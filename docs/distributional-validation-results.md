@@ -2,12 +2,12 @@
 
 - Overall result: **PASS**
 - Model family: `wright_fisher_counts`
-- Model specification: `2.0.0`
-- Software: `0.4.0`
-- Output schema: `2.0.0`
+- Model specification: `2.1.0`
+- Software: `0.7.0`
+- Output schema: `2.3.0`
 - Seed: `20260810`
-- Runtime: Python 3.14.6, NumPy 2.5.2
-- Generated: 2026-08-11T00:20:51.031429+00:00
+- Runtime: Python 3.14.7, NumPy 2.5.2
+- Generated: 2026-08-24T02:03:04.512883+00:00
 
 | Check | Result | Draws | Main diagnostic |
 |---|---:|---:|---|
@@ -21,12 +21,14 @@
 | without-replacement population sampling | PASS | 30,000 | observed_mean=5, expected_mean=5, mean_z=0.04312, observed_variance=3.051, expected_variance=3.03, variance_z=0.8392 |
 | optimized reservoir-founder sampling | PASS | 30,000 | observed_mean=1.597, expected_mean=1.6, mean_z=0.4746, observed_variance=1.277, expected_variance=1.28, variance_z=0.2437 |
 | environmental apportionment label neutrality | PASS | 30,000 | observed_mean=29.99, expected_mean=30, mean_z=1.086, observed_variance=5.423, expected_variance=5.375, variance_z=1.09 |
-| multi-generation neutral drift distribution | PASS | 30,000 | total_variation_distance=0.008202, maximum_bin_z=1.762 |
-| cell-level reference trajectory | PASS | 30,000 | richness_mean_difference=0.001, richness_z=0.06955, founder_cells_mean_difference=-0.0002667, founder_cells_z=0.00805, largest_mutant_clone_mean_difference=0.002533, largest_mutant_clone_z=0.1083, richness_total_variation_distance=0.006467, maximum_mean_z=0.1083 |
+| fixed-pool focal emigration | PASS | 30,000 | observed_mean=6.008, expected_mean=6, mean_z=0.7396, observed_variance=3.404, expected_variance=3.394, variance_z=0.3721 |
+| fixed-pool regional immigration | PASS | 30,000 | observed_mean=3.976, expected_mean=4, mean_z=2.333, observed_variance=3.212, expected_variance=3.2, variance_z=0.4756 |
+| multi-generation neutral drift distribution | PASS | 30,000 | total_variation_distance=0.006649, maximum_bin_z=1.794 |
+| cell-level reference trajectory | PASS | 30,000 | richness_mean_difference=-0.004333, richness_z=0.3067, founder_cells_mean_difference=0.01447, founder_cells_z=0.4401, largest_mutant_clone_mean_difference=-0.0168, largest_mutant_clone_z=0.7201, richness_total_variation_distance=0.011, maximum_mean_z=0.7201 |
 
 ## Scope
 
-These checks validate the declared stochastic law: neutral and selected within-host Wright–Fisher reproduction, independent dual-habitat fitness effects, free-living selection, Bernoulli infinite-alleles mutation, mutation parentage, reservoir founder sampling, finite escape sampling, multi-generation drift, and mutation-timing jackpot effects.
+These checks validate the declared stochastic law: neutral and selected within-host Wright–Fisher reproduction, independent dual-habitat fitness effects, free-living selection, Bernoulli infinite-alleles mutation, mutation parentage, reservoir founder sampling, finite escape sampling, fixed-pool emigration and immigration, multi-generation drift, and mutation-timing jackpot effects.
 
 Hamilton environmental capacity regulation is checked for exact capacity, seeded label-neutral tie resolution, and no-return invariance when free-living selection is disabled. It is not yet compared with a biological equilibrium distribution; that belongs to the subsequent Phase 1 experiment.
 

@@ -1,11 +1,11 @@
 {
-  "created_at": "2026-08-11T00:20:51.031429+00:00",
+  "created_at": "2026-08-24T02:03:04.512883+00:00",
   "model_family": "wright_fisher_counts",
-  "model_spec_version": "2.0.0",
-  "output_schema_version": "2.0.0",
-  "software_version": "0.4.0",
+  "model_spec_version": "2.1.0",
+  "output_schema_version": "2.3.0",
+  "software_version": "0.7.0",
   "seed": 20260810,
-  "python": "3.14.6",
+  "python": "3.14.7",
   "numpy": "2.5.2",
   "passed": true,
   "checks": [
@@ -180,12 +180,46 @@
       "interpretation": "Capacity-regulation ties are exchangeable with respect to strain ID."
     },
     {
+      "name": "fixed-pool focal emigration",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 6.007866666666667,
+        "expected_mean": 6.0,
+        "mean_z": 0.7396041412230525,
+        "observed_variance": 3.404251590608576,
+        "expected_variance": 3.393939393939393,
+        "variance_z": 0.3721221276764396
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Focal emigrants are sampled without replacement and follow the Hypergeometric law."
+    },
+    {
+      "name": "fixed-pool regional immigration",
+      "passed": true,
+      "observations": 30000,
+      "metrics": {
+        "observed_mean": 3.9759,
+        "expected_mean": 4.0,
+        "mean_z": 2.333472466089948,
+        "observed_variance": 3.212426270875696,
+        "expected_variance": 3.2,
+        "variance_z": 0.47558618353828436
+      },
+      "criteria": {
+        "maximum_absolute_z": 6.0
+      },
+      "interpretation": "Immigrants are sampled with replacement from the unchanged regional composition and follow the Binomial law."
+    },
+    {
       "name": "multi-generation neutral drift distribution",
       "passed": true,
       "observations": 30000,
       "metrics": {
-        "total_variation_distance": 0.008202064254033494,
-        "maximum_bin_z": 1.7621058888812462
+        "total_variation_distance": 0.006649041648927798,
+        "maximum_bin_z": 1.7937564882808037
       },
       "criteria": {
         "maximum_total_variation_distance": 0.015,
@@ -198,14 +232,14 @@
       "passed": true,
       "observations": 30000,
       "metrics": {
-        "richness_mean_difference": 0.0009999999999998899,
-        "richness_z": 0.06955025110910566,
-        "founder_cells_mean_difference": -0.0002666666666666373,
-        "founder_cells_z": 0.008050176264061655,
-        "largest_mutant_clone_mean_difference": 0.0025333333333334984,
-        "largest_mutant_clone_z": 0.10833913460027206,
-        "richness_total_variation_distance": 0.006466666666666685,
-        "maximum_mean_z": 0.10833913460027206
+        "richness_mean_difference": -0.0043333333333333,
+        "richness_z": 0.30668326066314994,
+        "founder_cells_mean_difference": 0.014466666666667294,
+        "founder_cells_z": 0.4400896746068291,
+        "largest_mutant_clone_mean_difference": -0.016799999999999926,
+        "largest_mutant_clone_z": 0.7201308794699811,
+        "richness_total_variation_distance": 0.01100000000000001,
+        "maximum_mean_z": 0.7201308794699811
       },
       "criteria": {
         "maximum_absolute_z": 6.0,

@@ -29,6 +29,7 @@ from trophosome.count_model import (
     IdAllocator,
     LineageRecorder,
     PopulationState,
+    fixed_pool_migration_step,
     free_living_selection_step,
     merge_populations,
     proportional_rescale,
@@ -422,6 +423,56 @@ def _analytical_figure(output: Path, repetitions: int, seed: int) -> None:
     _save(figure, output, "validation-analytical-distributions")
 
 
+def _migration_figure(output: Path, repetitions: int, seed: int) -> None:
+    focal = PopulationState.from_counts([30, 70], [1.0, 1.0])
+    regional = PopulationState.from_counts([20, 80], [1.0, 1.0])
+    emigrant_values = np.empty(repetitions, dtype=np.int64)
+    immigrant_values = np.empty(repetitions, dtype=np.int64)
+    emigration_rng = np.random.default_rng(seed)
+    immigration_rng = np.random.default_rng(seed + 1)
+    for index in range(repetitions):
+        _, emigrants, immigrants = fixed_pool_migration_step(
+            focal,
+            regional,
+            20,
+            emigration_rng,
+            immigration_rng,
+        )
+        assert emigrants is not None
+        assert immigrants is not None
+        emigrant_values[index] = _count(emigrants, 0)
+        immigrant_values[index] = _count(immigrants, 0)
+
+    emigrant_x, emigrant_expected = _hypergeometric_pmf(100, 30, 20)
+    immigrant_x, immigrant_expected = _binomial_pmf(20, 0.2)
+    figure, axes = plt.subplots(1, 2, figsize=(11.5, 4.5), constrained_layout=True)
+    _distribution_panel(
+        axes[0],
+        emigrant_x,
+        _histogram(emigrant_values, emigrant_x),
+        emigrant_expected,
+        "A  Focal emigration",
+        "Strain A cells among 20 emigrants",
+    )
+    _distribution_panel(
+        axes[1],
+        immigrant_x,
+        _histogram(immigrant_values, immigrant_x),
+        immigrant_expected,
+        "B  Immigration from fixed source",
+        "Strain A cells among 20 immigrants",
+    )
+    for axis in axes:
+        axis.legend(loc="upper right", fontsize=9)
+    figure.suptitle(
+        "Fixed-pool exchange follows the declared sampling laws",
+        y=1.03,
+        fontsize=14,
+        weight="bold",
+    )
+    _save(figure, output, "validation-fixed-pool-migration")
+
+
 def _dual_fitness_figure(output: Path, repetitions: int, seed: int) -> None:
     state = PopulationState.from_counts([1], [1.0], [1.0])
     evolution = EvolutionConfig(
@@ -638,6 +689,7 @@ def main() -> int:
     _style()
     _cycle_figure(args.output)
     _analytical_figure(args.output, args.repetitions, args.seed)
+    _migration_figure(args.output, args.repetitions, args.seed + 9)
     _dual_fitness_figure(args.output, args.repetitions, args.seed + 3)
     _trajectory_figure(args.output, args.repetitions, args.seed + 20)
     return 0

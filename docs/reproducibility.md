@@ -25,8 +25,10 @@ The run records:
 - software, model-specification and output-schema versions;
 - a SHA-256 hash of the fully resolved configuration;
 - host-generation summaries;
-- compact environmental, infection, adult-summary, pooled-occupancy, release and
-  mutation-lineage tables;
+- compact environmental, infection, adult-summary, pooled-occupancy, release,
+  fixed-pool migration and mutation-lineage tables;
+- an initial-strain origin table identifying focal, regional and shared source
+  strains;
 - explicit within-host and free-living fitness metadata for initial and mutant
   strains, plus habitat-specific mean fitness summaries;
 - optional full or reproducibly sampled-panel adult count tables;

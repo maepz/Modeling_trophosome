@@ -25,6 +25,7 @@ from trophosome.count_model import (
     IdAllocator,
     LineageRecorder,
     PopulationState,
+    fixed_pool_migration_step,
     free_living_selection_step,
     merge_populations,
     population_size_schedule,
@@ -353,6 +354,61 @@ def _environmental_apportionment(repetitions: int, seed: int) -> ValidationResul
     )
 
 
+def _fixed_pool_migration(
+    repetitions: int, seed: int
+) -> tuple[ValidationResult, ValidationResult]:
+    focal = PopulationState.from_counts([30, 70], [1.0, 1.0])
+    regional = PopulationState.from_counts([20, 80], [1.0, 1.0])
+    sample_size = 20
+    emigrant_values = np.empty(repetitions, dtype=np.float64)
+    immigrant_values = np.empty(repetitions, dtype=np.float64)
+    emigration_rng = np.random.default_rng(seed)
+    immigration_rng = np.random.default_rng(seed + 1)
+    for index in range(repetitions):
+        migrated, emigrants, immigrants = fixed_pool_migration_step(
+            focal,
+            regional,
+            sample_size,
+            emigration_rng,
+            immigration_rng,
+        )
+        if migrated.size != focal.size or emigrants is None or immigrants is None:
+            raise AssertionError("migration must exchange equal non-zero samples")
+        emigrant_values[index] = _count(emigrants, 0)
+        immigrant_values[index] = _count(immigrants, 0)
+    focal_probability = 0.3
+    regional_probability = 0.2
+    emigrant_variance = (
+        sample_size
+        * focal_probability
+        * (1.0 - focal_probability)
+        * (focal.size - sample_size)
+        / (focal.size - 1)
+    )
+    return (
+        _mean_variance_result(
+            "fixed-pool focal emigration",
+            emigrant_values,
+            sample_size * focal_probability,
+            emigrant_variance,
+            (
+                "Focal emigrants are sampled without replacement and follow the "
+                "Hypergeometric law."
+            ),
+        ),
+        _mean_variance_result(
+            "fixed-pool regional immigration",
+            immigrant_values,
+            sample_size * regional_probability,
+            sample_size * regional_probability * (1.0 - regional_probability),
+            (
+                "Immigrants are sampled with replacement from the unchanged "
+                "regional composition and follow the Binomial law."
+            ),
+        ),
+    )
+
+
 def _binomial_probability(size: int, count: int, probability: float) -> float:
     if probability == 0.0:
         return float(count == 0)
@@ -581,8 +637,9 @@ def run_validation(
         _sampling_without_replacement(repetitions, seed + 6),
         _optimized_reservoir_founders(repetitions, seed + 7),
         _environmental_apportionment(repetitions, seed + 8),
-        _multigeneration_drift(repetitions, seed + 9),
-        _cell_reference_comparison(repetitions, seed + 10),
+        *_fixed_pool_migration(repetitions, seed + 9),
+        _multigeneration_drift(repetitions, seed + 10),
+        _cell_reference_comparison(repetitions, seed + 11),
     ]
     return results
 
@@ -640,7 +697,8 @@ def _markdown(payload: dict[str, object]) -> str:
             "within-host Wright–Fisher reproduction, independent dual-habitat fitness "
             "effects, free-living selection, Bernoulli infinite-alleles mutation, "
             "mutation parentage, reservoir founder sampling, finite escape sampling, "
-            "multi-generation drift, and mutation-timing jackpot effects.",
+            "fixed-pool emigration and immigration, multi-generation drift, and "
+            "mutation-timing jackpot effects.",
             "",
             "Hamilton environmental capacity regulation is checked for exact capacity, "
             "seeded label-neutral tie resolution, and no-return invariance when "

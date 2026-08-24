@@ -29,6 +29,8 @@ class CliTests(unittest.TestCase):
         self.assertIn("within-host reproduction", help_text)
         self.assertIn("host_generation_summary.csv", help_text)
         self.assertIn("Use a different output directory", help_text)
+        self.assertIn("non-depleting regional source", help_text)
+        self.assertIn("[migration]", help_text)
         self.assertIn("--resume", help_text)
 
     def test_validate_help_says_that_it_does_not_run_the_model(self) -> None:
@@ -39,6 +41,18 @@ class CliTests(unittest.TestCase):
         help_text = output.getvalue()
         self.assertIn("does not simulate hosts", help_text)
         self.assertIn("does not create a results folder", help_text)
+
+    def test_report_help_explains_portable_pdf_workflow(self) -> None:
+        output = io.StringIO()
+        with self.assertRaises(SystemExit):
+            with contextlib.redirect_stdout(output):
+                main(["report", "-h"])
+        help_text = output.getvalue()
+        self.assertIn("self-contained PDF report", help_text)
+        self.assertIn("biologists", help_text)
+        self.assertIn("--analysis", help_text)
+        self.assertIn("--design", help_text)
+        self.assertIn("--markdown", help_text)
 
     def test_validate_prints_resolved_configuration(self) -> None:
         output = io.StringIO()

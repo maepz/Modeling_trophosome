@@ -21,13 +21,16 @@ class ConfigTests(unittest.TestCase):
             len(config.environment.initial_counts),
         )
         self.assertFalse(config.evolution.free_living_selection)
+        self.assertEqual(config.migration.mode, "none")
+        self.assertEqual(config.migration.fraction, 0.0)
+        self.assertEqual(config.migration.regional_counts, ())
         self.assertEqual(config.output.checkpoint_interval, "1h")
         self.assertEqual(config.output.checkpoint_keep, 2)
         self.assertEqual(config.output.environment_counts_mode, "all")
 
     def test_checkpoint_interval_requires_a_positive_duration(self) -> None:
         text = (REPOSITORY / "configs" / "smoke.toml").read_text()
-        for invalid in ('checkpoint_interval = 1', 'checkpoint_interval = "0h"'):
+        for invalid in ("checkpoint_interval = 1", 'checkpoint_interval = "0h"'):
             with self.subTest(invalid=invalid):
                 changed = text.replace('checkpoint_interval = "1h"', invalid)
                 with tempfile.TemporaryDirectory() as directory:
@@ -56,9 +59,7 @@ class ConfigTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "invalid.toml"
             path.write_text(text)
-            with self.assertRaisesRegex(
-                ConfigurationError, "environment_counts_mode"
-            ):
+            with self.assertRaisesRegex(ConfigurationError, "environment_counts_mode"):
                 load_config(path)
 
     def test_legacy_single_fitness_config_defaults_environment_to_neutral(self) -> None:
@@ -124,6 +125,69 @@ class ConfigTests(unittest.TestCase):
             path = Path(directory) / "invalid.toml"
             path.write_text(text)
             with self.assertRaisesRegex(ConfigurationError, "effective capacity"):
+                load_config(path)
+
+    def test_fixed_regional_pool_allows_aligned_zero_counts(self) -> None:
+        text = (REPOSITORY / "configs" / "smoke.toml").read_text()
+        text = text.replace(
+            "initial_counts = [5000, 3000, 1500, 500]",
+            "initial_counts = [5000, 3000, 0, 0]",
+        ).replace(
+            "[host]",
+            "[migration]\n"
+            'mode = "fixed_regional_pool"\n'
+            "fraction = 0.25\n"
+            "regional_counts = [5000, 0, 1500, 500]\n\n"
+            "[host]",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "migration.toml"
+            path.write_text(text)
+            config = load_config(path)
+        self.assertEqual(config.migration.mode, "fixed_regional_pool")
+        self.assertEqual(config.migration.fraction, 0.25)
+        self.assertEqual(config.migration.regional_counts, (5000, 0, 1500, 500))
+
+    def test_fixed_regional_pool_requires_valid_aligned_composition(self) -> None:
+        source = (REPOSITORY / "configs" / "smoke.toml").read_text()
+        cases = {
+            "between 0 and 1": (1.1, "[5000, 3000, 1500, 500]"),
+            "equal length": (0.1, "[5000]"),
+            "at least one regional": (0.1, "[0, 0, 0, 0]"),
+        }
+        for message, (fraction, regional_counts) in cases.items():
+            with self.subTest(message=message):
+                text = source.replace(
+                    "[host]",
+                    "[migration]\n"
+                    'mode = "fixed_regional_pool"\n'
+                    f"fraction = {fraction}\n"
+                    f"regional_counts = {regional_counts}\n\n"
+                    "[host]",
+                )
+                with tempfile.TemporaryDirectory() as directory:
+                    path = Path(directory) / "invalid.toml"
+                    path.write_text(text)
+                    with self.assertRaisesRegex(ConfigurationError, message):
+                        load_config(path)
+
+    def test_declared_strain_must_exist_in_focal_or_regional_pool(self) -> None:
+        text = (REPOSITORY / "configs" / "smoke.toml").read_text()
+        text = text.replace(
+            "initial_counts = [5000, 3000, 1500, 500]",
+            "initial_counts = [5000, 3000, 0, 500]",
+        ).replace(
+            "[host]",
+            "[migration]\n"
+            'mode = "fixed_regional_pool"\n'
+            "fraction = 0.1\n"
+            "regional_counts = [5000, 3000, 0, 500]\n\n"
+            "[host]",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "invalid.toml"
+            path.write_text(text)
+            with self.assertRaisesRegex(ConfigurationError, "every declared strain"):
                 load_config(path)
 
 

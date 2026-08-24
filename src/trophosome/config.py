@@ -50,6 +50,15 @@ class EnvironmentConfig:
 
 
 @dataclass(frozen=True)
+class MigrationConfig:
+    """Exchange between the focal environment and a fixed regional source."""
+
+    mode: Literal["none", "fixed_regional_pool"] = "none"
+    fraction: float = 0.0
+    regional_counts: tuple[int, ...] = ()
+
+
+@dataclass(frozen=True)
 class HostConfig:
     population_size: int
     infection_bottleneck: int
@@ -96,6 +105,7 @@ class ModelConfig:
     environment: EnvironmentConfig
     host: HostConfig
     evolution: EvolutionConfig
+    migration: MigrationConfig = MigrationConfig()
     output: OutputConfig = OutputConfig()
     execution: ExecutionConfig = ExecutionConfig()
     model: Literal["wright_fisher_counts"] = "wright_fisher_counts"
@@ -120,8 +130,10 @@ class ModelConfig:
             errors.append(
                 "initial_counts and initial_free_living_fitness must have equal length"
             )
-        if any(value <= 0 for value in self.environment.initial_counts):
-            errors.append("all initial counts must be positive")
+        if any(value < 0 for value in self.environment.initial_counts):
+            errors.append("all initial counts must be non-negative")
+        if not any(value > 0 for value in self.environment.initial_counts):
+            errors.append("at least one initial focal count must be positive")
         if any(
             not math.isfinite(value) or value < 0
             for value in self.environment.initial_within_host_fitness
@@ -137,22 +149,75 @@ class ModelConfig:
                 "all initial free-living fitness values must be finite and non-negative"
             )
         if self.environment.initial_within_host_fitness and not any(
-            value > 0 for value in self.environment.initial_within_host_fitness
+            count > 0 and value > 0
+            for count, value in zip(
+                self.environment.initial_counts,
+                self.environment.initial_within_host_fitness,
+                strict=True,
+            )
         ):
             errors.append(
-                "at least one initial genotype must have positive within-host fitness"
+                "at least one initially focal genotype must have positive "
+                "within-host fitness"
             )
         if self.environment.initial_free_living_fitness and not any(
-            value > 0 for value in self.environment.initial_free_living_fitness
+            count > 0 and value > 0
+            for count, value in zip(
+                self.environment.initial_counts,
+                self.environment.initial_free_living_fitness,
+                strict=True,
+            )
         ):
             errors.append(
-                "at least one initial genotype must have positive free-living fitness"
+                "at least one initially focal genotype must have positive "
+                "free-living fitness"
             )
         if (
             not math.isfinite(self.environment.capacity_ratio)
             or self.environment.capacity_ratio <= 0
         ):
             errors.append("environment.capacity_ratio must be finite and positive")
+
+        migration = self.migration
+        if migration.mode not in {"none", "fixed_regional_pool"}:
+            errors.append("migration.mode must be 'none' or 'fixed_regional_pool'")
+        if not math.isfinite(migration.fraction) or not 0 <= migration.fraction <= 1:
+            errors.append("migration.fraction must be finite and between 0 and 1")
+        if migration.mode == "none":
+            if migration.fraction != 0:
+                errors.append("migration.fraction must be 0 when migration is disabled")
+            if migration.regional_counts:
+                errors.append(
+                    "migration.regional_counts must be empty when migration is disabled"
+                )
+            if any(value == 0 for value in self.environment.initial_counts):
+                errors.append(
+                    "all initial focal counts must be positive when migration "
+                    "is disabled"
+                )
+        else:
+            if len(migration.regional_counts) != len(self.environment.initial_counts):
+                errors.append(
+                    "migration.regional_counts and environment.initial_counts "
+                    "must have equal length"
+                )
+            if any(value < 0 for value in migration.regional_counts):
+                errors.append("all regional counts must be non-negative")
+            if not any(value > 0 for value in migration.regional_counts):
+                errors.append("at least one regional count must be positive")
+            if len(migration.regional_counts) == len(
+                self.environment.initial_counts
+            ) and any(
+                focal == 0 and regional == 0
+                for focal, regional in zip(
+                    self.environment.initial_counts,
+                    migration.regional_counts,
+                    strict=True,
+                )
+            ):
+                errors.append(
+                    "every declared strain must occur in the focal or regional pool"
+                )
 
         host = self.host
         if host.population_size < 1:
@@ -282,6 +347,9 @@ def load_config(path: str | Path) -> ModelConfig:
     environment_data = _section(data, "environment")
     host_data = _section(data, "host")
     evolution_data = _section(data, "evolution")
+    migration_data = data.get("migration", {})
+    if not isinstance(migration_data, dict):
+        raise ConfigurationError("[migration] must be a TOML table")
     output_data = data.get("output", {})
     if not isinstance(output_data, dict):
         raise ConfigurationError("[output] must be a TOML table")
@@ -316,6 +384,13 @@ def load_config(path: str | Path) -> ModelConfig:
             ),
             host=HostConfig(**host_data),
             evolution=EvolutionConfig(**evolution_data),
+            migration=MigrationConfig(
+                mode=migration_data.get("mode", "none"),
+                fraction=float(migration_data.get("fraction", 0.0)),
+                regional_counts=tuple(
+                    int(x) for x in migration_data.get("regional_counts", ())
+                ),
+            ),
             output=OutputConfig(**output_data),
             execution=ExecutionConfig(**execution_data),
         )

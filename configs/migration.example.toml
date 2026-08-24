@@ -1,0 +1,50 @@
+# Fixed-regional-pool example. The regional composition is deliberately the
+# same as the initial focal composition for the first scientific migration
+# pilot. Free-living selection is implemented but remains disabled.
+model = "wright_fisher_counts"
+seed = 666
+replicates = 3
+
+[environment]
+initial_counts = [5000, 3000, 1500, 500]
+initial_within_host_fitness = [1.0, 1.0, 1.0, 1.0]
+initial_free_living_fitness = [1.0, 1.0, 1.0, 1.0]
+sampling_mode = "reservoir"
+capacity_ratio = 1.0
+
+[migration]
+mode = "fixed_regional_pool"
+fraction = 0.1
+regional_counts = [5000, 3000, 1500, 500]
+
+[host]
+population_size = 10
+infection_bottleneck = 10
+carrying_capacity = 1000
+growth_factor = 1.5
+steady_generations = 10
+host_generations = 20
+escape_fraction = 0.01
+
+[evolution]
+mutation_probability = 0.0001
+mutation_effect_mean = -0.01
+mutation_effect_sd = 0.01
+within_host_selection = false
+free_living_selection = false
+fitness_floor = 0.0
+max_materialized_mutants = 10000
+
+[output]
+snapshot_interval = 10
+checkpoint_interval = "1h"
+checkpoint_keep = 2
+retain_host_histories = false
+environment_counts_mode = "all"
+host_counts_mode = "panel"
+host_panel_size = 5
+
+[execution]
+workers = 1
+host_batch_size = 5
+in_flight_batches_per_worker = 2

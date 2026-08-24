@@ -1,0 +1,116 @@
+{
+  "assessment_schema_version": "1.0.0",
+  "budgets": {
+    "maximum_fraction": 0.7,
+    "runtime_hours": 48.0,
+    "storage_gib": 100.0
+  },
+  "core_experiment_id": "phase1-first-pilot-core12",
+  "extension_cells": [
+    "p01-s01-c0013",
+    "p01-s01-c0014",
+    "p01-s01-c0015",
+    "p01-s01-c0016",
+    "p01-s01-c0017"
+  ],
+  "gates": [
+    {
+      "evidence": "audit=PASS; cells=12; populations=36",
+      "name": "Core analysis and output audit",
+      "passed": true
+    },
+    {
+      "evidence": "/Users/maeva/Desktop/Modeling_trophosome/output/pdf/phase1-first-pilot-report.pdf",
+      "name": "Core PDF report generated",
+      "passed": true
+    },
+    {
+      "evidence": "maximum total-variation distance=0",
+      "name": "No-return environment unchanged",
+      "passed": true
+    },
+    {
+      "evidence": "largest fraction=0.008000%",
+      "name": "Mutation materialization below 25% of limit",
+      "passed": true
+    },
+    {
+      "evidence": "observed=[(1000000000, 0.5)]",
+      "name": "Matched-return core has equal R and alpha",
+      "passed": true
+    },
+    {
+      "evidence": "median final mutant richness=[1.0, 4.0, 44.0, 422.0]; maximum median mutant abundance fraction=5.69e-07",
+      "name": "Mutation levels bracket informative novelty",
+      "passed": true
+    },
+    {
+      "evidence": "projected sequential runtime=5.35 h; gate=33.60 h",
+      "name": "Projected extension runtime below budget gate",
+      "passed": true
+    },
+    {
+      "evidence": "projected diagnostic output=2.57 GiB; gate=70.00 GiB",
+      "name": "Projected extension storage below budget gate",
+      "passed": true
+    }
+  ],
+  "projection": {
+    "cells": [
+      {
+        "H": 1000,
+        "cell_id": "p01-s01-c0013",
+        "populations": 3,
+        "projected_elapsed_minutes": 2.4601711821117025,
+        "projected_output_mib": 22.900629033251214,
+        "projected_peak_rss_mib_per_population": 108.27186561776966,
+        "u": 1e-10
+      },
+      {
+        "H": 10000,
+        "cell_id": "p01-s01-c0014",
+        "populations": 3,
+        "projected_elapsed_minutes": 22.230449155715792,
+        "projected_output_mib": 227.0700951696394,
+        "projected_peak_rss_mib_per_population": 108.7682523114143,
+        "u": 1e-10
+      },
+      {
+        "H": 100000,
+        "cell_id": "p01-s01-c0015",
+        "populations": 3,
+        "projected_elapsed_minutes": 279.60266286763334,
+        "projected_output_mib": 2353.7162829637773,
+        "projected_peak_rss_mib_per_population": 108.83178980820082,
+        "u": 1e-10
+      },
+      {
+        "H": 100,
+        "cell_id": "p01-s01-c0016",
+        "populations": 3,
+        "projected_elapsed_minutes": 0.30873589635011744,
+        "projected_output_mib": 0.45334339141845703,
+        "projected_peak_rss_mib_per_population": 106.36328125,
+        "u": 0.0
+      },
+      {
+        "H": 10000,
+        "cell_id": "p01-s01-c0017",
+        "populations": 3,
+        "projected_elapsed_minutes": 16.6951945170993,
+        "projected_output_mib": 32.275025367736816,
+        "projected_peak_rss_mib_per_population": 106.9921875,
+        "u": 0.0
+      }
+    ],
+    "diagnostic_output_gib": 2.574624390552562,
+    "mutation_cost_multipliers": {
+      "elapsed_minutes": 1.331547777592364,
+      "output_mib": 7.035473793821589,
+      "peak_rss_mib": 1.01659994858423
+    },
+    "peak_rss_mib_per_population": 108.83178980820082,
+    "sequential_runtime_hours": 5.35495356031517
+  },
+  "safe_to_expand": true
+}

@@ -1,0 +1,71 @@
+{
+  "analysis_schema_version": "1.0.0",
+  "analysis_scope": "exploratory feasibility and calibration pilot",
+  "audit_issues": [],
+  "audit_status": "PASS",
+  "benchmark_hardware_note": "Local Mac: 1.2 GHz quad-core Intel Core i7 with 8 GB RAM",
+  "benchmark_platforms": [
+    "macOS-15.7.7-x86_64-i386-64bit-Mach-O"
+  ],
+  "cells": 12,
+  "experiment_id": "phase1-first-pilot-core12",
+  "initial_metrics": {
+    "evenness": 0.7671902580535777,
+    "gene_diversity": 0.9549670784452735,
+    "hill_q1": 34.227920618960724,
+    "hill_q2": 22.205976549506016,
+    "richness": 100,
+    "shannon": 3.5330417033688466,
+    "simpson": 0.9549670784452735,
+    "top_frequency": 0.093442162
+  },
+  "limitations": [
+    "Three independent populations per cell support descriptive pilot inference only.",
+    "Five host passages do not test equilibrium.",
+    "Complete labelled environmental composition is retained only at generation 5."
+  ],
+  "mutation_materialization": {
+    "configured_limit_per_transition": 100000,
+    "largest_fraction_of_limit": 8e-05,
+    "largest_realized_count": 8
+  },
+  "overall_resources": {
+    "elapsed_hours": 3.677773333915781,
+    "output_mib": 409.77635383605957,
+    "peak_rss_mib": 123.46484375
+  },
+  "pilot_tier": "core",
+  "populations": 36,
+  "raw_scratch": "/Users/maeva/Desktop/trophosome-experiments/scratch/trophosome",
+  "resources_by_seed_block": {
+    "sb0001": {
+      "elapsed_minutes": 60.327732910101375,
+      "output_mib": 136.57364463806152,
+      "peak_rss_mib": 122.8359375,
+      "populations": 12
+    },
+    "sb0002": {
+      "elapsed_minutes": 77.81693120059596,
+      "output_mib": 136.58215236663818,
+      "peak_rss_mib": 123.0078125,
+      "populations": 12
+    },
+    "sb0003": {
+      "elapsed_minutes": 82.52173592424951,
+      "output_mib": 136.62055683135986,
+      "peak_rss_mib": 123.46484375,
+      "populations": 12
+    }
+  },
+  "seed_blocks": [
+    "sb0001",
+    "sb0002",
+    "sb0003"
+  ],
+  "software_git_commits": [
+    "7c988b4601dcd19f609667a179b75a3c7c1dd90d"
+  ],
+  "source_sha256": [
+    "b752885bfd23ae2dcf4f44b22657c3435e2fcd4d676f484ff3689614eaf82cad"
+  ]
+}

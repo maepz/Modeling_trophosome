@@ -3,7 +3,7 @@
 ## Plain-language conclusion
 
 The exact-count implementation passed every distributional check used for the
-`0.4.0` release candidate. Across repeated simulations, it produced the same
+`0.7.0` release candidate. Across repeated simulations, it produced the same
 range, shape and relative frequency of outcomes expected from the declared
 population-genetic process.
 
@@ -13,18 +13,21 @@ outcomes should occur commonly, rare outcomes should occur rarely, and the
 amount of variation among replicate populations should be correct.
 
 The validation establishes that the optimized count representation samples the
-specified Wright–Fisher, dual-habitat fitness, mutation, infection and escape
-processes correctly. It does **not** establish that the biological assumptions
-or parameter values are correct for the tubeworm–symbiont system. Those are the
-subjects of calibration and the Phase 1 and Phase 2 experiments.
+specified Wright–Fisher, dual-habitat fitness, mutation, infection, escape and
+fixed-regional-pool migration processes correctly. It does **not** establish
+that the biological assumptions or parameter values are correct for the
+tubeworm–symbiont system. Those are the subjects of calibration and the Phase 1
+and Phase 2 experiments.
 
 ![Locations of the validation tests in the host–environment cycle](figures/validation-cycle.svg)
 
-**Figure 1.** Each part of the modeled biological cycle is covered. Infection is
+**Figure 1.** The core host–environment cycle is covered. Infection is
 tested as reservoir founder sampling; within-host growth is tested for drift,
 selection, mutation and early-mutation jackpots; escape is tested as finite
 sampling; and the environment is tested for neutral capacity regulation,
-free-living selection and no-return behavior under both profiles.
+free-living selection and no-return behavior under both profiles. Fixed-pool
+migration, added after this schematic was drawn, is tested separately against
+its exact emigration and immigration distributions below.
 
 ## How the validation was performed
 
@@ -249,7 +252,48 @@ that, with free-living selection enabled, the reservoir can change even when no
 bacteria return—the change is then caused by the declared environmental
 selection step.
 
-## Test 11 — Drift accumulated across generations
+## Tests 11 and 12 — Exchange with a fixed regional pool
+
+### Test 11: focal emigration
+
+**Biological question.** When a fixed fraction leaves the focal reservoir, is
+each emigrant a distinct focal cell, so that a cell cannot emigrate twice in the
+same exchange step?
+
+**Setup.** The focal reservoir contained 30 cells of strain A and 70 of strain
+B. Twenty cells emigrated without replacement.
+
+**Expected result.** The number of strain-A emigrants should follow a
+hypergeometric distribution, with mean 6 and variance 3.394.
+
+**Observed result.** Mean 6.008; variance 3.404.
+
+### Test 12: regional immigration
+
+**Biological question.** Does immigration repeatedly sample the declared fixed
+regional composition without depleting or changing that source?
+
+**Setup.** Strain A represented 20% of the fixed regional pool, and 20
+immigrants entered the focal reservoir in every replicate.
+
+**Expected result.** Because the regional source is fixed and sampled with
+replacement, the strain-A immigrant count should follow a binomial distribution
+with mean 4 and variance 3.2.
+
+**Observed result.** Mean 3.976; variance 3.212.
+
+![Observed and expected fixed-pool migration distributions](figures/validation-fixed-pool-migration.svg)
+
+**Figure 4.** Focal emigrants follow the finite-population Hypergeometric law
+(panel A), while immigrants follow the Binomial law expected when an unchanged
+regional composition is sampled with replacement (panel B).
+
+**Interpretation.** The migration step models both emigration and immigration
+at the focal boundary and exchanges exactly equal totals, so focal capacity is
+unchanged. The regional composition is an external fixed approximation: it is
+neither depleted by immigrants nor changed by focal emigrants.
+
+## Test 13 — Drift accumulated across generations
 
 **Biological question.** Can individually correct one-generation draws still
 accumulate incorrectly over several generations?
@@ -260,8 +304,8 @@ distribution was also calculated recursively from the Wright–Fisher transition
 probabilities.
 
 **Observed result.** The total-variation distance between the two endpoint
-distributions was 0.00820 (Figure 4A). A distance of zero would mean identical
-distributions and one would mean no overlap; 0.00820 represents less than one
+distributions was 0.00665 (Figure 5A). A distance of zero would mean identical
+distributions and one would mean no overlap; 0.00665 represents less than one
 percentage point of probability redistributed across all possible endpoint
 counts.
 
@@ -270,12 +314,12 @@ drift, including loss and fixation of strains.
 
 ![Multi-generation and cell-reference comparisons](figures/validation-trajectories-and-jackpots.svg)
 
-**Figure 4.** Panel A compares three accumulated Wright–Fisher generations with
+**Figure 5.** Panel A compares three accumulated Wright–Fisher generations with
 the exact analytical endpoint distribution. Panels B–D compare the optimized
 count model with an independent cell-by-cell model during population expansion
 and mutation. The lines are almost superimposed.
 
-## Test 12 — Mutation timing and jackpot clones
+## Test 14 — Mutation timing and jackpot clones
 
 **Biological question.** Does the optimized model preserve the important fact
 that an early mutation can leave many descendants, whereas a late mutation is
@@ -292,9 +336,9 @@ Three endpoint features were compared:
 - the size of the largest mutation-derived clone.
 
 **Observed result.** The mean differences between the count and cell models were
-0.001 strains for richness, −0.0003 cells for founder abundance and 0.0025 cells
-for the largest mutant clone. The total-variation distance between the richness
-distributions was 0.00647 (Figure 4B–D).
+−0.0043 strains for richness, 0.0145 cells for founder abundance and −0.0168
+cells for the largest mutant clone. The total-variation distance between the
+richness distributions was 0.0110 (Figure 5B–D).
 
 **Interpretation.** The count model does not merely generate the right total
 number of mutations. It also reproduces the clone-size consequences of when
@@ -312,7 +356,7 @@ after seeing the results:
 - the cell-reference richness distribution had to remain below its declared
   limit of 0.03, with feature means within six standard errors.
 
-All checks passed. The widest standardized discrepancy was 2.12 standard errors,
+All checks passed. The widest standardized discrepancy was 2.33 standard errors,
 well inside the six-standard-error release boundary. The conservative boundary
 is intended to detect meaningful implementation errors without causing the
 release test to fail because a valid random sample happened to be unusual.
@@ -334,9 +378,13 @@ and the machine-readable record is in
 - finite escape sampling;
 - the optimized infection sampler;
 - label-neutral Hamilton capacity regulation;
+- exact equal-sized focal emigration and regional immigration;
+- Hypergeometric focal-emigrant and Binomial fixed-source immigrant
+  distributions;
 - accumulation of drift across generations;
 - mutation-timing and jackpot-clone distributions; and
-- invariance of the dormant Phase 1 reservoir when no bacteria return; and
+- invariance of the dormant, migration-free Phase 1 reservoir when no bacteria
+  return;
 - environmental change under free-living selection even when no bacteria return.
 
 ### Not yet validated biologically
@@ -345,6 +393,8 @@ and the machine-readable record is in
   rate or reservoir capacity;
 - whether Hamilton capacity regulation is the best biological representation of
   the effective reservoir;
+- whether a fixed, non-depleting regional composition is an adequate biological
+  approximation of the wider free-living metapopulation;
 - the existence or location of a long-run environmental diversity equilibrium;
 - finite genomic sites, recurrent mutation, recombination or horizontal gene
   transfer;

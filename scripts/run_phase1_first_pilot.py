@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Run selected Phase 1 first-pilot populations and record resource use.
+"""Run the staged Phase 1 first pilot and record resource use.
 
-The launcher is deliberately scheduler-independent.  It runs populations
-sequentially by default, which is appropriate for the first Mac pilot.  On an
-HPC, separate invocations can safely run different cell/seed-block pairs.
+With no cell or seed selectors, the launcher performs the complete workflow:
+run or verify the core 12 cells, analyse and report them, apply the expansion
+safety gates, run the eight extension cells, then overwrite the report with the
+20-cell result. Supplying ``--cell`` or ``--seed-block`` retains the low-level,
+scheduler-independent mode for selected populations.
 """
 
 from __future__ import annotations
@@ -14,6 +16,7 @@ import hashlib
 import json
 import os
 import resource
+import shutil
 import signal
 import subprocess
 import sys
@@ -22,8 +25,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-EXPERIMENT_ID = "phase1-first-pilot-core12"
-PILOT_ORDER = (
+EXPERIMENT_ID = "phase1-first-pilot-20cell"
+CORE_ORDER = (
     "p01-s01-c0001",
     "p01-s01-c0002",
     "p01-s01-c0003",
@@ -37,6 +40,27 @@ PILOT_ORDER = (
     "p01-s01-c0005",
     "p01-s01-c0006",
 )
+EXTENSION_ORDER = (
+    "p01-s01-c0018",
+    "p01-s01-c0019",
+    "p01-s01-c0020",
+    "p01-s01-c0016",
+    "p01-s01-c0013",
+    "p01-s01-c0017",
+    "p01-s01-c0014",
+    "p01-s01-c0015",
+)
+PILOT_ORDER = (*CORE_ORDER, *EXTENSION_ORDER)
+SEED_BLOCKS = ("sb0001", "sb0002", "sb0003")
+
+
+def _experiment_id(cell_id: str) -> str:
+    number = int(cell_id.rsplit("c", 1)[1])
+    if number <= 12:
+        return "phase1-first-pilot-core12"
+    if number <= 17:
+        return "phase1-first-pilot-extension5"
+    return "phase1-first-pilot-alpha-extension3"
 
 
 def _sha256(path: Path) -> str:
@@ -58,6 +82,26 @@ def _atomic_json(path: Path, payload: dict[str, Any]) -> None:
 
 def _directory_size(path: Path) -> int:
     return sum(item.stat().st_size for item in path.rglob("*") if item.is_file())
+
+
+def _archive_unrestartable_attempt(
+    output: Path, scratch: Path, run_id: str
+) -> Path:
+    """Preserve a partial pre-checkpoint attempt and recreate a clean run folder."""
+    timestamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    archive_parent = scratch / "_failed-attempts" / run_id
+    archive_parent.mkdir(parents=True, exist_ok=True)
+    archive = archive_parent / timestamp
+    suffix = 1
+    while archive.exists():
+        archive = archive_parent / f"{timestamp}-{suffix:02d}"
+        suffix += 1
+    shutil.move(str(output), str(archive))
+    output.mkdir(parents=True, exist_ok=True)
+    archived_manifest = archive / "run.json"
+    if archived_manifest.is_file():
+        shutil.copy2(archived_manifest, output / "run.json")
+    return archive
 
 
 def _process_tree_rss_kib(root_pid: int) -> int | None:
@@ -99,9 +143,7 @@ def _normalise_cell_id(value: str) -> str:
         return f"p01-s01-c{int(value[1:]):04d}"
     if value.isdigit():
         return f"p01-s01-c{int(value):04d}"
-    raise argparse.ArgumentTypeError(
-        "cell must look like c0001, 1, or p01-s01-c0001"
-    )
+    raise argparse.ArgumentTypeError("cell must look like c0001, 1, or p01-s01-c0001")
 
 
 def _load_rows(repository: Path) -> tuple[Path, list[dict[str, str]]]:
@@ -109,10 +151,7 @@ def _load_rows(repository: Path) -> tuple[Path, list[dict[str, str]]]:
     layout = json.loads((work / "layout.local.json").read_text(encoding="utf-8"))
     scratch = Path(layout["scratch"])
     manifest = (
-        work
-        / "p01-neutral-feedback"
-        / "manifests"
-        / "phase1-first-pilot-runs.tsv"
+        work / "p01-neutral-feedback" / "manifests" / "phase1-first-pilot-runs.tsv"
     )
     with manifest.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle, delimiter="\t"))
@@ -140,6 +179,162 @@ def _select_rows(
     return selected
 
 
+def _run_rows(
+    selected: list[dict[str, str]],
+    *,
+    repository: Path,
+    work: Path,
+    scratch: Path,
+    python: Path,
+    monitor_interval: float,
+    continue_on_error: bool,
+) -> tuple[list[dict[str, Any]], int]:
+    results = []
+    exit_code = 0
+    for row in selected:
+        result = _run_one(
+            row,
+            repository,
+            work,
+            scratch,
+            python,
+            monitor_interval,
+        )
+        results.append(result)
+        if result["status"] == "failed":
+            exit_code = 1
+            if not continue_on_error:
+                break
+    return results, exit_code
+
+
+def _checked(command: list[str], repository: Path) -> None:
+    print("Workflow step: " + " ".join(command), flush=True)
+    subprocess.run(command, cwd=repository, check=True)
+
+
+def _run_full_workflow(
+    *,
+    repository: Path,
+    work: Path,
+    scratch: Path,
+    rows: list[dict[str, str]],
+    python: Path,
+    monitor_interval: float,
+    continue_on_error: bool,
+    core_only: bool,
+) -> int:
+    phase = work / "p01-neutral-feedback"
+    analysis_script = phase / "analysis" / "analyse_first_pilot.py"
+    core_analysis = phase / "analysis" / "s01-pilot-core-derived"
+    full_analysis = phase / "analysis" / "s01-pilot-derived"
+    design = phase / "design" / "phase1-first-pilot-cells.tsv"
+    core_design = phase / "design" / "phase1-first-pilot-core-cells.tsv"
+    report = repository / "output" / "pdf" / "phase1-first-pilot-report.pdf"
+    markdown = repository / "docs" / "phase1-first-pilot-report.md"
+    assets = repository / "docs" / "figures" / "phase1-pilot-report"
+    safety = phase / "analysis" / "phase1-first-pilot-expansion-safety.json"
+
+    _checked(
+        [str(python), "scripts/prepare_phase1_first_pilot.py", "--verify"],
+        repository,
+    )
+    _checked(
+        [str(python), "scripts/prepare_phase1_pilot_scratch.py", "--write"],
+        repository,
+    )
+
+    core_rows = _select_rows(rows, set(SEED_BLOCKS), set(CORE_ORDER))
+    _, exit_code = _run_rows(
+        core_rows,
+        repository=repository,
+        work=work,
+        scratch=scratch,
+        python=python,
+        monitor_interval=monitor_interval,
+        continue_on_error=continue_on_error,
+    )
+    if exit_code:
+        return exit_code
+    _checked([str(python), str(analysis_script), "--tier", "core"], repository)
+    _checked(
+        [
+            str(python),
+            "-m",
+            "trophosome.cli",
+            "report",
+            "--analysis",
+            str(core_analysis),
+            "--design",
+            str(core_design),
+            "--output",
+            str(report),
+            "--markdown",
+            str(markdown),
+            "--assets",
+            str(assets),
+            "--title",
+            "Phase 1 first-pilot report",
+        ],
+        repository,
+    )
+    _checked(
+        [
+            str(python),
+            "scripts/assess_phase1_pilot_expansion.py",
+            "--analysis",
+            str(core_analysis),
+            "--design",
+            str(design),
+            "--core-report",
+            str(report),
+            "--output",
+            str(safety),
+        ],
+        repository,
+    )
+    if core_only:
+        print("Core-only workflow complete; extension was not launched.", flush=True)
+        return 0
+
+    extension_rows = _select_rows(rows, set(SEED_BLOCKS), set(EXTENSION_ORDER))
+    _, exit_code = _run_rows(
+        extension_rows,
+        repository=repository,
+        work=work,
+        scratch=scratch,
+        python=python,
+        monitor_interval=monitor_interval,
+        continue_on_error=continue_on_error,
+    )
+    if exit_code:
+        return exit_code
+    _checked([str(python), str(analysis_script), "--tier", "all"], repository)
+    _checked(
+        [
+            str(python),
+            "-m",
+            "trophosome.cli",
+            "report",
+            "--analysis",
+            str(full_analysis),
+            "--design",
+            str(design),
+            "--output",
+            str(report),
+            "--markdown",
+            str(markdown),
+            "--assets",
+            str(assets),
+            "--title",
+            "Phase 1 first-pilot report",
+        ],
+        repository,
+    )
+    print(f"Full 20-cell workflow complete. Updated report: {report}", flush=True)
+    return 0
+
+
 def _run_one(
     row: dict[str, str],
     repository: Path,
@@ -159,6 +354,17 @@ def _run_one(
         (output / name).exists()
         for name in ("resolved_config.json", "provenance.json", "checkpoints")
     )
+    checkpoint_exists = any(
+        (output / "checkpoints").glob("checkpoint-rep*-gen*.npz")
+    )
+    if not completion.exists() and run_artifacts_exist and not checkpoint_exists:
+        archive = _archive_unrestartable_attempt(output, scratch, row["run_id"])
+        print(
+            f"[{row['run_id']}] partial attempt preceded its first checkpoint; "
+            f"preserved at {archive} and restarting cleanly",
+            flush=True,
+        )
+        run_artifacts_exist = False
     resume = not completion.exists() and run_artifacts_exist
     if completion.exists():
         status = "already-complete"
@@ -187,7 +393,7 @@ def _run_one(
     summary_path = output / "execution-summary.json"
     summary: dict[str, Any] = {
         "execution_summary_schema_version": "1.0.0",
-        "experiment_id": EXPERIMENT_ID,
+        "experiment_id": _experiment_id(row["cell_id"]),
         "run_id": row["run_id"],
         "cell_id": row["cell_id"],
         "seed_block_id": row["seed_block_id"],
@@ -208,9 +414,10 @@ def _run_one(
     stderr_path = output / "run.err"
     process: subprocess.Popen[str] | None = None
     try:
-        with stdout_path.open("a", encoding="utf-8") as stdout, stderr_path.open(
-            "a", encoding="utf-8"
-        ) as stderr:
+        with (
+            stdout_path.open("a", encoding="utf-8") as stdout,
+            stderr_path.open("a", encoding="utf-8") as stderr,
+        ):
             process = subprocess.Popen(
                 command,
                 cwd=repository,
@@ -242,9 +449,7 @@ def _run_one(
     finally:
         elapsed = time.monotonic() - started
         if not memory_measurements:
-            child_peak = int(
-                resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
-            )
+            child_peak = int(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
             # ru_maxrss is bytes on macOS and KiB on Linux.
             peak_rss_kib = (
                 child_peak // 1024 if sys.platform == "darwin" else child_peak
@@ -256,9 +461,7 @@ def _run_one(
             {
                 "completed_at": datetime.now(UTC).isoformat(),
                 "elapsed_seconds": elapsed,
-                "peak_process_tree_rss_kib": (
-                    peak_rss_kib if peak_rss_kib else None
-                ),
+                "peak_process_tree_rss_kib": (peak_rss_kib if peak_rss_kib else None),
                 "memory_measurement_mode": memory_mode,
                 "memory_measurements": memory_measurements,
                 "output_bytes": _directory_size(output),
@@ -293,13 +496,13 @@ def main() -> int:
         "--seed-block",
         action="append",
         default=None,
-        help="seed block to run; repeat for several (default: sb0001)",
+        help="selected-run mode: seed block to run; repeat for several",
     )
     parser.add_argument(
         "--cell",
         action="append",
         type=_normalise_cell_id,
-        help="cell to run; repeat for several (default: all 12)",
+        help="selected-run mode: cell to run; repeat for several",
     )
     parser.add_argument(
         "--python",
@@ -308,6 +511,11 @@ def main() -> int:
     )
     parser.add_argument("--monitor-interval", type=float, default=2.0)
     parser.add_argument("--continue-on-error", action="store_true")
+    parser.add_argument(
+        "--core-only",
+        action="store_true",
+        help="run, report and assess the core but do not launch the extension",
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -319,9 +527,29 @@ def main() -> int:
     )
     if not python.is_file():
         parser.error(f"Python interpreter does not exist: {python}")
-    seed_blocks = set(args.seed_block or ["sb0001"])
-    cells = set(args.cell) if args.cell else None
     scratch, rows = _load_rows(repository)
+    selected_mode = bool(args.seed_block or args.cell)
+    if not selected_mode and args.dry_run:
+        print(
+            "Staged workflow: core 12 x 3 seed blocks -> core analysis/report -> "
+            "safety gate -> extension 8 x 3 seed blocks -> 20-cell analysis/report"
+        )
+        return 0
+    work = repository / "experiments" / "work" / "trophosome"
+    if not selected_mode:
+        return _run_full_workflow(
+            repository=repository,
+            work=work,
+            scratch=scratch,
+            rows=rows,
+            python=python,
+            monitor_interval=args.monitor_interval,
+            continue_on_error=args.continue_on_error,
+            core_only=args.core_only,
+        )
+
+    seed_blocks = set(args.seed_block or ["sb0001"])
+    cells = set(args.cell) if args.cell else set(CORE_ORDER)
     selected = _select_rows(rows, seed_blocks, cells)
     if not selected:
         parser.error("no runs match the requested cells and seed blocks")
@@ -329,8 +557,6 @@ def main() -> int:
     unknown = seed_blocks - known_seed_blocks
     if unknown:
         parser.error(f"unknown seed block(s): {', '.join(sorted(unknown))}")
-    work = repository / "experiments" / "work" / "trophosome"
-
     print(
         f"Selected {len(selected)} population(s): "
         + ", ".join(row["run_id"] for row in selected),
@@ -339,22 +565,15 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    results = []
-    exit_code = 0
-    for row in selected:
-        result = _run_one(
-            row,
-            repository,
-            work,
-            scratch,
-            python,
-            args.monitor_interval,
-        )
-        results.append(result)
-        if result["status"] == "failed":
-            exit_code = 1
-            if not args.continue_on_error:
-                break
+    results, exit_code = _run_rows(
+        selected,
+        repository=repository,
+        work=work,
+        scratch=scratch,
+        python=python,
+        monitor_interval=args.monitor_interval,
+        continue_on_error=args.continue_on_error,
+    )
 
     aggregate_path = (
         scratch

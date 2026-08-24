@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "trophosome-model"
-version = "0.6.0"
+version = "0.7.0"
 description = "Population-genetic models for horizontally acquired tubeworm symbionts"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,6 +21,10 @@ coalescent = [
   "tskit>=0.5,<2",
 ]
 plot = ["matplotlib>=3.8,<4"]
+report = [
+  "matplotlib>=3.8,<4",
+  "reportlab>=4.2,<5",
+]
 dev = [
   "build>=1.2,<2",
   "pytest>=8,<9",
@@ -49,3 +53,4 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 "scripts/benchmark_v1_3_vs_exact.py" = ["B023", "E731"]
 "src/trophosome/simulation.py" = ["B023"]
+"src/trophosome/pilot_report.py" = ["E501"]

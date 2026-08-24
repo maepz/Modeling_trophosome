@@ -1,0 +1,9 @@
+cell_id	label	experimental_group	comparison_sets	pilot_tier	H	f	e	R	alpha	u	host_counts_mode	status
+p01-s01-c0013	Matched return R=1e9, H=1000, u=1e-10	MRM	matched-r1e9-u1e-10	extension	1000	1e-3	1000000	1000000000	0.5	1e-10	panel	planned
+p01-s01-c0014	Matched return R=1e9, H=10000, u=1e-10	MRM	matched-r1e9-u1e-10	extension	10000	1e-4	100000	1000000000	0.5	1e-10	panel	planned
+p01-s01-c0015	Matched return R=1e9, H=100000, u=1e-10	MRM	matched-r1e9-u1e-10	extension	100000	1e-5	10000	1000000000	0.5	1e-10	panel	planned
+p01-s01-c0016	Matched return R=1e8, H=100	MRLOW	matched-r1e8-u0|feedback-h100	extension	100	1e-3	1000000	100000000	0.0909090909091	0	full	planned
+p01-s01-c0017	Matched return R=1e8, H=10000	MRLOW	matched-r1e8-u0	extension	10000	1e-5	10000	100000000	0.0909090909091	0	panel	planned
+p01-s01-c0018	Alpha series H=100, alpha=0.909; f=0.1 sensitivity	FBA	feedback-h100|escape-range-sensitivity	extension	100	1e-1	100000000	10000000000	0.909090909091	0	full	planned
+p01-s01-c0019	Alpha series H=1000, alpha=0.001; f=1e-6 sensitivity	FBA	feedback-h1000|escape-range-sensitivity	extension	1000	1e-6	1000	1000000	0.000999000999001	0	panel	planned
+p01-s01-c0020	Alpha series H=1000, alpha=0.091	FBA	feedback-h1000|matched-r1e8-u0	extension	1000	1e-4	100000	100000000	0.0909090909091	0	panel	planned

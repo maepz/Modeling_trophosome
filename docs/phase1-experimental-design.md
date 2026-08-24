@@ -494,13 +494,22 @@ Use:
 | Feedback boundaries | Very weak `H=100, f=10^-5`; strong `H=1,000, f=10^-2` | `u = 0` | 2 |
 | **Initial core** |  |  | **12** |
 
-Five extension cells are pre-specified but are not launched automatically. Once
-the mutation bracket selects an informative `u*`, three cells complete the
-mutation-enabled `R=10^9` comparison at `H=1,000`, 10,000, and 100,000. Two
-additional mutation-free cells compare `H=100, f=10^-3` with
-`H=10,000, f=10^-5`; both have `R=10^8` and `alpha=0.090909`. This produces a
-17-cell design only if the 12-cell core passes its resource and information
-gates.
+Eight extension cells are pre-specified and the maintained pilot launcher runs
+them automatically only after the 12-cell core report passes the declared
+safety gates. Three cells complete the mutation-enabled `R=10^9` comparison at
+`H=1,000`, 10,000, and 100,000. Two cells complete a mutation-free `R=10^8`
+series at `H=100`, 1,000, and 10,000; the `H=100` cell is also part of the
+feedback analysis.
+
+Three further cells complete two mutation-free feedback series. At each fixed
+host abundance (`H=100` and `H=1,000`), the same four alpha levels are tested:
+approximately 0.001, 0.091, 0.5, and 0.909. Mutation remains zero, but escape
+fraction and total return necessarily rise with alpha. The `H=100, alpha=0.909`
+cell uses `f=0.1`, and the `H=1,000, alpha=0.001` cell uses `f=10^-6`; these two
+endpoints lie outside the primary escape range and are explicitly labelled
+sensitivity levels. This produces a 20-cell design only if the 12-cell core
+passes its resource and information gates. The final analysis then overwrites
+the interim core report with the 20-cell report.
 
 The pilot should measure:
 
@@ -555,7 +564,7 @@ Before any production run:
 
 Run the 12-cell, three-replicate, five-generation core above. Use it only for
 feasibility, mutation-supply calibration, early effect sizes, and variance
-estimation. Add the five extension cells only after applying the declared
+estimation. Add the eight extension cells only after applying the declared
 decision rule.
 
 ### Stage 2: equilibrium and precision pilot

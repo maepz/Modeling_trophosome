@@ -10,7 +10,7 @@ import numpy as np
 
 import trophosome.simulation as simulation
 from trophosome.checkpointing import CheckpointMismatchError
-from trophosome.config import ModelConfig, load_config
+from trophosome.config import MigrationConfig, ModelConfig, load_config
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 
@@ -53,9 +53,7 @@ class CheckpointRestartTests(unittest.TestCase):
             side_effect=interrupt_after_write,
         ):
             with self.assertRaisesRegex(RuntimeError, "simulated interruption"):
-                simulation.run_simulation(
-                    config, output, REPOSITORY, resume=resume
-                )
+                simulation.run_simulation(config, output, REPOSITORY, resume=resume)
 
     def _assert_scientific_outputs_equal(self, first: Path, second: Path) -> None:
         first_csv = sorted(path.name for path in first.glob("*.csv"))
@@ -108,6 +106,24 @@ class CheckpointRestartTests(unittest.TestCase):
                 self.assertFalse((resumed / "checkpoints").exists())
                 self.assertTrue((resumed / "completion.json").is_file())
 
+    def test_migration_enabled_resume_matches_uninterrupted_run(self) -> None:
+        config = replace(
+            self._config(generations=3),
+            migration=MigrationConfig(
+                mode="fixed_regional_pool",
+                fraction=0.2,
+                regional_counts=(500, 1500, 3000, 5000),
+            ),
+        )
+        with tempfile.TemporaryDirectory() as baseline_directory:
+            with tempfile.TemporaryDirectory() as resumed_directory:
+                baseline = Path(baseline_directory)
+                resumed = Path(resumed_directory)
+                simulation.run_simulation(config, baseline, REPOSITORY)
+                self._run_until_checkpoint(config, resumed, checkpoint_number=1)
+                simulation.run_simulation(config, resumed, REPOSITORY, resume=True)
+                self._assert_scientific_outputs_equal(baseline, resumed)
+
     def test_corrupt_latest_checkpoint_falls_back_and_only_two_are_retained(
         self,
     ) -> None:
@@ -145,8 +161,7 @@ class CheckpointRestartTests(unittest.TestCase):
                 self._assert_scientific_outputs_equal(baseline, resumed)
                 with (resumed / "environment_counts.csv").open() as handle:
                     generations = {
-                        int(line.split(",", 2)[1])
-                        for line in handle.readlines()[1:]
+                        int(line.split(",", 2)[1]) for line in handle.readlines()[1:]
                     }
                 self.assertEqual(generations, {3})
 
@@ -173,19 +188,13 @@ class CheckpointRestartTests(unittest.TestCase):
             output = Path(directory)
             self._run_until_checkpoint(config, output, checkpoint_number=1)
             with patch("trophosome.simulation._source_hash", return_value="0" * 64):
-                with self.assertRaisesRegex(
-                    CheckpointMismatchError, "source_sha256"
-                ):
-                    simulation.run_simulation(
-                        config, output, REPOSITORY, resume=True
-                    )
+                with self.assertRaisesRegex(CheckpointMismatchError, "source_sha256"):
+                    simulation.run_simulation(config, output, REPOSITORY, resume=True)
             with patch("trophosome.simulation.OUTPUT_SCHEMA_VERSION", "999.0.0"):
                 with self.assertRaisesRegex(
                     CheckpointMismatchError, "output_schema_version"
                 ):
-                    simulation.run_simulation(
-                        config, output, REPOSITORY, resume=True
-                    )
+                    simulation.run_simulation(config, output, REPOSITORY, resume=True)
 
     def test_repeated_resume_cycles_preserve_zero_return_invariant(self) -> None:
         config = self._config(generations=4)

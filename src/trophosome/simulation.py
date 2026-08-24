@@ -48,6 +48,7 @@ from trophosome.count_model import (
     LineageEvent,
     LineageRecorder,
     PopulationState,
+    fixed_pool_migration_step,
     free_living_selection_step,
     merge_populations,
     population_size_schedule,
@@ -71,6 +72,11 @@ class HostGenerationSummary:
     release_pool_size: int
     post_mix_size: int
     realized_host_feedback: float
+    post_return_richness: int
+    migration_replacement_count: int
+    realized_migration_fraction: float
+    post_migration_richness: int
+    expected_host_feedback_after_migration: float
     mean_adult_richness: float
     mean_adult_gene_diversity: float
     environment_gene_diversity: float
@@ -440,6 +446,22 @@ def _output_fields(config: ModelConfig) -> dict[str, list[str]]:
             "strain_id",
             "count",
         ],
+        "migration_counts.csv": [
+            "replicate",
+            "generation",
+            "strain_id",
+            "emigrant_count",
+            "immigrant_count",
+        ],
+        "strain_origins.csv": [
+            "replicate",
+            "strain_id",
+            "origin_type",
+            "initial_focal_count",
+            "regional_pool_count",
+            "within_host_fitness",
+            "free_living_fitness",
+        ],
         "strain_lineage_events.csv": [
             "replicate",
             "generation",
@@ -451,9 +473,7 @@ def _output_fields(config: ModelConfig) -> dict[str, list[str]]:
             "within_host_fitness",
             "free_living_fitness",
         ],
-        "host_generation_summary.csv": list(
-            HostGenerationSummary.__dataclass_fields__
-        ),
+        "host_generation_summary.csv": list(HostGenerationSummary.__dataclass_fields__),
     }
     if config.output.host_counts_mode != "summary":
         fields["host_adult_counts.csv"] = [
@@ -534,6 +554,9 @@ def _summary_from_dict(values: dict[str, object]) -> HostGenerationSummary:
         "environment_richness",
         "release_pool_size",
         "post_mix_size",
+        "post_return_richness",
+        "migration_replacement_count",
+        "post_migration_richness",
     }
     converted = {
         name: int(value) if name in integer_fields else float(value)
@@ -800,6 +823,19 @@ def run_simulation(
     transitions = max(1, len(schedule))
     id_block_size = transitions * config.evolution.max_materialized_mutants
     root_id_ceiling = len(config.environment.initial_counts)
+    regional_pool = None
+    if config.migration.mode == "fixed_regional_pool":
+        regional_pool = PopulationState.from_counts(
+            config.migration.regional_counts,
+            config.environment.initial_within_host_fitness,
+            config.environment.initial_free_living_fitness,
+        )
+    migration_replacement_count = (
+        round(config.migration.fraction * environment_capacity)
+        if regional_pool is not None
+        else 0
+    )
+    realized_migration_fraction = migration_replacement_count / environment_capacity
     total_host_lifetimes = (
         config.replicates * config.host.host_generations * config.host.population_size
     )
@@ -864,9 +900,7 @@ def run_simulation(
                 "platform": platform.platform(),
                 "python": sys.version,
                 "seed": config.seed,
-                "seed_coordinate_scheme_version": (
-                    SEED_COORDINATE_SCHEME_VERSION
-                ),
+                "seed_coordinate_scheme_version": (SEED_COORDINATE_SCHEME_VERSION),
                 "software_version": __version__,
                 "resumes": [],
             },
@@ -879,6 +913,8 @@ def run_simulation(
     adult_summary_writer = csv_outputs["host_adult_summaries.csv"].writer
     pooled_writer = csv_outputs["pooled_host_counts_and_occupancy.csv"].writer
     release_writer = csv_outputs["release_counts.csv"].writer
+    migration_writer = csv_outputs["migration_counts.csv"].writer
+    origin_writer = csv_outputs["strain_origins.csv"].writer
     lineage_writer = csv_outputs["strain_lineage_events.csv"].writer
     summary_writer = csv_outputs["host_generation_summary.csv"].writer
     adult_counts_output = csv_outputs.get("host_adult_counts.csv")
@@ -900,9 +936,7 @@ def run_simulation(
         resume_generation = 0
     else:
         checkpoint_replicate = int(checkpoint.metadata["replicate"])
-        checkpoint_generation = int(
-            checkpoint.metadata["last_completed_generation"]
-        )
+        checkpoint_generation = int(checkpoint.metadata["last_completed_generation"])
         if checkpoint_generation == config.host.host_generations:
             start_replicate = checkpoint_replicate + 1
             resume_generation = 0
@@ -919,13 +953,18 @@ def run_simulation(
             ):
                 environment = checkpoint.environment
                 active_depths = {
-                    int(genotype_id): int(depth)
-                    for genotype_id, depth in zip(
-                        environment.genotype_ids.tolist(),
-                        checkpoint.active_depths.tolist(),
-                        strict=True,
-                    )
+                    genotype_id: 0 for genotype_id in range(root_id_ceiling)
                 }
+                active_depths.update(
+                    {
+                        int(genotype_id): int(depth)
+                        for genotype_id, depth in zip(
+                            environment.genotype_ids.tolist(),
+                            checkpoint.active_depths.tolist(),
+                            strict=True,
+                        )
+                    }
+                )
                 first_generation = resume_generation + 1
             else:
                 environment = proportional_rescale(
@@ -938,10 +977,47 @@ def run_simulation(
                     _rng(config.seed, replicate, 0, 0, 3),
                 )
                 active_depths = {
-                    int(genotype_id): 0
-                    for genotype_id in environment.genotype_ids.tolist()
+                    genotype_id: 0 for genotype_id in range(root_id_ceiling)
                 }
                 first_generation = 1
+
+            if first_generation == 1:
+                regional_counts = (
+                    config.migration.regional_counts
+                    if regional_pool is not None
+                    else (0,) * root_id_ceiling
+                )
+                for genotype_id, (
+                    focal_count,
+                    regional_count,
+                    within_host_fitness,
+                    free_living_fitness,
+                ) in enumerate(
+                    zip(
+                        config.environment.initial_counts,
+                        regional_counts,
+                        config.environment.initial_within_host_fitness,
+                        config.environment.initial_free_living_fitness,
+                        strict=True,
+                    )
+                ):
+                    if focal_count and regional_count:
+                        origin_type = "initial_focal_and_regional"
+                    elif focal_count:
+                        origin_type = "initial_focal"
+                    else:
+                        origin_type = "fixed_regional_pool"
+                    origin_writer.writerow(
+                        {
+                            "replicate": replicate,
+                            "strain_id": genotype_id,
+                            "origin_type": origin_type,
+                            "initial_focal_count": focal_count,
+                            "regional_pool_count": regional_count,
+                            "within_host_fitness": within_host_fitness,
+                            "free_living_fitness": free_living_fitness,
+                        }
+                    )
 
             def write_environment(generation: int) -> None:
                 for genotype_id, count, host_value, environment_value in zip(
@@ -963,10 +1039,7 @@ def run_simulation(
                         }
                     )
 
-            if (
-                first_generation == 1
-                and config.output.environment_counts_mode == "all"
-            ):
+            if first_generation == 1 and config.output.environment_counts_mode == "all":
                 write_environment(0)
             for host_generation in range(
                 first_generation, config.host.host_generations + 1
@@ -1203,22 +1276,68 @@ def run_simulation(
                     post_mix = merge_populations(base, released)
                 release_pool_size = 0 if released is None else released.size
                 realized_feedback = release_pool_size / post_mix.size
+                post_return = proportional_rescale(
+                    post_mix,
+                    environment_capacity,
+                    _rng(config.seed, replicate, host_generation, 0, 3),
+                )
+                post_return_richness = post_return.richness
+                post_migration = post_return
+                emigrants = None
+                immigrants = None
+                if migration_replacement_count:
+                    assert regional_pool is not None
+                    post_migration, emigrants, immigrants = fixed_pool_migration_step(
+                        post_return,
+                        regional_pool,
+                        migration_replacement_count,
+                        _rng(config.seed, replicate, host_generation, 0, 6),
+                        _rng(config.seed, replicate, host_generation, 0, 7),
+                    )
+                if emigrants is not None and immigrants is not None:
+                    emigrant_counts = dict(
+                        zip(
+                            emigrants.genotype_ids.tolist(),
+                            emigrants.counts.tolist(),
+                            strict=True,
+                        )
+                    )
+                    immigrant_counts = dict(
+                        zip(
+                            immigrants.genotype_ids.tolist(),
+                            immigrants.counts.tolist(),
+                            strict=True,
+                        )
+                    )
+                    for genotype_id in sorted(
+                        emigrant_counts.keys() | immigrant_counts.keys()
+                    ):
+                        migration_writer.writerow(
+                            {
+                                "replicate": replicate,
+                                "generation": host_generation,
+                                "strain_id": genotype_id,
+                                "emigrant_count": emigrant_counts.get(genotype_id, 0),
+                                "immigrant_count": immigrant_counts.get(genotype_id, 0),
+                            }
+                        )
+                post_migration_richness = post_migration.richness
                 if config.evolution.free_living_selection:
                     environment = free_living_selection_step(
-                        post_mix,
+                        post_migration,
                         environment_capacity,
                         _rng(config.seed, replicate, host_generation, 0, 5),
                     )
                 else:
-                    environment = proportional_rescale(
-                        post_mix,
-                        environment_capacity,
-                        _rng(config.seed, replicate, host_generation, 0, 3),
-                    )
-                active_depths = {
-                    int(genotype_id): active_depths[int(genotype_id)]
-                    for genotype_id in environment.genotype_ids.tolist()
-                }
+                    environment = post_migration
+                next_depths = {genotype_id: 0 for genotype_id in range(root_id_ceiling)}
+                next_depths.update(
+                    {
+                        int(genotype_id): active_depths[int(genotype_id)]
+                        for genotype_id in environment.genotype_ids.tolist()
+                    }
+                )
+                active_depths = next_depths
                 environment_metrics = population_metrics(environment)
                 summary = HostGenerationSummary(
                     replicate=replicate,
@@ -1229,6 +1348,13 @@ def run_simulation(
                     release_pool_size=release_pool_size,
                     post_mix_size=post_mix.size,
                     realized_host_feedback=realized_feedback,
+                    post_return_richness=post_return_richness,
+                    migration_replacement_count=migration_replacement_count,
+                    realized_migration_fraction=realized_migration_fraction,
+                    post_migration_richness=post_migration_richness,
+                    expected_host_feedback_after_migration=(
+                        realized_feedback * (1.0 - realized_migration_fraction)
+                    ),
                     mean_adult_richness=(adult_richness / config.host.population_size),
                     mean_adult_gene_diversity=(
                         adult_gene_diversity / config.host.population_size
@@ -1249,9 +1375,7 @@ def run_simulation(
                 ):
                     write_environment(host_generation)
 
-                at_replicate_end = (
-                    host_generation == config.host.host_generations
-                )
+                at_replicate_end = host_generation == config.host.host_generations
                 if at_replicate_end:
                     _save_population(
                         output / f"final_environment_rep{replicate:03d}.npz",

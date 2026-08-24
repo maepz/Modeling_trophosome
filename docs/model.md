@@ -15,17 +15,19 @@ comparator, and V2.2 is the coalescent/tree-sequence comparator.
 
 ## Biological cycle
 
-For each host generation, the model applies six stages:
+For each host generation, the model applies eight stages:
 
 1. draw `infection_bottleneck` bacterial cells from the environmental pool;
 2. expand the within-host population by a fixed multiplicative growth factor;
 3. cap it at `carrying_capacity` and run `steady_generations` at that size;
 4. sample `escape_fraction` of the adult cells without replacement;
 5. add all released cells to the non-depleted effective reservoir;
-6. either return the mixed representation to its fixed effective capacity by
-   neutral Hamilton apportionment (Phase 1), or apply one free-living
-   fitness-weighted Wright--Fisher transition to that capacity (Phase 2), and
-   repeat.
+6. return the mixed representation to its fixed effective capacity by neutral
+   Hamilton apportionment;
+7. optionally replace a fixed fraction of the focal environment with bacteria
+   sampled from a fixed regional source; and
+8. optionally apply one free-living fitness-weighted Wright--Fisher transition,
+   then repeat.
 
 The infection bottleneck, growth phase, adult phase, escape, and horizontal
 re-acquisition therefore remain explicit.
@@ -89,11 +91,10 @@ seeded result.
 ## Effective environmental reservoir
 
 The Phase 1 default is `sampling_mode="reservoir"`. Environmental counts are
-sampling weights for a spatially and temporally bounded effective reservoir, not
-a literal census of all free-living bacteria. Infection samples do not deplete
-it. The reservoir is dormant between host returns, so its composition changes
-only when released symbionts are added and the mixed representation is returned
-to its fixed capacity
+sampling weights for a spatially and temporally bounded focal effective
+reservoir, not a literal census of all free-living bacteria. Infection samples
+do not deplete it. Host return and optional regional exchange operate on this
+focal population. Its fixed capacity is
 
 ```text
 N_E = capacity_ratio * carrying_capacity.
@@ -106,14 +107,38 @@ regulation is
 alpha_t = R_t / (N_E + R_t).
 ```
 
-With `free_living_selection=false`, this makes the stored environmental state
-after generation `t` identical to the `pre_infection` state of generation
-`t+1`; there is no separate `pre_return` or environmental turnover stage. With
-`free_living_selection=true`, the mixed pool instead undergoes one multinomial
-free-living transition with probabilities proportional to abundance times
-free-living fitness. The optional `finite` infection mode is retained for
-explicit sensitivity experiments and samples without replacement, but it is not
-the agreed Phase 1 reservoir assumption.
+The mixed focal pool is first returned to `N_E` by neutral Hamilton
+apportionment. With migration disabled, this post-return state passes directly
+to the optional selection stage.
+
+With `migration.mode="fixed_regional_pool"`, the model calculates
+
+```text
+M = round(migration.fraction * N_E).
+```
+
+Exactly `M` focal cells emigrate as a without-replacement sample, and exactly
+`M` immigrants are sampled with replacement from `regional_counts`. The focal
+capacity therefore remains `N_E`. The regional composition is a fixed sampling
+distribution: it is not depleted by immigration and does not receive or retain
+the focal emigrants. Thus the model represents physical immigration and
+emigration at the focal boundary, but only the fixed regional pool influences
+composition across generations. The sum of `regional_counts` sets no regional
+census size; only its relative strain weights matter.
+
+The focal and regional vectors share strain positions. A zero is permitted in
+either vector when the strain occurs in the other, allowing focal-only,
+regional-only and initially shared strains. Their shared strain IDs and fitness
+metadata make later origins unambiguous.
+
+With `free_living_selection=true`, the post-migration focal pool undergoes one
+multinomial free-living transition with probabilities proportional to abundance
+times free-living fitness. With selection disabled, it proceeds unchanged to
+the next infection. In either case, the stored environmental state after
+generation `t` is the `pre_infection` state of generation `t+1`. The optional
+`finite` infection mode is retained for explicit sensitivity experiments and
+samples without replacement, but it is not the agreed Phase 1 reservoir
+assumption.
 
 ## Important parameter semantics
 
@@ -138,14 +163,16 @@ multiplicative reduction at every parental value.
 `within_host_selection` and `free_living_selection` activate the two fitness
 dimensions independently. Free-living selection represents exactly one
 free-living Wright--Fisher generation per host-population generation, after host
-return and before the next infection sample. It creates drift and selection but
-no environmental mutation.
+return, neutral regulation and migration, but before the next infection sample.
+It creates drift and selection but no environmental mutation.
 
 ## Not yet represented
 
 - complete genomes, finite sites, recombination, or horizontal gene transfer;
 - cell-level genealogy or molecular branch lengths; the lineage table records
   strain-changing mutation events, not every cell birth;
+- dynamic regional demes, regional depletion, or feedback of focal emigrants
+  into the regional composition;
 - trophosome spatial subdivision or lobe-specific migration;
 - overlapping host cohorts, variable host lifespan, or host demography;
 - mutation in the free-living phase or a configurable number of free-living
