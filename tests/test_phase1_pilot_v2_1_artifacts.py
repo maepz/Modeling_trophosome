@@ -39,6 +39,7 @@ class Phase1PilotV21ArtifactTests(unittest.TestCase):
                 '  if [[ "$1" != "activate" || "$2" != "trophosome" ]]; then\n'
                 "    return 98\n"
                 "  fi\n"
+                '  : "$TROPHOSOME_TEST_UNSET_CONDA_BACKUP_VARIABLE"\n'
                 '  export PATH="$FAKE_MAMBA_ENV_BIN:$PATH"\n'
                 "}\n"
                 "HOOK\n",

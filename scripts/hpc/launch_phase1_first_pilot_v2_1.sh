@@ -24,7 +24,15 @@ if ! MAMBA_SHELL_HOOK="$("$MAMBA_EXECUTABLE" shell hook -s bash)"; then
 fi
 eval "$MAMBA_SHELL_HOOK"
 
-if ! mamba activate "$MAMBA_ENVIRONMENT"; then
+# Conda package activation/deactivation hooks commonly inspect optional backup
+# variables such as CONDA_BACKUP_CXX without first checking whether they exist.
+# Temporarily suspend nounset while those third-party hooks run, then restore
+# the launcher's strict shell settings before doing any project work.
+set +u
+MAMBA_ACTIVATION_STATUS=0
+mamba activate "$MAMBA_ENVIRONMENT" || MAMBA_ACTIVATION_STATUS=$?
+set -u
+if ((MAMBA_ACTIVATION_STATUS != 0)); then
   echo "Could not activate mamba environment: $MAMBA_ENVIRONMENT" >&2
   exit 2
 fi
