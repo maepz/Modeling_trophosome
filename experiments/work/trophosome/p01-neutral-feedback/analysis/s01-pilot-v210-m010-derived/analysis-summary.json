@@ -1,0 +1,86 @@
+{
+  "analysis_schema_version": "1.1.0",
+  "analysis_scope": "exploratory feasibility and calibration pilot",
+  "audit_issues": [],
+  "audit_status": "PASS",
+  "benchmark_hardware_note": "HPC run: Linux-4.18.0-553.155.1.el8_10.x86_64-x86_64-with-glibc2.28",
+  "benchmark_platforms": [
+    "Linux-4.18.0-553.155.1.el8_10.x86_64-x86_64-with-glibc2.28"
+  ],
+  "cells": 20,
+  "experiment_id": "phase1-first-pilot-v210-m010",
+  "initial_metrics": {
+    "evenness": 0.7671902580535777,
+    "gene_diversity": 0.9549670784452735,
+    "hill_q1": 34.227920618960724,
+    "hill_q2": 22.205976549506016,
+    "richness": 100,
+    "shannon": 3.5330417033688466,
+    "simpson": 0.9549670784452735,
+    "top_frequency": 0.093442162
+  },
+  "limitations": [
+    "Three independent populations per cell support descriptive pilot inference only.",
+    "Five host passages do not test equilibrium.",
+    "Migration is fixed at m=0.1, so this pilot does not estimate the effect of m.",
+    "The regional pool begins with the focal composition; alternative regional compositions are not tested.",
+    "Complete labelled environmental composition is retained only at generation 5."
+  ],
+  "migration": {
+    "fraction_m": 0.1,
+    "mode": "fixed_regional_pool",
+    "regional_composition": "identical to initial ip001-fisher100",
+    "regional_pool_depleted": false,
+    "regional_pool_id": "rp001-fisher100-fixed",
+    "replacement_count_per_passage": 100000000,
+    "stage": "after host return and environmental capacity regulation"
+  },
+  "model_spec_version": "2.1.0",
+  "mutation_materialization": {
+    "configured_limit_per_transition": 100000,
+    "largest_fraction_of_limit": 0.0001,
+    "largest_realized_count": 10
+  },
+  "output_schema_version": "2.3.0",
+  "overall_resources": {
+    "elapsed_hours": 5.7403586650118985,
+    "output_mib": 4260.125071525574,
+    "peak_rss_mib": 492.28515625
+  },
+  "pilot_tier": "all",
+  "populations": 60,
+  "raw_scratch": "/data/qiulab/CRF_project/scratch/trophosome",
+  "resources_by_seed_block": {
+    "sb0001": {
+      "elapsed_minutes": 114.59804275108327,
+      "output_mib": 1420.2825164794922,
+      "peak_rss_mib": 489.16015625,
+      "populations": 20
+    },
+    "sb0002": {
+      "elapsed_minutes": 114.87063839546464,
+      "output_mib": 1419.875906944275,
+      "peak_rss_mib": 487.18359375,
+      "populations": 20
+    },
+    "sb0003": {
+      "elapsed_minutes": 114.95283875416595,
+      "output_mib": 1419.9666481018066,
+      "peak_rss_mib": 492.28515625,
+      "populations": 20
+    }
+  },
+  "seed_blocks": [
+    "sb0001",
+    "sb0002",
+    "sb0003"
+  ],
+  "software_git_commits": [
+    "84938e61a3c1af84393e0ceb59cb4ce6748cc00a"
+  ],
+  "software_version": "0.7.0",
+  "source_sha256": [
+    "e278d154be073297b2fd80ec86909fbb9ce3b30ac12f101fd130d1a963fc61ab"
+  ],
+  "variant_id": "v210-m010"
+}

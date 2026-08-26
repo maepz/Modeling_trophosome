@@ -1,0 +1,44 @@
+{
+  "analysis_audit": "PASS",
+  "assets_path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/figures/phase1-pilot-v210-m010-report",
+  "complete": true,
+  "completed_at": "2026-08-26T13:45:38.114156+00:00",
+  "experiment_id": "phase1-first-pilot-v210-m010",
+  "input_fingerprint_sha256": "8e46bb215856d2b1b017635c1ed9c8b3fc4f96ec479fec37dfd6436199e56ff4",
+  "markdown_path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/phase1-first-pilot-v210-m010-report.md",
+  "outputs": [
+    {
+      "bytes": 2106927,
+      "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/output/pdf/phase1-first-pilot-v210-m010-report.pdf",
+      "sha256": "5acfa0872119b0b23ffa39cc76214b8b4e28f2c1d0a796d19cf7c9dc79c6fc71"
+    },
+    {
+      "bytes": 15725,
+      "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/phase1-first-pilot-v210-m010-report.md",
+      "sha256": "dc9c309e54303295c9acc1b4c7898a06abb046edebea43f3dc11e3bb1f12b501"
+    },
+    {
+      "bytes": 2832,
+      "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s01-pilot-v210-m010-derived/analysis-summary.json",
+      "sha256": "836c93dad41decce0d7b0695293f749e5ae29846383d70e009c705e6dfc1f174"
+    },
+    {
+      "bytes": 36763,
+      "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s01-pilot-v210-m010-derived/run-endpoints.tsv",
+      "sha256": "9861fc325b92220eacfce2b2c1221f56131879b5230279dfa4acf03216229e9c"
+    },
+    {
+      "bytes": 39401,
+      "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s01-pilot-v210-m010-derived/environment-trajectories.tsv",
+      "sha256": "603f477fb16717784ee7514441d666b665821599e5e8921f9f1fbd79ff00b844"
+    },
+    {
+      "bytes": 35914,
+      "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s01-pilot-v210-m010-derived/cell-summaries.tsv",
+      "sha256": "c1aa7ac0ee753c9ebabd64d991531e642caf0bf6b84dddb4ba4f0bb92f0dcab1"
+    }
+  ],
+  "pdf_path": "/data/qiulab/CRF_project/work/Modeling_trophosome/output/pdf/phase1-first-pilot-v210-m010-report.pdf",
+  "report_completion_schema_version": "1.0.0",
+  "variant_id": "v210-m010"
+}
