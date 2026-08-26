@@ -116,3 +116,43 @@ bash scripts/hpc/launch_phase1_first_pilot_v2_1.sh --report-only
 An unchanged, successfully fingerprinted report is skipped on later launcher
 runs. Use `--no-report` only when simulations should finish without automatic
 analysis and knitting.
+
+## Phase 1 second pilot: stationarity and precision
+
+The second pilot narrows the completed first-pilot design to six sentinels and
+extends every population to 250 host passages. Twelve matched seed blocks give
+72 populations. The largest host-population size is `H = 10,000`; it is paired
+with `H = 100` at the same total return of one billion cells. Complete labelled
+environmental counts are retained at every passage. Adult counts are complete
+for `H = 100` and use the deterministic 100-host panel for `H = 10,000`.
+
+Generate or verify the 82 portable configuration/manifest files and both
+registry sections with:
+
+```bash
+python scripts/prepare_phase1_second_pilot.py --write
+python scripts/prepare_phase1_second_pilot.py --verify
+```
+
+The HPC workflow is:
+
+```bash
+bash scripts/hpc/launch_phase1_second_pilot.sh --prepare-only
+bash scripts/hpc/launch_phase1_second_pilot.sh --dry-run
+bash scripts/hpc/launch_phase1_second_pilot.sh
+```
+
+Completed runs and valid checkpoints are idempotently skipped or resumed. Once
+all 72 runs pass the completion gate, the launcher automatically creates a
+self-contained PDF report and an editable Markdown companion. The analysis
+reports both the final stationarity screen and the earliest assessed generation
+from which all later screens remain satisfied. Run the same audit, analysis and
+report later without simulation using:
+
+```bash
+bash scripts/hpc/launch_phase1_second_pilot.sh --report-only
+```
+
+See [`scripts/hpc/README.md`](../scripts/hpc/README.md) for the server setup,
+full sentinel table, expected resource use, interruption procedure, output
+locations, and direct stand-alone report command.

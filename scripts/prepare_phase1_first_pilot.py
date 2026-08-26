@@ -673,6 +673,33 @@ def build_files(repository: Path) -> dict[Path, str]:
     return files
 
 
+def _registry_rows(text: str) -> tuple[list[str], list[dict[str, str]]]:
+    reader = csv.DictReader(io.StringIO(text))
+    return list(reader.fieldnames or ()), list(reader)
+
+
+def _registry_subset_matches(path: Path, expected: str) -> bool:
+    if not path.is_file():
+        return False
+    expected_fields, expected_rows = _registry_rows(expected)
+    actual_fields, actual_rows = _registry_rows(path.read_text(encoding="utf-8"))
+    managed_cell_ids = {row["cell_id"] for row in expected_rows}
+    managed_actual = [row for row in actual_rows if row["cell_id"] in managed_cell_ids]
+    return actual_fields == expected_fields and managed_actual == expected_rows
+
+
+def _registry_text_preserving_later_stages(path: Path, expected: str) -> str:
+    if not path.is_file():
+        return expected
+    fields, expected_rows = _registry_rows(expected)
+    actual_fields, actual_rows = _registry_rows(path.read_text(encoding="utf-8"))
+    if actual_fields != fields:
+        raise ValueError(f"registry columns differ: {path}")
+    managed_cell_ids = {row["cell_id"] for row in expected_rows}
+    later_rows = [row for row in actual_rows if row["cell_id"] not in managed_cell_ids]
+    return _csv_text(expected_rows + later_rows, fields)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -687,11 +714,19 @@ def main() -> int:
         parser.error("choose exactly one of --write or --verify")
     repository = args.repository.resolve()
     files = build_files(repository)
+    registry_paths = {
+        repository / "experiments/work/trophosome/registry/cells.csv",
+        repository / "experiments/work/trophosome/registry/cell_parameters.csv",
+    }
     if args.verify:
         mismatches = [
             str(path.relative_to(repository))
             for path, expected in files.items()
-            if not path.is_file() or path.read_text(encoding="utf-8") != expected
+            if (
+                not _registry_subset_matches(path, expected)
+                if path in registry_paths
+                else not path.is_file() or path.read_text(encoding="utf-8") != expected
+            )
         ]
         if mismatches:
             raise SystemExit("pilot files differ:\n" + "\n".join(mismatches))
@@ -699,6 +734,8 @@ def main() -> int:
         return 0
     for path, content in files.items():
         path.parent.mkdir(parents=True, exist_ok=True)
+        if path in registry_paths:
+            content = _registry_text_preserving_later_stages(path, content)
         path.write_text(content, encoding="utf-8")
     print(f"Wrote {len(files)} Phase 1 first-pilot files")
     return 0

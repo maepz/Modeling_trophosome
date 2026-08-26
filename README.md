@@ -197,6 +197,12 @@ its figures. See the [pilot reporting tutorial](docs/pilot-reporting-tutorial.md
 for the standardized input tables, a complete example and instructions for
 adding future experimental cells.
 
+The maintained Phase 1 server workflows, including checkpoint/resume behavior
+and automatic or stand-alone reports, are documented in the
+[HPC workflow guide](scripts/hpc/README.md). The current second pilot uses six
+sentinel conditions, 12 matched populations per condition, and 250 repeated
+host passages.
+
 ## Model versions and scientific documentation
 
 The command `trophosome run` uses `wright_fisher_counts`, the maintained main

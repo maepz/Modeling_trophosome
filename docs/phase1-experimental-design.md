@@ -569,17 +569,21 @@ decision rule.
 
 ### Stage 2: equilibrium and precision pilot
 
-Choose approximately six sentinel conditions representing:
+The frozen second pilot uses six sentinel conditions selected from the
+model-2.1 first pilot: migration-only no return; mutation-free and
+mutation-enabled passage at baseline feedback; `H = 100` and `H = 10,000` at
+fixed `R = 10^9`; and weak and strong feedback. It uses 12 independent matched
+seed blocks and 250 host passages for every cell. The fixed regional-pool
+migration fraction is `m = 0.1` and selection is disabled.
 
-- no return;
-- mutation-free passage at baseline feedback;
-- mutation-enabled passage at baseline feedback;
-- few-host and many-host extremes at fixed (R); and
-- weak and strong feedback.
-
-Begin with 12 independent seed blocks. Use the generation rule and convergence
-diagnostics below. This stage estimates the required run length and number of
-replicates for confirmatory contrasts.
+Complete labelled environmental compositions are retained at every passage so
+late-run stationarity and continuing fluctuation can be assessed. The analysis
+uses four predeclared diagnostic windows, two overlapping three-window
+assessments, equivalence bounds, rank-normalized split R-hat and approximate
+effective sample size. Passing is described as a **stationarity screen**, not
+proof of equilibrium, because this pilot does not test convergence from
+contrasting initial environmental compositions. Paired variance across the 12
+seed blocks determines the recommended confirmatory replicate number.
 
 ### Stage 3: exploratory parameter mapping
 
@@ -1018,7 +1022,7 @@ Retain the agreed output specification.
 
 | Output | Required content and use |
 |---|---|
-| `environment_counts.csv` | Labelled environmental counts, frequencies, and fitness metadata. Phase 1 pilot configurations use `environment_counts_mode = "final"`, so only the endpoint of each replicate is retained. |
+| `environment_counts.csv` | Labelled environmental counts, frequencies, and fitness metadata. The first pilot uses `environment_counts_mode = "final"`; the 250-passage second pilot uses `"all"` for stationarity and fluctuation analyses. |
 | `infection_counts.csv` | Infection founders by host and generation. Source for founder coverage and representativeness. |
 | `host_adult_summaries.csv` | Richness, diversity, and mean fitness for every adult host. |
 | `host_adult_counts.csv` | Full adult counts for sentinel/mechanistic runs or a reproducibly selected host panel for large mapping runs. |
@@ -1034,14 +1038,16 @@ Recommended adult-count modes are:
 
 - full adult counts for first-pilot and mechanistic runs with `H <= 100`;
 - a deterministic panel of 100 hosts when `H = 1,000` during mapping;
+- a deterministic panel of 100 hosts for the second-pilot `H = 10,000` sentinel;
 - full counts for selected confirmatory cells when projected storage permits; and
 - adult summaries for every host in every run.
 
 Raw results should be written outside Git. After quality control, make each run
 directory immutable, generate SHA-256 checksums, and then compress or transfer
 it to the research data store. The other required scientific tables remain
-available, but successful Phase 1 pilot runs retain only the final labelled
-environmental state rather than a complete environmental composition history.
+available. Successful first-pilot runs retain only the final labelled
+environmental state, whereas the stationarity-focused second pilot retains the
+complete environmental composition history.
 The verified final state is stored both as `environment_counts.csv` and as the
 checksummed `final_environment_repNNN.npz` recovery-independent artifact.
 

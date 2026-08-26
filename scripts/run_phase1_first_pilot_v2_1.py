@@ -187,11 +187,11 @@ def _scratch_manifest(
 ) -> dict[str, object]:
     return {
         "scratch_manifest_schema_version": "1.1.0",
-        "experiment_id": EXPERIMENT_ID,
-        "variant_id": VARIANT_TAG,
+        "experiment_id": row["experiment_id"],
+        "variant_id": row["variant_id"],
         "run_id": row["run_id"],
         "cell_id": row["cell_id"],
-        "pilot_tier": row["pilot_tier"],
+        "pilot_tier": row.get("pilot_tier", "second-pilot"),
         "seed_block_id": row["seed_block_id"],
         "master_seed": int(row["master_seed"]),
         "within_run_replicate_index": int(row["within_run_replicate_index"]),
@@ -270,7 +270,7 @@ def _run_one(
     config = work / row["config_path"]
     output = scratch / row["scratch_relative_path"]
     output.mkdir(parents=True, exist_ok=True)
-    lock_directory = scratch / "_launch-locks" / VARIANT_TAG
+    lock_directory = scratch / "_launch-locks" / row["variant_id"]
     lock_directory.mkdir(parents=True, exist_ok=True)
     lock_path = lock_directory / f"{row['run_id']}.lock"
 
@@ -324,8 +324,8 @@ def _run_one(
         summary_path = output / "execution-summary.json"
         summary: dict[str, Any] = {
             "execution_summary_schema_version": "1.1.0",
-            "experiment_id": EXPERIMENT_ID,
-            "variant_id": VARIANT_TAG,
+            "experiment_id": row["experiment_id"],
+            "variant_id": row["variant_id"],
             "run_id": row["run_id"],
             "cell_id": row["cell_id"],
             "seed_block_id": row["seed_block_id"],

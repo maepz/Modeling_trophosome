@@ -16,6 +16,10 @@ output schema have independent versions recorded in every simulation.
   metadata, and post-return and post-migration richness summaries.
 - Distributional validation of without-replacement focal emigration and
   with-replacement immigration from the fixed regional composition.
+- A frozen six-sentinel, 72-population Phase 1 second-pilot workflow with
+  checkpoint/resume support, 250-passage environmental trajectories, automatic
+  auditing, stationarity diagnostics, precision recommendations, and a
+  self-contained biological PDF report.
 
 ### Changed
 
