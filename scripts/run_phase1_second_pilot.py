@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import os
 import signal
@@ -42,6 +43,13 @@ EXPECTED_CELLS = {cell.cell_id for cell in CELLS}
 EXPECTED_SEED_BLOCKS = {seed_block_id for seed_block_id, _ in SEED_BLOCKS}
 EXPECTED_RUNS = len(EXPECTED_CELLS) * len(EXPECTED_SEED_BLOCKS)
 MANIFEST_NAME = f"{DESIGN_STEM}-runs.tsv"
+
+
+def _resolved_config_sha256(payload: dict[str, Any]) -> str:
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
+    return hashlib.sha256(serialized).hexdigest()
 
 
 def _normalise_cell_id(value: str) -> str:
@@ -164,7 +172,9 @@ def _write_launcher_summary(
     return path
 
 
-def _report_readiness_issues(rows: list[dict[str, str]], *, scratch: Path) -> list[str]:
+def _report_readiness_issues(
+    rows: list[dict[str, str]], *, work: Path, scratch: Path
+) -> list[str]:
     issues: list[str] = []
     if len(rows) != EXPECTED_RUNS:
         issues.append(f"manifest contains {len(rows)} runs; expected {EXPECTED_RUNS}")
@@ -181,6 +191,21 @@ def _report_readiness_issues(rows: list[dict[str, str]], *, scratch: Path) -> li
             continue
         if completion.get("complete") is not True:
             issues.append(f"{row['run_id']}: completion marker is not committed")
+        config = load_config(work / row["config_path"])
+        expected_resolved = json.loads(json.dumps(config.to_dict()))
+        resolved_path = run_directory / "resolved_config.json"
+        try:
+            observed_resolved = json.loads(resolved_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            issues.append(
+                f"{row['run_id']}: resolved_config.json is unreadable ({exc})"
+            )
+            continue
+        if observed_resolved != expected_resolved:
+            issues.append(
+                f"{row['run_id']}: resolved configuration differs from frozen TOML"
+            )
+        expected_resolved_hash = _resolved_config_sha256(expected_resolved)
         expected_versions = {
             "model_spec_version": MODEL_SPEC_VERSION,
             "output_schema_version": OUTPUT_SCHEMA_VERSION,
@@ -192,8 +217,10 @@ def _report_readiness_issues(rows: list[dict[str, str]], *, scratch: Path) -> li
                     f"{row['run_id']}: {field}={completion.get(field)!r}; "
                     f"expected {expected!r}"
                 )
-        if completion.get("config_sha256") != row["config_sha256"]:
-            issues.append(f"{row['run_id']}: completed configuration hash differs")
+        if completion.get("config_sha256") != expected_resolved_hash:
+            issues.append(
+                f"{row['run_id']}: completed resolved-configuration hash differs"
+            )
         output_sizes = completion.get("output_sizes")
         if not isinstance(output_sizes, dict):
             issues.append(f"{row['run_id']}: output-size audit is missing")
@@ -326,7 +353,7 @@ def main() -> int:
             )
         return 0
     if args.report_only:
-        issues = _report_readiness_issues(rows, scratch=scratch)
+        issues = _report_readiness_issues(rows, work=work, scratch=scratch)
         if issues:
             print("The report completion gate failed:\n" + "\n".join(issues))
             return 1
@@ -407,7 +434,7 @@ def main() -> int:
         return 1
     if args.no_report:
         return 0
-    readiness_issues = _report_readiness_issues(rows, scratch=scratch)
+    readiness_issues = _report_readiness_issues(rows, work=work, scratch=scratch)
     if readiness_issues:
         print(
             f"Automatic report deferred because the complete {EXPECTED_RUNS}-run "

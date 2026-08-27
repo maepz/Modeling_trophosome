@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import math
 import statistics
@@ -25,6 +26,8 @@ from analyse_first_pilot import (
     trace_roots,
     write_tsv,
 )
+
+from trophosome.config import load_config
 
 VARIANT_TAG = "v210-m010-g250"
 EXPERIMENT_ID = f"phase1-second-pilot-{VARIANT_TAG}"
@@ -72,6 +75,13 @@ def _atomic_json(path: Path, payload: dict[str, Any]) -> None:
     temporary.replace(path)
 
 
+def _resolved_config_sha256(payload: dict[str, Any]) -> str:
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode(
+        "utf-8"
+    )
+    return hashlib.sha256(serialized).hexdigest()
+
+
 def _audit_payload(status: str, issues: list[str]) -> dict[str, Any]:
     return {
         "analysis_audit_schema_version": "1.0.0",
@@ -100,10 +110,13 @@ def completion_gate_issues(
     for run in run_rows:
         run_id = run.get("run_id", "unknown-run")
         config = work / run.get("config_path", "")
+        frozen_resolved: dict[str, Any] | None = None
         if not config.is_file():
             issues.append(f"{run_id}: configuration is missing")
         elif sha256(config) != run.get("config_sha256"):
             issues.append(f"{run_id}: configuration checksum differs from manifest")
+        else:
+            frozen_resolved = json.loads(json.dumps(load_config(config).to_dict()))
 
         output = scratch / run.get("scratch_relative_path", "")
         missing = [name for name in REQUIRED_RAW_FILES if not (output / name).is_file()]
@@ -129,8 +142,18 @@ def completion_gate_issues(
                     f"{run_id}: {field}={completion.get(field)!r}; "
                     f"expected {expected!r}"
                 )
-        if completion.get("config_sha256") != run.get("config_sha256"):
-            issues.append(f"{run_id}: completed configuration hash differs")
+        resolved_path = output / "resolved_config.json"
+        try:
+            observed_resolved = json.loads(resolved_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            issues.append(f"{run_id}: unreadable resolved_config.json ({exc})")
+            continue
+        if frozen_resolved is None:
+            continue
+        if observed_resolved != frozen_resolved:
+            issues.append(f"{run_id}: resolved configuration differs from frozen TOML")
+        if completion.get("config_sha256") != _resolved_config_sha256(frozen_resolved):
+            issues.append(f"{run_id}: completed resolved-configuration hash differs")
         final_path = output / "final_environment_rep000.npz"
         recorded_final = completion.get("final_environment_sha256", {}).get(
             final_path.name

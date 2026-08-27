@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import tempfile
 import unittest
 from pathlib import Path
+
+from trophosome.config import load_config
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 WORK = REPOSITORY / "experiments/work/trophosome"
@@ -109,6 +112,44 @@ class Phase1SecondPilotAnalysisTests(unittest.TestCase):
         self.assertEqual(len(rows), 72)
         self.assertGreaterEqual(len(issues), 72)
         self.assertTrue(any("completion.json" in issue for issue in issues))
+
+    def test_completion_gate_distinguishes_file_and_resolved_config_hashes(
+        self,
+    ) -> None:
+        rows = self.module.read_tsv(RUNS)
+        run = rows[0]
+        config = load_config(WORK / run["config_path"])
+        resolved = config.to_dict()
+        resolved_hash = self.module._resolved_config_sha256(resolved)
+        self.assertNotEqual(resolved_hash, run["config_sha256"])
+
+        with tempfile.TemporaryDirectory() as directory:
+            scratch = Path(directory)
+            output = scratch / run["scratch_relative_path"]
+            output.mkdir(parents=True)
+            for name in self.module.REQUIRED_RAW_FILES:
+                if name not in {"completion.json", "resolved_config.json"}:
+                    (output / name).write_bytes(b"")
+            (output / "resolved_config.json").write_text(
+                json.dumps(resolved), encoding="utf-8"
+            )
+            final = output / "final_environment_rep000.npz"
+            completion = {
+                "complete": True,
+                "model_spec_version": self.module.MODEL_SPEC_VERSION,
+                "output_schema_version": self.module.OUTPUT_SCHEMA_VERSION,
+                "software_version": self.module.SOFTWARE_VERSION,
+                "config_sha256": resolved_hash,
+                "final_environment_sha256": {final.name: self.module.sha256(final)},
+                "output_sizes": {},
+            }
+            (output / "completion.json").write_text(
+                json.dumps(completion), encoding="utf-8"
+            )
+            issues = self.module.completion_gate_issues(
+                [run], work=WORK, scratch=scratch
+            )
+        self.assertEqual(issues, ["manifest contains 1 runs; expected 72"])
 
 
 if __name__ == "__main__":
