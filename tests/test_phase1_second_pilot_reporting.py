@@ -91,6 +91,7 @@ def _fixture(analysis: Path) -> None:
                         }
                     )
     stationarity: list[dict[str, object]] = []
+    separated: list[dict[str, object]] = []
     for cell_number, cell_id in enumerate(cell_ids):
         for response_number, response in enumerate(
             ("D0", "D1", "D2", "evenness", "TV")
@@ -113,6 +114,41 @@ def _fixture(analysis: Path) -> None:
                     "first_passing_assessment_generation": 200 if passed else "",
                     "persistent_stationarity_generation": 200 if passed else "",
                     "full_equilibrium_status": "not established",
+                }
+            )
+            separated.append(
+                {
+                    "cell_id": cell_id,
+                    "response": response,
+                    "assessment_end_generation": 250,
+                    "window_generations": 20,
+                    "diagnostic_version": "1.0.0",
+                    "diagnostic_scope": "post_hoc_exploratory",
+                    "within_seed_trend_status": (
+                        "inconclusive"
+                        if cell_number == 5 and response_number == 1
+                        else "stable"
+                    ),
+                    "within_seed_trend_direction": "none",
+                    "largest_trend_ci_to_margin_ratio": 0.5,
+                    "between_seed_location_status": "stable",
+                    "between_seed_location_direction": "none",
+                    "between_seed_spread_status": "stable",
+                    "between_seed_spread_direction": "none",
+                    "largest_spread_ci_to_margin_ratio": 0.4,
+                    "between_seed_distribution_status": "stable",
+                    "between_seed_sd_final_window": 0.1,
+                    "between_seed_sd_ci90_lower": 0.05,
+                    "between_seed_sd_ci90_upper": 0.15,
+                    "heterogeneity_margin": 1.0,
+                    "between_seed_heterogeneity_status": "negligible",
+                    "rank_normalized_split_rhat_secondary": 1.1,
+                    "approximate_combined_ess_secondary": 200,
+                    "final_classification": (
+                        "stability_unresolved"
+                        if cell_number == 5 and response_number == 1
+                        else "stable_with_negligible_heterogeneity"
+                    ),
                 }
             )
     contrasts = (
@@ -170,6 +206,7 @@ def _fixture(analysis: Path) -> None:
     _write_tsv(analysis / "environment-trajectories.tsv", trajectories)
     _write_tsv(analysis / "run-window-summaries.tsv", windows)
     _write_tsv(analysis / "stationarity-screen.tsv", stationarity)
+    _write_tsv(analysis / "separated-stability-diagnostic.tsv", separated)
     _write_tsv(analysis / "precision-recommendations.tsv", precision)
 
 
@@ -195,7 +232,11 @@ class Phase1SecondPilotReportingTests(unittest.TestCase):
             self.assertIn("| 10,000 |", markdown)
             self.assertIn("Stationarity screen", markdown)
             self.assertIn("Short glossary", markdown)
-            self.assertEqual(len(list(artifacts.assets.glob("*.png"))), 4)
+            self.assertIn("not expected to converge to an identical", markdown)
+            self.assertIn("Individual seed-block trajectories", markdown)
+            self.assertIn("Post-hoc separated stability diagnostic", markdown)
+            self.assertIn("29 of 30 responses", markdown)
+            self.assertEqual(len(list(artifacts.assets.glob("*.png"))), 6)
 
 
 if __name__ == "__main__":

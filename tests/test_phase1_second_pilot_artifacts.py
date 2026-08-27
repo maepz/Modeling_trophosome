@@ -55,7 +55,7 @@ class Phase1SecondPilotArtifactTests(unittest.TestCase):
             capture_output=True,
             text=True,
         )
-        self.assertIn("Verified 82 second-pilot files", result.stdout)
+        self.assertIn("Verified 130 second-pilot files", result.stdout)
 
     def test_frozen_design_has_six_sentinels_and_h_is_at_most_10000(self) -> None:
         path = PHASE / "design" / f"phase1-second-pilot-{VARIANT}-cells.tsv"
@@ -73,16 +73,16 @@ class Phase1SecondPilotArtifactTests(unittest.TestCase):
         self.assertEqual(many["source_first_pilot_cell"], "p01-s01-c0005")
         self.assertEqual(many["host_counts_mode"], "panel")
 
-    def test_all_72_runs_freeze_outputs_migration_and_neutral_selection(self) -> None:
+    def test_all_120_runs_freeze_outputs_migration_and_neutral_selection(self) -> None:
         path = PHASE / "manifests" / f"phase1-second-pilot-{VARIANT}-runs.tsv"
         with path.open(encoding="utf-8") as handle:
             runs = list(csv.DictReader(handle, delimiter="\t"))
-        self.assertEqual(len(runs), 72)
-        self.assertEqual(len({row["run_id"] for row in runs}), 72)
-        self.assertEqual(len({row["scratch_relative_path"] for row in runs}), 72)
+        self.assertEqual(len(runs), 120)
+        self.assertEqual(len({row["run_id"] for row in runs}), 120)
+        self.assertEqual(len({row["scratch_relative_path"] for row in runs}), 120)
         self.assertEqual(
             {row["seed_block_id"] for row in runs},
-            {f"sb{number:04d}" for number in range(1, 13)},
+            {f"sb{number:04d}" for number in range(1, 21)},
         )
         for row in runs:
             config = load_config(WORK / row["config_path"])
@@ -101,12 +101,17 @@ class Phase1SecondPilotArtifactTests(unittest.TestCase):
         path = PHASE / "manifests" / f"phase1-second-pilot-{VARIANT}-manifest.json"
         payload = json.loads(path.read_text(encoding="utf-8"))
         resources = payload["resource_projection_from_first_pilot"]
-        self.assertLess(resources["aggregate_output_gib"], 10)
-        self.assertLess(resources["aggregate_runtime_hours"], 40)
+        self.assertLess(resources["aggregate_output_gib"], 15)
+        self.assertLess(resources["aggregate_runtime_hours"], 65)
         self.assertEqual(
             payload["automatic_reporting"]["completion_gate"],
-            "all 72 populations complete and internally valid",
+            "all 120 populations complete and internally valid",
         )
+        self.assertEqual(
+            payload["closure_batch"]["seed_block_ids"],
+            [f"sb{number:04d}" for number in range(13, 21)],
+        )
+        self.assertEqual(payload["closure_batch"]["populations"], 48)
         self.assertEqual(
             payload["automatic_reporting"]["report_only_option"], "--report-only"
         )
@@ -162,7 +167,7 @@ class Phase1SecondPilotArtifactTests(unittest.TestCase):
                 encoding="utf-8",
             )
             issues = runner._report_readiness_issues([row], work=WORK, scratch=scratch)
-        self.assertEqual(issues, ["manifest contains 1 runs; expected 72"])
+        self.assertEqual(issues, ["manifest contains 1 runs; expected 120"])
 
     def test_hpc_launcher_activates_mamba_and_forwards_report_only(self) -> None:
         launcher = REPOSITORY / "scripts/hpc/launch_phase1_second_pilot.sh"
@@ -221,6 +226,45 @@ class Phase1SecondPilotArtifactTests(unittest.TestCase):
                     "--report-only",
                 ],
             )
+
+    def test_closure_launcher_selects_only_the_eight_new_seed_blocks(self) -> None:
+        launcher = REPOSITORY / "scripts/hpc/launch_phase1_second_pilot_closure.sh"
+        shared_launcher = REPOSITORY / "scripts/hpc/launch_phase1_second_pilot.sh"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            copied_closure = root / launcher.name
+            copied_shared = root / shared_launcher.name
+            copied_closure.write_bytes(launcher.read_bytes())
+            copied_shared.write_text(
+                "#!/usr/bin/env bash\nprintf '%s\\n' \"$@\" > \"$FAKE_CAPTURE\"\n",
+                encoding="utf-8",
+            )
+            copied_closure.chmod(0o755)
+            copied_shared.chmod(0o755)
+            capture = root / "closure-arguments.txt"
+            environment = os.environ.copy()
+            environment["FAKE_CAPTURE"] = str(capture)
+            subprocess.run(
+                ["bash", str(copied_closure), "--prepare-only"],
+                env=environment,
+                check=True,
+            )
+            expected: list[str] = []
+            for number in range(13, 21):
+                expected.extend(("--seed-block", f"sb{number:04d}"))
+            expected.append("--prepare-only")
+            self.assertEqual(
+                capture.read_text(encoding="utf-8").splitlines(), expected
+            )
+            rejected = subprocess.run(
+                ["bash", str(copied_closure), "--seed-block", "sb0001"],
+                env=environment,
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(rejected.returncode, 2)
+            self.assertIn("fixes seed blocks", rejected.stderr)
 
 
 if __name__ == "__main__":

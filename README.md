@@ -200,8 +200,8 @@ adding future experimental cells.
 The maintained Phase 1 server workflows, including checkpoint/resume behavior
 and automatic or stand-alone reports, are documented in the
 [HPC workflow guide](scripts/hpc/README.md). The current second pilot uses six
-sentinel conditions, 12 matched populations per condition, and 250 repeated
-host passages.
+sentinel conditions, 20 matched populations per condition after its eight-seed
+closure batch, and 250 repeated host passages.
 
 ## Model versions and scientific documentation
 

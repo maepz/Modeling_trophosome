@@ -34,6 +34,23 @@ CELL_COLOURS = {
     "p01-s02-c0026": "#C94A53",
 }
 
+STABILITY_CLASS_STYLES = {
+    "stable_with_negligible_heterogeneity": (
+        "#3A9D6F",
+        "STABLE",
+    ),
+    "stable_with_persistent_heterogeneity": (
+        "#3478A5",
+        "STABLE\nheterogeneity",
+    ),
+    "stable_heterogeneity_uncertain": (
+        "#4D9A9A",
+        "STABLE\nspread ?",
+    ),
+    "stability_unresolved": ("#E3A23B", "UNCLEAR"),
+    "continuing_change_detected": ("#C94A53", "CHANGE\ndetected"),
+}
+
 
 def _configure_matplotlib() -> None:
     """Select a headless backend and a writable, reusable font cache."""
@@ -91,12 +108,14 @@ def _load(
     list[dict[str, str]],
     list[dict[str, str]],
     list[dict[str, str]],
+    list[dict[str, str]],
 ]:
     required = {
         "summary": analysis / "analysis-summary.json",
         "trajectories": analysis / "environment-trajectories.tsv",
         "windows": analysis / "run-window-summaries.tsv",
         "stationarity": analysis / "stationarity-screen.tsv",
+        "separated": analysis / "separated-stability-diagnostic.tsv",
         "precision": analysis / "precision-recommendations.tsv",
         "design": design_path,
     }
@@ -117,6 +136,7 @@ def _load(
         _read_tsv(required["trajectories"]),
         _read_tsv(required["windows"]),
         _read_tsv(required["stationarity"]),
+        _read_tsv(required["separated"]),
         _read_tsv(required["precision"]),
     )
 
@@ -190,6 +210,117 @@ def _plot_trajectories(
     plt.close(figure)
 
 
+def _plot_seed_trajectories(
+    path: Path,
+    design: list[dict[str, str]],
+    trajectories: list[dict[str, str]],
+) -> None:
+    """Show replicate histories for the three cells with strongest seed variation."""
+
+    _configure_matplotlib()
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    focus_ids = ("p01-s02-c0022", "p01-s02-c0023", "p01-s02-c0026")
+    design_index = {row["cell_id"]: row for row in design}
+    missing = [cell_id for cell_id in focus_ids if cell_id not in design_index]
+    if missing:
+        raise ValueError("seed-trajectory figure is missing cells: " + ", ".join(missing))
+
+    grouped: dict[tuple[str, str, str], list[tuple[int, float]]] = defaultdict(list)
+    for row in trajectories:
+        if row["cell_id"] not in focus_ids:
+            continue
+        for response in ("D1", "D2", "TV"):
+            grouped[(row["cell_id"], row["seed_block_id"], response)].append(
+                (int(row["generation"]), float(row[response]))
+            )
+
+    figure, axes = plt.subplots(3, 3, figsize=(10.4, 8.2), sharex=True)
+    seed_block_count = len(
+        {
+            seed_id
+            for cell_id, seed_id, _response in grouped
+            if cell_id == focus_ids[0]
+        }
+    )
+    response_labels = {
+        "D1": "Hill D1",
+        "D2": "Hill D2",
+        "TV": "TV distance",
+    }
+    for column, cell_id in enumerate(focus_ids):
+        colour = CELL_COLOURS[cell_id]
+        cell = design_index[cell_id]
+        seed_ids = sorted(
+            {
+                seed_id
+                for candidate, seed_id, _response in grouped
+                if candidate == cell_id
+            }
+        )
+        for row_number, response in enumerate(("D1", "D2", "TV")):
+            axis = axes[row_number, column]
+            values_by_generation: dict[int, list[float]] = defaultdict(list)
+            for seed_id in seed_ids:
+                points = sorted(grouped[(cell_id, seed_id, response)])
+                generations = [generation for generation, _value in points]
+                values = [value for _generation, value in points]
+                for generation, value in points:
+                    values_by_generation[generation].append(value)
+                axis.plot(
+                    generations,
+                    values,
+                    color=colour,
+                    alpha=0.24,
+                    linewidth=0.65,
+                )
+            generations = sorted(values_by_generation)
+            medians = [np.median(values_by_generation[item]) for item in generations]
+            axis.plot(
+                generations,
+                medians,
+                color="#17232B",
+                linewidth=2.1,
+                label="Median" if row_number == 0 and column == 0 else None,
+            )
+            if column == 0:
+                axis.set_ylabel(response_labels[response])
+            if row_number == 0:
+                axis.set_title(
+                    f"{_short_cell(cell_id)}\n{cell['sentinel_role']}",
+                    fontsize=9.2,
+                    fontweight="bold",
+                    color="#173B4F",
+                )
+            if row_number == 2:
+                axis.set_xlabel("Host-population passage")
+            axis.grid(axis="y", color="#DCE3E8", linewidth=0.6)
+            axis.spines[["top", "right"]].set_visible(False)
+    axes[0, 0].legend(frameon=False, fontsize=8, loc="best")
+    figure.suptitle(
+        "Individual stochastic populations do not follow identical paths",
+        x=0.07,
+        ha="left",
+        fontsize=14,
+        fontweight="bold",
+        color="#173B4F",
+    )
+    figure.text(
+        0.07,
+        0.935,
+        f"Thin coloured lines: {seed_block_count} seed blocks per cell  |  "
+        "Thick black line: median",
+        ha="left",
+        fontsize=8.5,
+        color="#52636D",
+    )
+    figure.tight_layout(rect=(0, 0, 1, 0.91))
+    path.parent.mkdir(parents=True, exist_ok=True)
+    figure.savefig(path, dpi=200, bbox_inches="tight", facecolor="white")
+    plt.close(figure)
+
+
 def _plot_stationarity(
     path: Path,
     design: list[dict[str, str]],
@@ -253,6 +384,95 @@ def _plot_stationarity(
     for spine in axis.spines.values():
         spine.set_visible(False)
     figure.tight_layout()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    figure.savefig(path, dpi=200, bbox_inches="tight", facecolor="white")
+    plt.close(figure)
+
+
+def _plot_separated_stability(
+    path: Path,
+    design: list[dict[str, str]],
+    separated: list[dict[str, str]],
+) -> None:
+    _configure_matplotlib()
+    import matplotlib.pyplot as plt
+    import numpy as np
+    from matplotlib.colors import ListedColormap
+    from matplotlib.patches import Patch
+
+    responses = ("D0", "D1", "D2", "evenness", "TV")
+    classes = tuple(STABILITY_CLASS_STYLES)
+    class_number = {name: number for number, name in enumerate(classes)}
+    index = {(row["cell_id"], row["response"]): row for row in separated}
+    matrix = np.asarray(
+        [
+            [
+                class_number[index[(cell["cell_id"], response)]["final_classification"]]
+                for cell in design
+            ]
+            for response in responses
+        ]
+    )
+    colour_map = ListedColormap(
+        [STABILITY_CLASS_STYLES[name][0] for name in classes]
+    )
+    figure, axis = plt.subplots(figsize=(9.1, 5.0))
+    axis.imshow(matrix, cmap=colour_map, vmin=-0.5, vmax=len(classes) - 0.5)
+    for y, response in enumerate(responses):
+        for x, cell in enumerate(design):
+            row = index[(cell["cell_id"], response)]
+            classification = row["final_classification"]
+            label = STABILITY_CLASS_STYLES[classification][1]
+            if classification == "stability_unresolved":
+                unresolved: list[str] = []
+                if row["within_seed_trend_status"] != "stable":
+                    unresolved.append("T?")
+                if row["between_seed_distribution_status"] != "stable":
+                    unresolved.append("D?")
+                label += "\n" + " ".join(unresolved)
+            axis.text(
+                x,
+                y,
+                label,
+                ha="center",
+                va="center",
+                color="white",
+                fontsize=7.2,
+                fontweight="bold",
+            )
+    axis.set_xticks(range(len(design)), [_short_cell(row["cell_id"]) for row in design])
+    axis.set_yticks(range(len(responses)), responses)
+    axis.tick_params(length=0)
+    axis.set_xlabel("Sentinel cell")
+    axis.set_title(
+        "Separated diagnosis of late-run stability",
+        loc="left",
+        fontsize=13,
+        fontweight="bold",
+        color="#173B4F",
+        pad=14,
+    )
+    for spine in axis.spines.values():
+        spine.set_visible(False)
+    legend_labels = {
+        "stable_with_negligible_heterogeneity": "stable; small seed spread",
+        "stable_with_persistent_heterogeneity": "stable; persistent seed spread",
+        "stable_heterogeneity_uncertain": "stable; seed spread uncertain",
+        "stability_unresolved": "stability unresolved",
+        "continuing_change_detected": "meaningful change detected",
+    }
+    axis.legend(
+        handles=[
+            Patch(color=STABILITY_CLASS_STYLES[name][0], label=legend_labels[name])
+            for name in classes
+        ],
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.12),
+        ncol=3,
+        frameon=False,
+        fontsize=7.2,
+    )
+    figure.tight_layout(rect=(0, 0.06, 1, 1))
     path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(path, dpi=200, bbox_inches="tight", facecolor="white")
     plt.close(figure)
@@ -367,6 +587,7 @@ def _write_markdown(
     summary: dict[str, Any],
     design: list[dict[str, str]],
     stationarity: list[dict[str, str]],
+    separated: list[dict[str, str]],
     precision: list[dict[str, str]],
     figures: dict[str, Path],
 ) -> None:
@@ -383,6 +604,16 @@ def _write_markdown(
         for cell in design
     }
     maximum_precision = max(int(row["recommended_replicates"]) for row in precision)
+    stability_counts: dict[str, int] = defaultdict(int)
+    for row in separated:
+        stability_counts[row["final_classification"]] += 1
+    stable_responses = sum(
+        count
+        for classification, count in stability_counts.items()
+        if classification.startswith("stable_")
+    )
+    unresolved_responses = stability_counts["stability_unresolved"]
+    changing_responses = stability_counts["continuing_change_detected"]
     lines = [
         f"# {title}",
         "",
@@ -436,18 +667,65 @@ def _write_markdown(
                 "the initial environmental composition."
             ),
             "",
+            f"![Individual seed-block trajectories]({relative_figures['seed_trajectories']})",
+            "",
+            (
+                "**Figure 2.** Thin coloured lines are all 12 independently seeded populations "
+                "for the three conditions with the strongest seed-to-seed variation; the thick "
+                "black line is their median. Persistent separation among seeds is expected in a "
+                "stochastic model and does not, by itself, show continuing directional change."
+            ),
+            "",
+            (
+                "Independent populations are not expected to converge to an identical diversity "
+                "value. A stationary stochastic population can keep fluctuating, and different "
+                "populations can remain apart. Longer runs are useful only for asking whether "
+                "directional change within each population disappears and whether the distribution "
+                "across populations stops changing—not for forcing the lines to meet. The paired "
+                "late-window tests compare each seed block with itself, so a stable difference "
+                "between seeds does not make those tests fail. R-hat is the component that is "
+                "sensitive to persistent differences among seed histories; here it is best read "
+                "as a secondary common-distribution diagnostic, not as a demand that independent "
+                "biological populations become identical."
+            ),
+            "",
+            "## Post-hoc separated stability diagnostic",
+            "",
+            (
+                f"After separating temporal trends, stability of the seed-block distribution, "
+                f"and the magnitude of between-seed spread, {stable_responses} of 30 responses "
+                f"were classified as statistically stable, {unresolved_responses} remained "
+                f"unresolved, and {changing_responses} showed clear biologically meaningful "
+                f"continuing change. This diagnostic is exploratory because it was added after "
+                f"inspection of the registered pilot results."
+            ),
+            "",
+            f"![Separated stability diagnostic]({relative_figures['separated_stability']})",
+            "",
+            (
+                "**Figure 3.** The classification uses the agreed biological margins. First, "
+                "slopes are calculated within each seed block. Second, changes in the average "
+                "and spread of the seed-block distribution are tested separately. Failure to "
+                "demonstrate equivalence is labelled unresolved rather than continuing change; "
+                "clear change requires a 90% interval outside the biological margin. R-hat and "
+                "ESS are retained as secondary diagnostics only. T? marks an unresolved trend; "
+                "D? marks unresolved stability of the seed-block distribution."
+            ),
+            "",
             f"![Stationarity screen]({relative_figures['stationarity']})",
             "",
             (
-                "**Figure 2.** A response passes only when both overlapping late-window "
+                "**Figure 4.** The registered combined screen passes only when both overlapping late-window "
                 "assessments satisfy the predeclared equivalence limits, rank-normalized split "
-                "R-hat is below 1.05, and approximate combined ESS is at least 400."
+                "R-hat is below 1.05, and approximate combined ESS is at least 400. R-hat asks "
+                "whether replicate histories are compatible with a common long-run distribution; "
+                "it does not ask whether their current values are identical."
             ),
             "",
             f"![Continuing fluctuations]({relative_figures['fluctuations']})",
             "",
             (
-                "**Figure 3.** Median within-run coefficient of variation in the last diagnostic "
+                "**Figure 5.** Median within-run coefficient of variation in the last diagnostic "
                 "window. Larger values mean more continuing fluctuation around the late-run level."
             ),
             "",
@@ -461,7 +739,7 @@ def _write_markdown(
             "",
             f"![Precision recommendations]({relative_figures['precision']})",
             "",
-            "**Figure 4.** Dashed lines show the minimum of 20 matched replicates.",
+            "**Figure 6.** Dashed lines show the minimum of 20 matched replicates.",
             "",
             "## Quality control and computational resources",
             "",
@@ -487,7 +765,7 @@ def _write_markdown(
             "- **Evenness:** how similarly abundant the strains are.",
             "- **TV:** total-variation distance from the initial environmental composition; 0 means identical and 1 means no overlap.",
             "- **ESS:** effective sample size after accounting for temporal autocorrelation.",
-            "- **R-hat:** agreement among independent replicate trajectories after splitting each trajectory; values close to 1 are preferred.",
+            "- **R-hat:** whether split replicate histories appear compatible with a common long-run distribution. It does not require replicates to have identical values; values close to 1 indicate better distributional agreement.",
             "",
         ]
     )
@@ -550,6 +828,7 @@ def _write_pdf(
     summary: dict[str, Any],
     design: list[dict[str, str]],
     stationarity: list[dict[str, str]],
+    separated: list[dict[str, str]],
     precision: list[dict[str, str]],
     figures: dict[str, Path],
 ) -> None:
@@ -673,6 +952,16 @@ def _write_pdf(
         for cell in design
     }
     maximum_precision = max(int(row["recommended_replicates"]) for row in precision)
+    stability_counts: dict[str, int] = defaultdict(int)
+    for row in separated:
+        stability_counts[row["final_classification"]] += 1
+    stable_responses = sum(
+        count
+        for classification, count in stability_counts.items()
+        if classification.startswith("stable_")
+    )
+    unresolved_responses = stability_counts["stability_unresolved"]
+    changing_responses = stability_counts["continuing_change_detected"]
     cell_stationarity = "; ".join(
         f"{_short_cell(cell['cell_id'])} {_cell_stationarity_text(cell['cell_id'], stationarity)}"
         for cell in design
@@ -702,6 +991,15 @@ def _write_pdf(
             "Important interpretation: passing supports late-run <b>stationarity</b>, "
             "not definitive equilibrium. These runs all begin from the same environmental "
             "community, so convergence from contrasting starting communities is not tested.",
+            styles["body"],
+        ),
+        Paragraph(
+            "The post-hoc separated diagnostic classified "
+            f"<b>{stable_responses} of 30</b> responses as stable, "
+            f"<b>{unresolved_responses}</b> as unresolved, and "
+            f"<b>{changing_responses}</b> as showing clear biologically meaningful "
+            "continuing change. This exploratory result does not replace the registered "
+            "screen above.",
             styles["body"],
         ),
         Paragraph(
@@ -775,15 +1073,33 @@ def _write_pdf(
         (
             "Environmental trajectories",
             "trajectories",
-            "Lines are medians across 12 independent populations; shaded bands span "
-            "the 10th to 90th percentiles. TV measures departure from the initial "
-            "environmental composition.",
+            f"Lines are medians across {summary['seed_blocks']} independent "
+            "populations; shaded bands span the 10th to 90th percentiles. TV "
+            "measures departure from the initial environmental composition.",
+        ),
+        (
+            "Variation among independently seeded populations",
+            "seed_trajectories",
+            f"Thin coloured lines show all {summary['seed_blocks']} seed blocks for "
+            "c0022, c0023, and c0026; the thick black line is their median. Persistent "
+            "separation is expected under stochastic dynamics and does not by itself "
+            "imply directional change.",
+        ),
+        (
+            "Post-hoc separated stability diagnostic",
+            "separated_stability",
+            f"Using the agreed biological margins, {stable_responses} of 30 responses "
+            f"were stable, {unresolved_responses} were unresolved, and "
+            f"{changing_responses} showed clear continuing change. R-hat and ESS do not "
+            "determine this exploratory classification. T? means trend unresolved; D? "
+            "means seed-distribution stability unresolved.",
         ),
         (
             "Late-run stationarity screen",
             "stationarity",
-            "PASS requires both late-window equivalence assessments, rank-normalized "
-            "split R-hat below 1.05, and approximate combined ESS of at least 400.",
+            "The registered combined PASS requires both late-window equivalence "
+            "assessments, rank-normalized split R-hat below 1.05, and approximate "
+            "combined ESS of at least 400.",
         ),
         (
             "Continuing fluctuation",
@@ -807,7 +1123,37 @@ def _write_pdf(
                 Paragraph(f"Figure {number}. {caption}", styles["caption"]),
             ]
         )
-        if number in {1, 3}:
+        if number == 2:
+            story.append(
+                Paragraph(
+                    "The seed-block lines are <b>not expected to converge to one identical "
+                    "value</b>. A stationary stochastic population can keep fluctuating, and "
+                    "independent populations can remain different. Longer runs test whether "
+                    "directional change within each population disappears and whether the "
+                    "distribution across populations stabilizes; they should not be used to "
+                    "force the lines to meet. The paired late-window tests compare each seed "
+                    "block with itself, so stable separation among seeds does not make those "
+                    "tests fail. R-hat is the component sensitive to persistent differences "
+                    "among seed histories; for these biological replicate populations, it is "
+                    "best treated as a secondary common-distribution diagnostic rather than "
+                    "a requirement that all populations become identical.",
+                    styles["body"],
+                )
+            )
+        if number == 3:
+            story.append(
+                Paragraph(
+                    "This diagnostic asks three separate questions. Are average slopes "
+                    "calculated within seed blocks biologically negligible? Has both the "
+                    "average and spread of the seed-block distribution stabilized? Is the "
+                    "remaining between-seed spread itself biologically meaningful? Failure "
+                    "to establish equivalence is labelled <b>unresolved</b>; continuing "
+                    "change is declared only when a 90% interval lies beyond the agreed "
+                    "biological margin.",
+                    styles["body"],
+                )
+            )
+        if number in {1, 2, 3, 5}:
             story.append(PageBreak())
 
     resources = summary["resources"]
@@ -840,7 +1186,9 @@ def _write_pdf(
                 "strains. <b>D2</b> emphasizes dominant strains. <b>Evenness</b> describes "
                 "similarity of strain abundances. <b>TV</b> is total-variation distance from "
                 "the initial environment. <b>ESS</b> discounts temporally redundant "
-                "observations. <b>R-hat</b> tests agreement among split replicate trajectories.",
+                "observations. <b>R-hat</b> asks whether split replicate histories are "
+                "compatible with a common long-run distribution; it does not require "
+                "identical diversity values.",
                 styles["body"],
             ),
         ]
@@ -860,17 +1208,25 @@ def generate_second_pilot_report(
 ) -> SecondPilotReportArtifacts:
     """Generate figures, an editable Markdown report, and a self-contained PDF."""
 
-    summary, cells, trajectories, windows, stationarity, precision = _load(
+    summary, cells, trajectories, windows, stationarity, separated, precision = _load(
         analysis, design
     )
     figures: dict[str, Path] = {
         "trajectories": assets / "environmental-trajectories.png",
+        "seed_trajectories": assets / "individual-seed-trajectories.png",
+        "separated_stability": assets / "separated-stability-diagnostic.png",
         "stationarity": assets / "stationarity-screen.png",
         "fluctuations": assets / "continuing-fluctuations.png",
         "precision": assets / "precision-recommendations.png",
     }
     plotters: tuple[tuple[str, Callable[..., None], tuple[Any, ...]], ...] = (
         ("trajectories", _plot_trajectories, (cells, trajectories)),
+        ("seed_trajectories", _plot_seed_trajectories, (cells, trajectories)),
+        (
+            "separated_stability",
+            _plot_separated_stability,
+            (cells, separated),
+        ),
         ("stationarity", _plot_stationarity, (cells, stationarity)),
         ("fluctuations", _plot_fluctuations, (cells, windows)),
         ("precision", _plot_precision, (precision,)),
@@ -885,6 +1241,7 @@ def generate_second_pilot_report(
         summary,
         cells,
         stationarity,
+        separated,
         precision,
         figures,
     )
@@ -895,6 +1252,7 @@ def generate_second_pilot_report(
         summary,
         cells,
         stationarity,
+        separated,
         precision,
         figures,
     )

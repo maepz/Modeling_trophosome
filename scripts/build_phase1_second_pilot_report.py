@@ -125,7 +125,7 @@ def main() -> int:
         description=__doc__,
         epilog=(
             "This is the stand-alone report path: it never launches simulations. "
-            "It stops unless all 72 committed populations pass the audit."
+            "It stops unless all 120 committed populations pass the audit."
         ),
     )
     parser.add_argument(
@@ -179,8 +179,11 @@ def main() -> int:
         paths["derived"] / "run-window-summaries.tsv",
         paths["derived"] / "stationarity-screen.tsv",
         paths["derived"] / "stationarity-history.tsv",
+        paths["derived"] / "separated-stability-diagnostic.tsv",
         paths["derived"] / "precision-recommendations.tsv",
         paths["assets"] / "environmental-trajectories.png",
+        paths["assets"] / "individual-seed-trajectories.png",
+        paths["assets"] / "separated-stability-diagnostic.png",
         paths["assets"] / "stationarity-screen.png",
         paths["assets"] / "continuing-fluctuations.png",
         paths["assets"] / "precision-recommendations.png",

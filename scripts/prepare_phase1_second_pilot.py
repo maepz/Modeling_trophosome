@@ -35,7 +35,10 @@ EXPERIMENT_ID = f"phase1-second-pilot-{VARIANT_TAG}"
 DESIGN_STEM = f"phase1-second-pilot-{VARIANT_TAG}"
 STAGE_DIRECTORY = f"s02-equilibrium-precision-{VARIANT_TAG}"
 REGIONAL_POOL_ID = "rp001-fisher100-fixed"
-SEED_BLOCKS = tuple((f"sb{number:04d}", 665 + number) for number in range(1, 13))
+ORIGINAL_SEED_BLOCK_COUNT = 12
+CLOSURE_SEED_BLOCK_COUNT = 8
+SEED_BLOCKS = tuple((f"sb{number:04d}", 665 + number) for number in range(1, 21))
+CLOSURE_SEED_BLOCKS = SEED_BLOCKS[ORIGINAL_SEED_BLOCK_COUNT:]
 
 
 @dataclass(frozen=True)
@@ -325,7 +328,7 @@ def _registry_cell_row(cell: SentinelCell) -> dict[str, str]:
         "status": "prepared",
         "notes": (
             "Exploratory equilibrium-and-precision sentinel derived from "
-            f"{cell.source_first_pilot_cell}; 12 seed blocks and 250 passages."
+            f"{cell.source_first_pilot_cell}; 20 seed blocks and 250 passages."
         ),
     }
 
@@ -373,10 +376,10 @@ def _parameter_rows(cell: SentinelCell) -> list[dict[str, str]]:
         ("mutation_effect_mean", "0.0", "float", "fitness_units", "nuisance"),
         ("mutation_effect_sd", "0.0", "float", "fitness_units", "nuisance"),
         ("environment_counts_mode", "all", "string", "", "technical"),
-        ("planned_seed_blocks", "12", "integer", "seed_blocks", "technical"),
+        ("planned_seed_blocks", "20", "integer", "seed_blocks", "technical"),
         (
             "seed_block_set",
-            "phase1-second-pilot-sb0001-sb0012",
+            "phase1-second-pilot-sb0001-sb0020",
             "string",
             "",
             "technical",
@@ -481,11 +484,12 @@ def build_files(repository: Path) -> dict[Path, str]:
             "master_seed": master_seed,
             "within_run_replicate_index": 0,
             "use": (
-                "matched exploratory precision replicate; first three continue "
-                "the seed series and nine are new"
+                "matched exploratory precision replicate; original Stage 2 batch"
+                if number <= ORIGINAL_SEED_BLOCK_COUNT
+                else "matched exploratory precision replicate; Stage 2 closure batch"
             ),
         }
-        for seed_block_id, master_seed in SEED_BLOCKS
+        for number, (seed_block_id, master_seed) in enumerate(SEED_BLOCKS, start=1)
     ]
     files[manifest_directory / f"{DESIGN_STEM}-seed-blocks.tsv"] = _tsv_text(
         seed_rows, list(seed_rows[0])
@@ -577,6 +581,17 @@ def build_files(repository: Path) -> dict[Path, str]:
             "expansion_fraction_limit": 0.70,
         },
         "seed_blocks": seed_rows,
+        "closure_batch": {
+            "purpose": (
+                "increase precision for the six frozen sentinel cells without "
+                "changing the parameter matrix or confirmatory status"
+            ),
+            "seed_block_ids": [seed for seed, _master_seed in CLOSURE_SEED_BLOCKS],
+            "populations": len(CELLS) * len(CLOSURE_SEED_BLOCKS),
+            "combined_seed_blocks_per_cell": len(SEED_BLOCKS),
+            "combined_populations": len(CELLS) * len(SEED_BLOCKS),
+            "confirmatory": False,
+        },
         "cells": [
             {
                 **asdict(cell),
@@ -590,7 +605,7 @@ def build_files(repository: Path) -> dict[Path, str]:
         ],
         "runs": run_records,
         "automatic_reporting": {
-            "completion_gate": "all 72 populations complete and internally valid",
+            "completion_gate": "all 120 populations complete and internally valid",
             "analysis_directory": (
                 f"p01-neutral-feedback/analysis/{STAGE_DIRECTORY}-derived"
             ),

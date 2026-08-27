@@ -30,13 +30,27 @@ Passing this screen supports late-run stationarity, not definitive equilibrium. 
 
 **Figure 1.** Lines are medians across 12 independent populations; shaded bands span the 10th to 90th percentiles. TV is total-variation distance from the initial environmental composition.
 
+![Individual seed-block trajectories](figures/phase1-second-pilot-v210-m010-g250-report/individual-seed-trajectories.png)
+
+**Figure 2.** Thin coloured lines are all 12 independently seeded populations for the three conditions with the strongest seed-to-seed variation; the thick black line is their median. Persistent separation among seeds is expected in a stochastic model and does not, by itself, show continuing directional change.
+
+Independent populations are not expected to converge to an identical diversity value. A stationary stochastic population can keep fluctuating, and different populations can remain apart. Longer runs are useful only for asking whether directional change within each population disappears and whether the distribution across populations stops changing—not for forcing the lines to meet. The paired late-window tests compare each seed block with itself, so a stable difference between seeds does not make those tests fail. R-hat is the component that is sensitive to persistent differences among seed histories; here it is best read as a secondary common-distribution diagnostic, not as a demand that independent biological populations become identical.
+
+## Post-hoc separated stability diagnostic
+
+After separating temporal trends, stability of the seed-block distribution, and the magnitude of between-seed spread, 22 of 30 responses were classified as statistically stable, 8 remained unresolved, and 0 showed clear biologically meaningful continuing change. This diagnostic is exploratory because it was added after inspection of the registered pilot results.
+
+![Separated stability diagnostic](figures/phase1-second-pilot-v210-m010-g250-report/separated-stability-diagnostic.png)
+
+**Figure 3.** The classification uses the agreed biological margins. First, slopes are calculated within each seed block. Second, changes in the average and spread of the seed-block distribution are tested separately. Failure to demonstrate equivalence is labelled unresolved rather than continuing change; clear change requires a 90% interval outside the biological margin. R-hat and ESS are retained as secondary diagnostics only. T? marks an unresolved trend; D? marks unresolved stability of the seed-block distribution.
+
 ![Stationarity screen](figures/phase1-second-pilot-v210-m010-g250-report/stationarity-screen.png)
 
-**Figure 2.** A response passes only when both overlapping late-window assessments satisfy the predeclared equivalence limits, rank-normalized split R-hat is below 1.05, and approximate combined ESS is at least 400.
+**Figure 4.** The registered combined screen passes only when both overlapping late-window assessments satisfy the predeclared equivalence limits, rank-normalized split R-hat is below 1.05, and approximate combined ESS is at least 400. R-hat asks whether replicate histories are compatible with a common long-run distribution; it does not ask whether their current values are identical.
 
 ![Continuing fluctuations](figures/phase1-second-pilot-v210-m010-g250-report/continuing-fluctuations.png)
 
-**Figure 3.** Median within-run coefficient of variation in the last diagnostic window. Larger values mean more continuing fluctuation around the late-run level.
+**Figure 5.** Median within-run coefficient of variation in the last diagnostic window. Larger values mean more continuing fluctuation around the late-run level.
 
 ## Precision for the confirmatory experiment
 
@@ -44,7 +58,7 @@ The largest recommendation is 20 matched replicates. Recommendations target a 95
 
 ![Precision recommendations](figures/phase1-second-pilot-v210-m010-g250-report/precision-recommendations.png)
 
-**Figure 4.** Dashed lines show the minimum of 20 matched replicates.
+**Figure 6.** Dashed lines show the minimum of 20 matched replicates.
 
 ## Quality control and computational resources
 
@@ -69,4 +83,4 @@ The largest recommendation is 20 matched replicates. Recommendations target a 95
 - **Evenness:** how similarly abundant the strains are.
 - **TV:** total-variation distance from the initial environmental composition; 0 means identical and 1 means no overlap.
 - **ESS:** effective sample size after accounting for temporal autocorrelation.
-- **R-hat:** agreement among independent replicate trajectories after splitting each trajectory; values close to 1 are preferred.
+- **R-hat:** whether split replicate histories appear compatible with a common long-run distribution. It does not require replicates to have identical values; values close to 1 indicate better distributional agreement.

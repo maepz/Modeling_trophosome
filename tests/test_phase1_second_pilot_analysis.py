@@ -31,7 +31,12 @@ def _load_module():
         sys.path.pop(0)
 
 
-def _trajectory(seed: int, *, trend_d1: bool = False) -> list[dict[str, object]]:
+def _trajectory(
+    seed: int,
+    *,
+    trend_d1: bool = False,
+    d1_seed_offset: float = 0.0,
+) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for generation in range(251):
         rows.append(
@@ -39,7 +44,11 @@ def _trajectory(seed: int, *, trend_d1: bool = False) -> list[dict[str, object]]
                 "seed_block_id": f"sb{seed:04d}",
                 "generation": generation,
                 "D0": 100.0,
-                "D1": 30.0 + generation if trend_d1 else 30.0,
+                "D1": (
+                    30.0 + d1_seed_offset + generation
+                    if trend_d1
+                    else 30.0 + d1_seed_offset
+                ),
                 "D2": 20.0,
                 "evenness": 0.75,
                 "TV": 0.1,
@@ -76,6 +85,70 @@ class Phase1SecondPilotAnalysisTests(unittest.TestCase):
         self.assertFalse(by_response["D1"]["stationarity_screen_pass"])
         self.assertTrue(by_response["D2"]["stationarity_screen_pass"])
 
+    def test_closure_analysis_accepts_twenty_matched_seed_blocks(self) -> None:
+        _windows, screens = self.module.equilibrium_screen(
+            "p01-s02-c0022",
+            [_trajectory(seed) for seed in range(1, 21)],
+            window_length=20,
+        )
+        self.assertEqual(len(screens), 5)
+        self.assertTrue(all(row["stationarity_screen_pass"] for row in screens))
+
+    def test_separated_diagnostic_accepts_a_stable_common_level(self) -> None:
+        rows = self.module.separated_stability_diagnostic(
+            "p01-s02-c0022",
+            [_trajectory(seed) for seed in range(1, 13)],
+            window_length=20,
+            bootstrap_resamples=500,
+        )
+        by_response = {row["response"]: row for row in rows}
+        self.assertEqual(
+            by_response["D1"]["final_classification"],
+            "stable_with_negligible_heterogeneity",
+        )
+        self.assertEqual(by_response["D1"]["within_seed_trend_status"], "stable")
+        self.assertEqual(
+            by_response["D1"]["between_seed_distribution_status"], "stable"
+        )
+
+    def test_separated_diagnostic_preserves_stable_seed_heterogeneity(self) -> None:
+        rows = self.module.separated_stability_diagnostic(
+            "p01-s02-c0022",
+            [
+                _trajectory(seed, d1_seed_offset=5.0 * seed)
+                for seed in range(1, 13)
+            ],
+            window_length=20,
+            bootstrap_resamples=500,
+        )
+        by_response = {row["response"]: row for row in rows}
+        self.assertEqual(
+            by_response["D1"]["final_classification"],
+            "stable_with_persistent_heterogeneity",
+        )
+        self.assertEqual(
+            by_response["D1"]["between_seed_heterogeneity_status"], "meaningful"
+        )
+        self.assertGreater(
+            by_response["D1"]["rank_normalized_split_rhat_secondary"], 1.05
+        )
+
+    def test_separated_diagnostic_detects_continuing_change(self) -> None:
+        rows = self.module.separated_stability_diagnostic(
+            "p01-s02-c0022",
+            [_trajectory(seed, trend_d1=True) for seed in range(1, 13)],
+            window_length=20,
+            bootstrap_resamples=500,
+        )
+        by_response = {row["response"]: row for row in rows}
+        self.assertEqual(
+            by_response["D1"]["final_classification"],
+            "continuing_change_detected",
+        )
+        self.assertEqual(
+            by_response["D1"]["within_seed_trend_status"], "continuing_change"
+        )
+
     def test_precision_recommendations_use_minimum_batches_and_cap(self) -> None:
         self.assertEqual(self.module._recommended_replicates(1), (20, False))
         self.assertEqual(self.module._recommended_replicates(21), (28, False))
@@ -109,8 +182,8 @@ class Phase1SecondPilotAnalysisTests(unittest.TestCase):
                 work=WORK,
                 scratch=Path(directory),
             )
-        self.assertEqual(len(rows), 72)
-        self.assertGreaterEqual(len(issues), 72)
+        self.assertEqual(len(rows), 120)
+        self.assertGreaterEqual(len(issues), 120)
         self.assertTrue(any("completion.json" in issue for issue in issues))
 
     def test_completion_gate_distinguishes_file_and_resolved_config_hashes(
@@ -149,7 +222,7 @@ class Phase1SecondPilotAnalysisTests(unittest.TestCase):
             issues = self.module.completion_gate_issues(
                 [run], work=WORK, scratch=scratch
             )
-        self.assertEqual(issues, ["manifest contains 1 runs; expected 72"])
+        self.assertEqual(issues, ["manifest contains 1 runs; expected 120"])
 
 
 if __name__ == "__main__":

@@ -573,8 +573,12 @@ The frozen second pilot uses six sentinel conditions selected from the
 model-2.1 first pilot: migration-only no return; mutation-free and
 mutation-enabled passage at baseline feedback; `H = 100` and `H = 10,000` at
 fixed `R = 10^9`; and weak and strong feedback. It uses 12 independent matched
-seed blocks and 250 host passages for every cell. The fixed regional-pool
-migration fraction is `m = 0.1` and selection is disabled.
+seed blocks in its original batch and 250 host passages for every cell. A Stage
+2 closure batch adds eight further matched seed blocks (`sb0013`--`sb0020`) to
+all six cells without changing any biological parameter, giving 20 populations
+per cell and 120 in the combined analysis. The closure remains exploratory; it
+does not use seed blocks reserved for later confirmation. The fixed
+regional-pool migration fraction is `m = 0.1` and selection is disabled.
 
 Complete labelled environmental compositions are retained at every passage so
 late-run stationarity and continuing fluctuation can be assessed. The analysis
@@ -583,7 +587,39 @@ assessments, equivalence bounds, rank-normalized split R-hat and approximate
 effective sample size. Passing is described as a **stationarity screen**, not
 proof of equilibrium, because this pilot does not test convergence from
 contrasting initial environmental compositions. Paired variance across the 12
-seed blocks determines the recommended confirmatory replicate number.
+original seed blocks motivated the closure; the final precision recommendation
+is recalculated from all 20 matched seed blocks.
+
+#### Post-hoc separated stability diagnostic
+
+After inspecting the registered second-pilot screen, add a clearly labelled
+post-hoc exploratory diagnostic that does not require independently seeded
+biological populations to converge to an identical value. For every cell and
+response, it evaluates three components over the same four late diagnostic
+windows:
+
+1. Calculate a slope within each seed block and window, express it as change per
+   complete window, and use the 90% interval across seed blocks to test against
+   the agreed biological margin.
+2. Compare the location of the seed-block distribution between every pair of
+   adjacent windows using paired seed-block differences. Compare changes in its
+   standard deviation with a deterministic paired bootstrap (5,000 resamples).
+3. Compare the bootstrapped 90% interval for the final between-seed standard
+   deviation with the same response-specific biological margin. This describes
+   whether persistent heterogeneity is biologically meaningful; it is not a
+   requirement that the heterogeneity disappear.
+
+Classify the response as statistically stable only when all late-window trend,
+distribution-location, and distribution-spread intervals lie inside the agreed
+margin. If a recent 90% interval lies entirely beyond the margin, classify it as
+continuing biologically meaningful change. Otherwise classify stability as
+unresolved. A stable response is further described as having negligible,
+meaningful, or uncertain persistent between-seed heterogeneity.
+
+Retain split R-hat and effective sample size as secondary mixing and precision
+diagnostics, but do not use them to assign this biological classification.
+Because this rule was developed after inspecting the registered pilot results,
+it remains exploratory and cannot be presented as a confirmatory test.
 
 ### Stage 3: exploratory parameter mapping
 

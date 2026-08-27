@@ -1,5 +1,5 @@
 {
-  "analysis_schema_version": "2.0.0",
+  "analysis_schema_version": "2.1.0",
   "analysis_scope": "equilibrium-and-precision pilot; exploratory",
   "audit_status": "PASS",
   "benchmark_platforms": [
@@ -38,6 +38,16 @@
     "summed_output_gib": 7.953777038492262
   },
   "seed_blocks": 12,
+  "separated_stability_diagnostic": {
+    "bootstrap_resamples": 5000,
+    "classification_counts": {
+      "stability_unresolved": 8,
+      "stable_with_negligible_heterogeneity": 22
+    },
+    "diagnostic_version": "1.0.0",
+    "rhat_and_ess_role": "secondary diagnostics; not classification criteria",
+    "scope": "post-hoc exploratory"
+  },
   "software_git_commits": [
     "754269bb75da5bf560548fa72d1a227e5f449ee3"
   ],

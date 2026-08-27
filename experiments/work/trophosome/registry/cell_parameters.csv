@@ -462,8 +462,8 @@ p01-s02-c0021,free_living_selection,false,boolean,,nuisance
 p01-s02-c0021,mutation_effect_mean,0.0,float,fitness_units,nuisance
 p01-s02-c0021,mutation_effect_sd,0.0,float,fitness_units,nuisance
 p01-s02-c0021,environment_counts_mode,all,string,,technical
-p01-s02-c0021,planned_seed_blocks,12,integer,seed_blocks,technical
-p01-s02-c0021,seed_block_set,phase1-second-pilot-sb0001-sb0012,string,,technical
+p01-s02-c0021,planned_seed_blocks,20,integer,seed_blocks,technical
+p01-s02-c0021,seed_block_set,phase1-second-pilot-sb0001-sb0020,string,,technical
 p01-s02-c0021,source_first_pilot_cell,p01-s01-c0001,string,,design
 p01-s02-c0021,diagnostic_window_generations,50,integer,host_passages,analysis
 p01-s02-c0022,H,100,integer,hosts,input
@@ -489,8 +489,8 @@ p01-s02-c0022,free_living_selection,false,boolean,,nuisance
 p01-s02-c0022,mutation_effect_mean,0.0,float,fitness_units,nuisance
 p01-s02-c0022,mutation_effect_sd,0.0,float,fitness_units,nuisance
 p01-s02-c0022,environment_counts_mode,all,string,,technical
-p01-s02-c0022,planned_seed_blocks,12,integer,seed_blocks,technical
-p01-s02-c0022,seed_block_set,phase1-second-pilot-sb0001-sb0012,string,,technical
+p01-s02-c0022,planned_seed_blocks,20,integer,seed_blocks,technical
+p01-s02-c0022,seed_block_set,phase1-second-pilot-sb0001-sb0020,string,,technical
 p01-s02-c0022,source_first_pilot_cell,p01-s01-c0003,string,,design
 p01-s02-c0022,diagnostic_window_generations,20,integer,host_passages,analysis
 p01-s02-c0023,H,100,integer,hosts,input
@@ -516,8 +516,8 @@ p01-s02-c0023,free_living_selection,false,boolean,,nuisance
 p01-s02-c0023,mutation_effect_mean,0.0,float,fitness_units,nuisance
 p01-s02-c0023,mutation_effect_sd,0.0,float,fitness_units,nuisance
 p01-s02-c0023,environment_counts_mode,all,string,,technical
-p01-s02-c0023,planned_seed_blocks,12,integer,seed_blocks,technical
-p01-s02-c0023,seed_block_set,phase1-second-pilot-sb0001-sb0012,string,,technical
+p01-s02-c0023,planned_seed_blocks,20,integer,seed_blocks,technical
+p01-s02-c0023,seed_block_set,phase1-second-pilot-sb0001-sb0020,string,,technical
 p01-s02-c0023,source_first_pilot_cell,p01-s01-c0009,string,,design
 p01-s02-c0023,diagnostic_window_generations,20,integer,host_passages,analysis
 p01-s02-c0024,H,10000,integer,hosts,input
@@ -543,8 +543,8 @@ p01-s02-c0024,free_living_selection,false,boolean,,nuisance
 p01-s02-c0024,mutation_effect_mean,0.0,float,fitness_units,nuisance
 p01-s02-c0024,mutation_effect_sd,0.0,float,fitness_units,nuisance
 p01-s02-c0024,environment_counts_mode,all,string,,technical
-p01-s02-c0024,planned_seed_blocks,12,integer,seed_blocks,technical
-p01-s02-c0024,seed_block_set,phase1-second-pilot-sb0001-sb0012,string,,technical
+p01-s02-c0024,planned_seed_blocks,20,integer,seed_blocks,technical
+p01-s02-c0024,seed_block_set,phase1-second-pilot-sb0001-sb0020,string,,technical
 p01-s02-c0024,source_first_pilot_cell,p01-s01-c0005,string,,design
 p01-s02-c0024,diagnostic_window_generations,20,integer,host_passages,analysis
 p01-s02-c0025,H,100,integer,hosts,input
@@ -570,8 +570,8 @@ p01-s02-c0025,free_living_selection,false,boolean,,nuisance
 p01-s02-c0025,mutation_effect_mean,0.0,float,fitness_units,nuisance
 p01-s02-c0025,mutation_effect_sd,0.0,float,fitness_units,nuisance
 p01-s02-c0025,environment_counts_mode,all,string,,technical
-p01-s02-c0025,planned_seed_blocks,12,integer,seed_blocks,technical
-p01-s02-c0025,seed_block_set,phase1-second-pilot-sb0001-sb0012,string,,technical
+p01-s02-c0025,planned_seed_blocks,20,integer,seed_blocks,technical
+p01-s02-c0025,seed_block_set,phase1-second-pilot-sb0001-sb0020,string,,technical
 p01-s02-c0025,source_first_pilot_cell,p01-s01-c0016,string,,design
 p01-s02-c0025,diagnostic_window_generations,53,integer,host_passages,analysis
 p01-s02-c0026,H,100,integer,hosts,input
@@ -597,7 +597,7 @@ p01-s02-c0026,free_living_selection,false,boolean,,nuisance
 p01-s02-c0026,mutation_effect_mean,0.0,float,fitness_units,nuisance
 p01-s02-c0026,mutation_effect_sd,0.0,float,fitness_units,nuisance
 p01-s02-c0026,environment_counts_mode,all,string,,technical
-p01-s02-c0026,planned_seed_blocks,12,integer,seed_blocks,technical
-p01-s02-c0026,seed_block_set,phase1-second-pilot-sb0001-sb0012,string,,technical
+p01-s02-c0026,planned_seed_blocks,20,integer,seed_blocks,technical
+p01-s02-c0026,seed_block_set,phase1-second-pilot-sb0001-sb0020,string,,technical
 p01-s02-c0026,source_first_pilot_cell,p01-s01-c0018,string,,design
 p01-s02-c0026,diagnostic_window_generations,20,integer,host_passages,analysis

@@ -112,7 +112,10 @@ def _verify_manifest(
     if {row["cell_id"] for row in rows} != EXPECTED_CELLS:
         raise RuntimeError("manifest does not contain the six frozen sentinel cells")
     if {row["seed_block_id"] for row in rows} != EXPECTED_SEED_BLOCKS:
-        raise RuntimeError("manifest does not contain the 12 frozen seed blocks")
+        raise RuntimeError(
+            f"manifest does not contain the {len(EXPECTED_SEED_BLOCKS)} frozen "
+            "seed blocks"
+        )
     if not selected:
         raise RuntimeError("the requested cell/seed selection contains no runs")
 
@@ -303,14 +306,17 @@ def main() -> int:
         "--report-only",
         action="store_true",
         help=(
-            "audit all 72 completed populations, rerun the analysis, and rebuild "
-            "the PDF and Markdown without simulating"
+            f"audit all {EXPECTED_RUNS} completed populations, rerun the analysis, "
+            "and rebuild the PDF and Markdown without simulating"
         ),
     )
     parser.add_argument(
         "--no-report",
         action="store_true",
-        help="do not automatically build the report after all 72 runs complete",
+        help=(
+            "do not automatically build the report after all "
+            f"{EXPECTED_RUNS} runs complete"
+        ),
     )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -339,10 +345,12 @@ def main() -> int:
 
     populations = len(selected)
     cell_count = len({row["cell_id"] for row in selected})
+    selected_seed_count = len({row["seed_block_id"] for row in selected})
     print(
         f"Preflight passed: {populations} populations from {cell_count} sentinel "
-        f"cells; 250 passages; 12 seed blocks; m=0.1; up to {args.jobs} "
-        f"populations and {args.jobs * 2} host workers concurrently.",
+        f"cells; 250 passages; {selected_seed_count} selected of "
+        f"{len(EXPECTED_SEED_BLOCKS)} frozen seed blocks; m=0.1; up to "
+        f"{args.jobs} populations and {args.jobs * 2} host workers concurrently.",
         flush=True,
     )
     if args.dry_run:

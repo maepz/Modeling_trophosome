@@ -177,9 +177,11 @@ du -sh /home/qiulab/data/CRF_project/scratch/trophosome/p01-neutral-feedback/s01
 
 The second pilot is the long-run stationarity-and-precision screen selected from
 the completed model-2.1 first pilot. It is exploratory rather than
-confirmatory. The frozen matrix contains six sentinel conditions, 12 matched
-seed blocks per condition, and 250 host-population passages: 72 independently
-runnable populations in total.
+confirmatory. Its parameter matrix remains frozen at six sentinel conditions
+and 250 host-population passages. The original batch used 12 matched seed blocks
+per condition (72 populations). The Stage 2 closure batch adds eight matched
+seed blocks (`sb0013`--`sb0020`) to every condition (48 new populations), giving
+20 seed blocks and 120 populations in the combined Stage 2 analysis.
 
 | Cell | Biological comparison | Hosts | Escape fraction | Total return | Mutation rate |
 |---|---|---:|---:|---:|---:|
@@ -195,10 +197,13 @@ within-host and free-living fitness, complete environmental trajectories, and
 one-hour checkpoint targets. Adult strain counts are complete for the
 100-host cells and use the deterministic 100-host panel for `H = 10,000`.
 
-The first-pilot measurements project about 35.7 summed runtime hours and 7.3
-GiB for the full matrix. These are linear planning estimates. The longest cell
-is projected at about 2.7 hours per population; actual HPC performance should
-still be checked after the first completed seed block.
+The first-pilot measurements project about 23.8 additional summed runtime hours
+and 4.9 GiB for the 48-population closure batch, or about 59.5 hours and 12.2
+GiB for all 120 Stage 2 populations. These are linear planning estimates. The
+longest cell is projected at about 2.7 hours per population; actual HPC
+performance should still be checked after the first completed closure seed
+block. The 72 completed populations must remain in scratch because the combined
+report audits and analyses all 120 populations together.
 
 ### Before launching
 
@@ -224,33 +229,33 @@ running the model:
 
 ```bash
 python scripts/prepare_phase1_second_pilot.py --verify
-bash scripts/hpc/launch_phase1_second_pilot.sh --prepare-only
-bash scripts/hpc/launch_phase1_second_pilot.sh --dry-run
+bash scripts/hpc/launch_phase1_second_pilot_closure.sh --prepare-only
+bash scripts/hpc/launch_phase1_second_pilot_closure.sh --dry-run
 ```
 
-The preflight must report 72 populations, six sentinel cells, 250 passages, 12
-seed blocks, and `m = 0.1`. It also checks every configuration checksum,
-selection state, starting focal/regional composition, and output-retention
-mode.
+The closure preflight must report 48 populations, six sentinel cells, 250
+passages, eight selected seed blocks out of 20 frozen seed blocks, and migration
+fraction `m = 0.1`. It also checks every configuration checksum, selection
+state, starting focal/regional composition, and output-retention mode.
 
 Before the full launch, a non-reporting single-population check may be run and
 resumed safely:
 
 ```bash
-bash scripts/hpc/launch_phase1_second_pilot.sh \
-  --cell c0021 --seed-block sb0001 --no-report
+bash scripts/hpc/launch_phase1_second_pilot_closure.sh \
+  --cell c0021 --seed-block sb0013 --no-report
 ```
 
-This population is part of the frozen 72-run design; it is not a disposable
-extra replicate. The later full launcher will detect and skip it.
+This population is part of the frozen closure batch; it is not a disposable
+extra replicate. The later closure launcher will detect and skip it.
 
 ### Full launch, interruption, and resume
 
 Run inside `tmux` because the probed server does not expose a batch scheduler:
 
 ```bash
-tmux new -s trophosome-second-pilot
-bash scripts/hpc/launch_phase1_second_pilot.sh
+tmux new -s trophosome-second-pilot-closure
+bash scripts/hpc/launch_phase1_second_pilot_closure.sh
 ```
 
 Eight populations run concurrently by default, with two host workers per
@@ -258,17 +263,21 @@ population. Change this only after inspecting machine load:
 
 ```bash
 TROPHOSOME_SECOND_PILOT_JOBS=4 \
-  bash scripts/hpc/launch_phase1_second_pilot.sh
+  bash scripts/hpc/launch_phase1_second_pilot_closure.sh
 ```
 
 Detach from `tmux` with `Ctrl-b`, then `d`, and reconnect with:
 
 ```bash
-tmux attach -t trophosome-second-pilot
+tmux attach -t trophosome-second-pilot-closure
 ```
 
-`Ctrl-c` requests an orderly stop. Run the same launcher again to skip complete
-populations and resume interrupted ones from their newest valid checkpoints.
+`Ctrl-c` requests an orderly stop. Run the same closure launcher again to skip
+complete populations and resume interrupted ones from their newest valid
+checkpoints. The closure wrapper fixes the selection to `sb0013`--`sb0020`; any
+additional options such as `--jobs`, `--cell`, or `--no-report` are forwarded to
+the shared Stage 2 runner. Seed blocks for later confirmatory experiments must
+use a separately frozen series rather than reusing these exploratory seeds.
 Raw results are stored below:
 
 ```text
@@ -284,8 +293,8 @@ Verify the report libraries before starting the full run:
 python -c 'import matplotlib, numpy, reportlab; print("reporting dependencies available")'
 ```
 
-After all 72 populations complete, the launcher automatically audits the raw
-outputs, creates the analysis tables and four biological figures, and writes:
+After all 120 populations complete, the launcher automatically audits the raw
+outputs, creates the analysis tables and six biological figures, and writes:
 
 ```text
 output/pdf/phase1-second-pilot-v210-m010-g250-report.pdf
@@ -295,11 +304,12 @@ docs/figures/phase1-second-pilot-v210-m010-g250-report/
 
 The PDF is self-contained. The Markdown copy and PNG figures are editable. The
 report explains environmental D0, D1, D2, evenness and compositional change;
-late-run stationarity diagnostics; the earliest assessment from which the
-screen remains satisfied; continuing fluctuations; and recommended replicate
-numbers for the confirmatory experiment.
+late-run stationarity diagnostics; the post-hoc diagnostic separating temporal
+stability from persistent seed-block heterogeneity; the earliest assessment from
+which the registered screen remains satisfied; continuing fluctuations; and
+recommended replicate numbers for the confirmatory experiment.
 
-No report is created unless all 72 committed outputs pass their version,
+No report is created unless all 120 committed outputs pass their version,
 configuration, size, final-checksum, reservoir-capacity, trajectory-completeness
 and migration audits. A report error never alters the raw simulations. Build or
 rebuild the report later, without launching simulations, using either:
@@ -316,5 +326,5 @@ python scripts/build_phase1_second_pilot_report.py \
 ```
 
 Without `--force`, an unchanged report is skipped using a fingerprint of the
-72 completion records, design, manifest, analysis code, and report code. To run
+120 completion records, design, manifest, analysis code, and report code. To run
 simulations without trying the automatic report, add `--no-report`.

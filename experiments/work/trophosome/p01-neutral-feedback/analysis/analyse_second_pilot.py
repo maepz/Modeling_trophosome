@@ -37,9 +37,13 @@ MODEL_SPEC_VERSION = "2.1.0"
 OUTPUT_SCHEMA_VERSION = "2.3.0"
 SOFTWARE_VERSION = "0.7.0"
 HOST_GENERATIONS = 250
-EXPECTED_RUNS = 72
+EXPECTED_SEED_BLOCKS = tuple(f"sb{number:04d}" for number in range(1, 21))
+EXPECTED_RUNS = 6 * len(EXPECTED_SEED_BLOCKS)
 MIGRATION_REPLACEMENT_COUNT = 100_000_000
 RESPONSES = ("D0", "D1", "D2", "evenness", "TV")
+SEPARATED_STABILITY_DIAGNOSTIC_VERSION = "1.0.0"
+STABILITY_BOOTSTRAP_RESAMPLES = 5_000
+STABILITY_BOOTSTRAP_SEED = 20_260_827
 REQUIRED_RAW_FILES = (
     "completion.json",
     "environment_counts.csv",
@@ -258,7 +262,15 @@ def _mean_ci90(values: list[float]) -> tuple[float, float, float]:
     if len(values) < 2:
         return mean, math.nan, math.nan
     standard_error = statistics.stdev(values) / math.sqrt(len(values))
-    critical = 1.796 if len(values) == 12 else 1.645
+    degrees_freedom = len(values) - 1
+    z = NormalDist().inv_cdf(0.95)
+    critical = (
+        z
+        + (z**3 + z) / (4 * degrees_freedom)
+        + (5 * z**5 + 16 * z**3 + 3 * z) / (96 * degrees_freedom**2)
+        + (3 * z**7 + 19 * z**5 + 17 * z**3 - 15 * z)
+        / (384 * degrees_freedom**3)
+    )
     return mean, mean - critical * standard_error, mean + critical * standard_error
 
 
@@ -322,6 +334,319 @@ def _assessment_pass(
     )
 
 
+def _ci_state(lower: float, upper: float, margin: float) -> str:
+    """Classify an interval relative to a symmetric biological margin."""
+
+    if _inside_margin(lower, upper, margin):
+        return "equivalent"
+    if math.isfinite(lower) and lower > margin:
+        return "increasing"
+    if math.isfinite(upper) and upper < -margin:
+        return "decreasing"
+    return "inconclusive"
+
+
+def _bootstrap_rng(*parts: object) -> np.random.Generator:
+    token = ":".join(str(part) for part in (STABILITY_BOOTSTRAP_SEED, *parts))
+    digest = hashlib.sha256(token.encode("utf-8")).digest()
+    return np.random.default_rng(int.from_bytes(digest[:8], "big"))
+
+
+def _bootstrap_sd_interval(
+    values: np.ndarray,
+    *,
+    key: tuple[object, ...],
+    resamples: int,
+) -> tuple[float, float, float]:
+    values = np.asarray(values, dtype=float)
+    observed = float(np.std(values, ddof=1))
+    indices = _bootstrap_rng(*key).integers(
+        0, len(values), size=(resamples, len(values))
+    )
+    estimates = np.std(values[indices], axis=1, ddof=1)
+    return (
+        observed,
+        float(np.quantile(estimates, 0.05)),
+        float(np.quantile(estimates, 0.95)),
+    )
+
+
+def _bootstrap_sd_change_interval(
+    first: np.ndarray,
+    second: np.ndarray,
+    *,
+    key: tuple[object, ...],
+    resamples: int,
+) -> tuple[float, float, float]:
+    first = np.asarray(first, dtype=float)
+    second = np.asarray(second, dtype=float)
+    if len(first) != len(second):
+        raise ValueError("paired spread comparison has unequal seed counts")
+    observed = float(np.std(second, ddof=1) - np.std(first, ddof=1))
+    indices = _bootstrap_rng(*key).integers(
+        0, len(first), size=(resamples, len(first))
+    )
+    estimates = np.std(second[indices], axis=1, ddof=1) - np.std(
+        first[indices], axis=1, ddof=1
+    )
+    return (
+        observed,
+        float(np.quantile(estimates, 0.05)),
+        float(np.quantile(estimates, 0.95)),
+    )
+
+
+def _stability_status(states: list[str], recent_states: list[str]) -> str:
+    if states and all(state == "equivalent" for state in states):
+        return "stable"
+    if any(state in {"increasing", "decreasing"} for state in recent_states):
+        return "continuing_change"
+    return "inconclusive"
+
+
+def _direction(states: list[str]) -> str:
+    directions = {
+        state for state in states if state in {"increasing", "decreasing"}
+    }
+    if not directions:
+        return "none"
+    if len(directions) == 1:
+        return next(iter(directions))
+    return "mixed"
+
+
+def separated_stability_diagnostic(
+    cell_id: str,
+    cell_trajectories: list[list[dict[str, Any]]],
+    *,
+    window_length: int,
+    end_generation: int = HOST_GENERATIONS,
+    bootstrap_resamples: int = STABILITY_BOOTSTRAP_RESAMPLES,
+) -> list[dict[str, Any]]:
+    """Separate temporal settling, distribution stability, and seed heterogeneity.
+
+    This is a post-hoc exploratory diagnostic. Slopes are first calculated inside
+    each independently seeded population and then summarized across seed blocks.
+    Changes in the location and spread of the seed-block distribution are assessed
+    separately. R-hat and ESS are retained as secondary diagnostics and do not
+    determine the biological classification.
+    """
+
+    if len(cell_trajectories) < 12:
+        raise ValueError(f"{cell_id} needs at least 12 trajectories")
+    if bootstrap_resamples < 100:
+        raise ValueError("at least 100 bootstrap resamples are required")
+    start = end_generation - 4 * window_length + 1
+    if start < 1:
+        raise ValueError(f"four diagnostic windows do not fit for {cell_id}")
+
+    window_values: dict[str, np.ndarray] = {}
+    for response in RESPONSES:
+        seed_windows: list[list[np.ndarray]] = []
+        for trajectory in cell_trajectories:
+            by_generation = {int(row["generation"]): row for row in trajectory}
+            windows: list[np.ndarray] = []
+            for window_id in range(4):
+                lower = start + window_id * window_length
+                upper = lower + window_length
+                windows.append(
+                    np.asarray(
+                        [
+                            float(by_generation[generation][response])
+                            for generation in range(lower, upper)
+                        ],
+                        dtype=float,
+                    )
+                )
+            seed_windows.append(windows)
+        window_values[response] = np.asarray(seed_windows)
+
+    rows: list[dict[str, Any]] = []
+    for response, values in window_values.items():
+        window_means = np.mean(values, axis=2)
+        trend_states: list[str] = []
+        trend_ratios: list[float] = []
+        for window_id in range(4):
+            slopes = [
+                float(
+                    np.polyfit(np.arange(window_length), segment, 1)[0]
+                    * window_length
+                )
+                for segment in values[:, window_id, :]
+            ]
+            references = [
+                float(np.mean(segment)) for segment in values[:, window_id, :]
+            ]
+            _mean, lower, upper = _mean_ci90(slopes)
+            margin = _margin(response, statistics.fmean(references))
+            trend_states.append(_ci_state(lower, upper, margin))
+            trend_ratios.append(max(abs(lower), abs(upper)) / margin)
+        within_seed_trend_status = _stability_status(
+            trend_states, trend_states[1:]
+        )
+
+        location_states: list[str] = []
+        spread_states: list[str] = []
+        spread_ratios: list[float] = []
+        for first_window, second_window in ((0, 1), (1, 2), (2, 3)):
+            first = window_means[:, first_window]
+            second = window_means[:, second_window]
+            differences = [float(b - a) for a, b in zip(first, second, strict=True)]
+            _mean, lower, upper = _mean_ci90(differences)
+            margin = _margin(response, float(np.mean(first)))
+            location_states.append(_ci_state(lower, upper, margin))
+
+            _spread_change, spread_lower, spread_upper = (
+                _bootstrap_sd_change_interval(
+                    first,
+                    second,
+                    key=(cell_id, response, first_window, second_window, "spread"),
+                    resamples=bootstrap_resamples,
+                )
+            )
+            spread_states.append(_ci_state(spread_lower, spread_upper, margin))
+            spread_ratios.append(
+                max(abs(spread_lower), abs(spread_upper)) / margin
+            )
+
+        location_status = _stability_status(
+            location_states, location_states[1:]
+        )
+        spread_status = _stability_status(spread_states, spread_states[1:])
+        distribution_states = location_states + spread_states
+        recent_distribution_states = location_states[1:] + spread_states[1:]
+        between_seed_distribution_status = _stability_status(
+            distribution_states, recent_distribution_states
+        )
+
+        final_means = window_means[:, 3]
+        final_reference = float(np.mean(final_means))
+        heterogeneity_margin = _margin(response, final_reference)
+        between_sd, between_sd_lower, between_sd_upper = _bootstrap_sd_interval(
+            final_means,
+            key=(cell_id, response, "final-between-seed-sd"),
+            resamples=bootstrap_resamples,
+        )
+        if between_sd_lower > heterogeneity_margin:
+            heterogeneity_status = "meaningful"
+        elif between_sd_upper <= heterogeneity_margin:
+            heterogeneity_status = "negligible"
+        else:
+            heterogeneity_status = "uncertain"
+
+        chains = np.asarray(
+            [np.concatenate((seed[1], seed[2], seed[3])) for seed in values]
+        )
+        rhat = rank_normalized_split_rhat(chains)
+        ess = approximate_combined_ess(chains)
+
+        if (
+            within_seed_trend_status == "stable"
+            and between_seed_distribution_status == "stable"
+        ):
+            if heterogeneity_status == "meaningful":
+                classification = "stable_with_persistent_heterogeneity"
+            elif heterogeneity_status == "negligible":
+                classification = "stable_with_negligible_heterogeneity"
+            else:
+                classification = "stable_heterogeneity_uncertain"
+        elif (
+            within_seed_trend_status == "continuing_change"
+            or between_seed_distribution_status == "continuing_change"
+        ):
+            classification = "continuing_change_detected"
+        else:
+            classification = "stability_unresolved"
+
+        rows.append(
+            {
+                "cell_id": cell_id,
+                "response": response,
+                "assessment_end_generation": end_generation,
+                "window_generations": window_length,
+                "diagnostic_version": SEPARATED_STABILITY_DIAGNOSTIC_VERSION,
+                "diagnostic_scope": "post_hoc_exploratory",
+                "within_seed_trend_status": within_seed_trend_status,
+                "within_seed_trend_direction": _direction(trend_states[1:]),
+                "largest_trend_ci_to_margin_ratio": max(trend_ratios),
+                "between_seed_location_status": location_status,
+                "between_seed_location_direction": _direction(location_states[1:]),
+                "between_seed_spread_status": spread_status,
+                "between_seed_spread_direction": _direction(spread_states[1:]),
+                "largest_spread_ci_to_margin_ratio": max(spread_ratios),
+                "between_seed_distribution_status": (
+                    between_seed_distribution_status
+                ),
+                "between_seed_sd_final_window": between_sd,
+                "between_seed_sd_ci90_lower": between_sd_lower,
+                "between_seed_sd_ci90_upper": between_sd_upper,
+                "heterogeneity_margin": heterogeneity_margin,
+                "between_seed_heterogeneity_status": heterogeneity_status,
+                "rank_normalized_split_rhat_secondary": rhat,
+                "approximate_combined_ess_secondary": ess,
+                "final_classification": classification,
+            }
+        )
+    return rows
+
+
+def _matched_seed_blocks(
+    trajectories_by_cell_seed: dict[tuple[str, str], list[dict[str, Any]]],
+    cell_ids: tuple[str, ...],
+) -> tuple[str, ...]:
+    seed_sets = {
+        cell_id: {
+            seed_block
+            for observed_cell, seed_block in trajectories_by_cell_seed
+            if observed_cell == cell_id
+        }
+        for cell_id in cell_ids
+    }
+    if any(len(seed_blocks) < 12 for seed_blocks in seed_sets.values()):
+        counts = ", ".join(
+            f"{cell_id}={len(seed_blocks)}"
+            for cell_id, seed_blocks in seed_sets.items()
+        )
+        raise ValueError(f"at least 12 seed blocks per cell are required ({counts})")
+    unique_sets = {frozenset(seed_blocks) for seed_blocks in seed_sets.values()}
+    if len(unique_sets) != 1:
+        raise ValueError("cells do not contain the same matched seed blocks")
+    return tuple(sorted(next(iter(unique_sets))))
+
+
+def separated_stability_rows(
+    trajectories_by_cell_seed: dict[tuple[str, str], list[dict[str, Any]]],
+    design: dict[str, dict[str, str]],
+) -> list[dict[str, Any]]:
+    seed_blocks = _matched_seed_blocks(trajectories_by_cell_seed, tuple(design))
+    rows: list[dict[str, Any]] = []
+    for cell_id in design:
+        rows.extend(
+            separated_stability_diagnostic(
+                cell_id,
+                [
+                    trajectories_by_cell_seed[(cell_id, seed_block)]
+                    for seed_block in seed_blocks
+                ],
+                window_length=int(design[cell_id]["diagnostic_window_generations"]),
+            )
+        )
+    return rows
+
+
+def _separated_stability_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    counts: dict[str, int] = defaultdict(int)
+    for row in rows:
+        counts[str(row["final_classification"])] += 1
+    return {
+        "diagnostic_version": SEPARATED_STABILITY_DIAGNOSTIC_VERSION,
+        "scope": "post-hoc exploratory",
+        "bootstrap_resamples": STABILITY_BOOTSTRAP_RESAMPLES,
+        "classification_counts": dict(sorted(counts.items())),
+        "rhat_and_ess_role": "secondary diagnostics; not classification criteria",
+    }
+
+
 def equilibrium_screen(
     cell_id: str,
     cell_trajectories: list[list[dict[str, Any]]],
@@ -329,8 +654,8 @@ def equilibrium_screen(
     window_length: int,
     end_generation: int = HOST_GENERATIONS,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    if len(cell_trajectories) != 12:
-        raise ValueError(f"{cell_id} needs 12 trajectories")
+    if len(cell_trajectories) < 12:
+        raise ValueError(f"{cell_id} needs at least 12 trajectories")
     start = end_generation - 4 * window_length + 1
     if start < 1:
         raise ValueError(f"four diagnostic windows do not fit for {cell_id}")
@@ -450,12 +775,14 @@ def precision_rows(
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for contrast, treatment, reference in CONTRASTS:
+        seed_blocks = _matched_seed_blocks(
+            trajectories_by_cell_seed, (treatment, reference)
+        )
         window_length = int(design[treatment]["diagnostic_window_generations"])
         reference_window = int(design[reference]["diagnostic_window_generations"])
         for response in ("D1", "D2", "TV"):
             differences: list[float] = []
-            for number in range(1, 13):
-                seed = f"sb{number:04d}"
+            for seed in seed_blocks:
                 treatment_rows = trajectories_by_cell_seed[(treatment, seed)]
                 reference_rows = trajectories_by_cell_seed[(reference, seed)]
                 treatment_value = statistics.fmean(
@@ -530,6 +857,14 @@ def main() -> int:
     parser.add_argument(
         "--repository", type=Path, default=Path(__file__).resolve().parents[5]
     )
+    parser.add_argument(
+        "--diagnostics-from-derived",
+        action="store_true",
+        help=(
+            "recompute only the post-hoc separated stability diagnostic from the "
+            "audited environment-trajectories.tsv; do not inspect raw simulations"
+        ),
+    )
     args = parser.parse_args()
     repository = args.repository.resolve()
     work = repository / "experiments/work/trophosome"
@@ -541,6 +876,66 @@ def main() -> int:
     derived = phase / "analysis" / f"{STAGE_DIRECTORY}-derived"
     audit_path = derived / "analysis-audit.json"
     design = _load_design(design_path)
+
+    if args.diagnostics_from_derived:
+        trajectory_path = derived / "environment-trajectories.tsv"
+        summary_path = derived / "analysis-summary.json"
+        if not trajectory_path.is_file() or not summary_path.is_file():
+            raise SystemExit(
+                "derived-only diagnostics require environment-trajectories.tsv "
+                "and analysis-summary.json"
+            )
+        trajectory_rows = read_tsv(trajectory_path)
+        trajectories_by_cell_seed: dict[
+            tuple[str, str], list[dict[str, Any]]
+        ] = defaultdict(list)
+        for row in trajectory_rows:
+            trajectories_by_cell_seed[(row["cell_id"], row["seed_block_id"])].append(
+                row
+            )
+        try:
+            derived_seed_blocks = _matched_seed_blocks(
+                dict(trajectories_by_cell_seed), tuple(design)
+            )
+        except ValueError as exc:
+            raise SystemExit(f"derived trajectories are incomplete: {exc}") from exc
+        expected_keys = {
+            (cell_id, seed_block)
+            for cell_id in design
+            for seed_block in derived_seed_blocks
+        }
+        if set(trajectories_by_cell_seed) != expected_keys:
+            raise SystemExit(
+                "derived trajectories do not form a complete matched cell-by-seed "
+                "matrix"
+            )
+        if any(
+            len(rows) != HOST_GENERATIONS + 1
+            for rows in trajectories_by_cell_seed.values()
+        ):
+            raise SystemExit("a derived trajectory does not contain 251 states")
+        separated_rows = separated_stability_rows(
+            dict(trajectories_by_cell_seed), design
+        )
+        write_tsv(
+            derived / "separated-stability-diagnostic.tsv",
+            separated_rows,
+            list(separated_rows[0]),
+        )
+        summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        if summary.get("audit_status") != "PASS":
+            raise SystemExit("the existing analysis audit is not PASS")
+        summary["analysis_schema_version"] = "2.1.0"
+        summary["separated_stability_diagnostic"] = (
+            _separated_stability_summary(separated_rows)
+        )
+        _atomic_json(summary_path, summary)
+        print(
+            "Separated stability diagnostic written from audited derived trajectories: "
+            f"{len(separated_rows)} cell-response classifications"
+        )
+        return 0
+
     run_rows = read_tsv(manifest_path)
 
     preflight_issues = completion_gate_issues(run_rows, work=work, scratch=scratch)
@@ -703,10 +1098,15 @@ def main() -> int:
     run_window_rows: list[dict[str, Any]] = []
     screen_rows: list[dict[str, Any]] = []
     screen_history_rows: list[dict[str, Any]] = []
+    seed_blocks = _matched_seed_blocks(trajectories_by_cell_seed, tuple(design))
+    if seed_blocks != EXPECTED_SEED_BLOCKS:
+        raise SystemExit(
+            "completed trajectories do not contain the 20 frozen seed blocks"
+        )
     for cell_id in design:
         cell_trajectories = [
-            trajectories_by_cell_seed[(cell_id, f"sb{number:04d}")]
-            for number in range(1, 13)
+            trajectories_by_cell_seed[(cell_id, seed_block)]
+            for seed_block in seed_blocks
         ]
         run_windows, screens = equilibrium_screen(
             cell_id,
@@ -753,6 +1153,13 @@ def main() -> int:
         list(screen_history_rows[0]),
     )
 
+    separated_rows = separated_stability_rows(trajectories_by_cell_seed, design)
+    write_tsv(
+        derived / "separated-stability-diagnostic.tsv",
+        separated_rows,
+        list(separated_rows[0]),
+    )
+
     precision = precision_rows(trajectories_by_cell_seed, design)
     write_tsv(derived / "precision-recommendations.tsv", precision, list(precision[0]))
 
@@ -778,14 +1185,14 @@ def main() -> int:
             else None
         )
     summary = {
-        "analysis_schema_version": "2.0.0",
+        "analysis_schema_version": "2.1.0",
         "analysis_scope": "equilibrium-and-precision pilot; exploratory",
         "experiment_id": EXPERIMENT_ID,
         "variant_id": VARIANT_TAG,
         "audit_status": "PASS",
         "populations": EXPECTED_RUNS,
         "cells": len(design),
-        "seed_blocks": 12,
+        "seed_blocks": len(seed_blocks),
         "host_generations": HOST_GENERATIONS,
         "stationarity_responses_passing": passed_responses,
         "stationarity_responses_total": len(screen_rows),
@@ -795,6 +1202,9 @@ def main() -> int:
         ),
         "full_equilibrium_status": (
             "not established because contrasting initial conditions were not tested"
+        ),
+        "separated_stability_diagnostic": _separated_stability_summary(
+            separated_rows
         ),
         "precision_recommendation_maximum": max(
             int(row["recommended_replicates"]) for row in precision
