@@ -1,0 +1,9 @@
+{
+  "analysis_audit_schema_version": "1.0.0",
+  "checked_at": "2026-08-27T00:39:06.247564+00:00",
+  "expected_populations": 72,
+  "experiment_id": "phase1-second-pilot-v210-m010-g250",
+  "issues": [],
+  "status": "PASS",
+  "variant_id": "v210-m010-g250"
+}

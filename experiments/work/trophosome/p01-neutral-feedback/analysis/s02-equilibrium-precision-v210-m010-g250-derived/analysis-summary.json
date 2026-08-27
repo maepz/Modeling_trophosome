@@ -1,0 +1,50 @@
+{
+  "analysis_schema_version": "2.0.0",
+  "analysis_scope": "equilibrium-and-precision pilot; exploratory",
+  "audit_status": "PASS",
+  "benchmark_platforms": [
+    "Linux-4.18.0-553.155.1.el8_10.x86_64-x86_64-with-glibc2.28"
+  ],
+  "cells": 6,
+  "cells_passing_all_stationarity_responses": 0,
+  "estimated_persistent_stationarity_generation_by_cell": {
+    "p01-s02-c0021": null,
+    "p01-s02-c0022": null,
+    "p01-s02-c0023": null,
+    "p01-s02-c0024": null,
+    "p01-s02-c0025": null,
+    "p01-s02-c0026": null
+  },
+  "experiment_id": "phase1-second-pilot-v210-m010-g250",
+  "full_equilibrium_status": "not established because contrasting initial conditions were not tested",
+  "host_generations": 250,
+  "limitations": [
+    "Stationarity diagnostics are an initial screen, not proof of equilibrium.",
+    "Convergence from contrasting initial strain compositions is not tested.",
+    "Linear first-pilot cost projections are planning estimates, not guarantees.",
+    "Confirmatory seed blocks must remain held out until final design freeze."
+  ],
+  "mutation_materialization": {
+    "configured_limit_per_transition": 100000,
+    "generated_lineages": 15199651,
+    "largest_realized_count_per_transition": 6
+  },
+  "populations": 72,
+  "precision_contrasts_exceeding_cap": 0,
+  "precision_recommendation_maximum": 20,
+  "resources": {
+    "maximum_peak_rss_mib": 106.484375,
+    "summed_elapsed_hours": 33.766422810592694,
+    "summed_output_gib": 7.953777038492262
+  },
+  "seed_blocks": 12,
+  "software_git_commits": [
+    "754269bb75da5bf560548fa72d1a227e5f449ee3"
+  ],
+  "source_sha256": [
+    "a779690b1a83ba3bb84d79a2d67707e55d15d65f71ad21a32d5a4c77fc6e50b3"
+  ],
+  "stationarity_responses_passing": 5,
+  "stationarity_responses_total": 30,
+  "variant_id": "v210-m010-g250"
+}

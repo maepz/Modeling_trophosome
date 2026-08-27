@@ -1,0 +1,31 @@
+cell_id	response	assessment_end_generation	window_generations	previous_assessment_equivalent	current_assessment_equivalent	largest_previous_ci_to_margin_ratio	largest_current_ci_to_margin_ratio	equivalence_margin	rank_normalized_split_rhat	approximate_combined_ess	stationarity_screen_pass	full_equilibrium_status	first_passing_assessment_generation	persistent_stationarity_generation
+p01-s02-c0021	D0	250	50	True	True	4.0753445704045054e-15	4.0753445704045054e-15	5.0	1.0	1800.0	True	not established: contrasting initial conditions not tested	200	200
+p01-s02-c0021	D1	250	50	True	True	0.0006235586526588041	0.0007949513771645319	1.7113986434934423	1.089673647778962	181.76772012012083	False	not established: contrasting initial conditions not tested		
+p01-s02-c0021	D2	250	50	True	True	0.0007664538221384281	0.0007349753341384419	1.1103038522201232	1.0781988420898294	179.15124940818583	False	not established: contrasting initial conditions not tested		
+p01-s02-c0021	evenness	250	50	True	True	0.0003385155418648061	0.0004315549712822478	0.02	1.089673647778962	181.76730704479795	False	not established: contrasting initial conditions not tested		
+p01-s02-c0021	TV	250	50	True	True	0.00025849368762404743	0.00025849368762404743	0.05	1.0632688051071315	207.45468939980074	False	not established: contrasting initial conditions not tested		
+p01-s02-c0022	D0	250	20	True	True	2.9698419350359553e-15	2.9698419350359553e-15	5.0	1.0	720.0	True	not established: contrasting initial conditions not tested	80	80
+p01-s02-c0022	D1	250	20	False	False	1.717386910298236	1.717386910298236	1.4804644145133803	1.3493695141323205	115.52041097769938	False	not established: contrasting initial conditions not tested		
+p01-s02-c0022	D2	250	20	False	False	2.161139251090448	2.161139251090448	1.0198498692096558	1.396170371537089	104.31132889542367	False	not established: contrasting initial conditions not tested		
+p01-s02-c0022	evenness	250	20	True	True	0.9170329678699873	0.9170329678699873	0.02	1.3493695141323205	115.67820572077575	False	not established: contrasting initial conditions not tested		
+p01-s02-c0022	TV	250	20	True	True	0.5498074483629051	0.5170432888920125	0.05	1.143009072985252	136.2568810619152	False	not established: contrasting initial conditions not tested		
+p01-s02-c0023	D0	250	20	True	True	0.5938510076122244	0.8379754334603962	6.792916666666668	1.019975937877994	335.9794825047815	False	not established: contrasting initial conditions not tested		
+p01-s02-c0023	D1	250	20	False	False	1.646271587323691	2.086689543085177	1.4762445348975983	1.2521184153079004	90.03901103961894	False	not established: contrasting initial conditions not tested		
+p01-s02-c0023	D2	250	20	False	False	2.281922582448752	2.281922582448752	1.0138714762275034	1.286403442567842	91.99759776395751	False	not established: contrasting initial conditions not tested		
+p01-s02-c0023	evenness	250	20	True	True	0.8943910316879449	0.9035250906575674	0.02	1.219436110535544	95.98191879275132	False	not established: contrasting initial conditions not tested		
+p01-s02-c0023	TV	250	20	True	True	0.5507234652827787	0.6751075312594503	0.05	1.1003442870488491	128.40800518210466	False	not established: contrasting initial conditions not tested		
+p01-s02-c0024	D0	250	20	True	True	2.9698419350359553e-15	2.9698419350359553e-15	5.0	1.0	720.0	True	not established: contrasting initial conditions not tested	80	80
+p01-s02-c0024	D1	250	20	True	True	0.15243815260603222	0.16547512845442677	1.7098136339504362	1.2163579958847588	100.94721882275874	False	not established: contrasting initial conditions not tested		
+p01-s02-c0024	D2	250	20	True	True	0.19558983129055904	0.2211249946891283	1.1099782199445467	1.2518361811204324	108.83695221173748	False	not established: contrasting initial conditions not tested		
+p01-s02-c0024	evenness	250	20	True	True	0.08278342638789883	0.08963017065413283	0.02	1.2163579958847588	100.92439474333311	False	not established: contrasting initial conditions not tested		
+p01-s02-c0024	TV	250	20	True	True	0.049188934242268834	0.08327295721126085	0.05	1.0554137208767131	144.83488080319816	False	not established: contrasting initial conditions not tested		
+p01-s02-c0025	D0	250	53	True	True	3.2593729673248873e-15	3.2593729673248873e-15	5.0	1.0	1908.0	True	not established: contrasting initial conditions not tested	212	212
+p01-s02-c0025	D1	250	53	True	True	0.34686189736353207	0.41366683914621843	1.6987619521442736	1.098776381979339	146.5878261807816	False	not established: contrasting initial conditions not tested		
+p01-s02-c0025	D2	250	53	True	True	0.31348850417455193	0.44490269454607817	1.1073229110110707	1.0856012900491951	170.1547539423609	False	not established: contrasting initial conditions not tested		
+p01-s02-c0025	evenness	250	53	True	True	0.18730596902842112	0.22468110764323046	0.02	1.098776381979339	146.5650456653089	False	not established: contrasting initial conditions not tested		
+p01-s02-c0025	TV	250	53	True	True	0.10929523818209906	0.10929523818209906	0.05	1.0748572506169995	229.27112526109357	False	not established: contrasting initial conditions not tested		
+p01-s02-c0026	D0	250	20	True	True	2.9698419350359553e-15	2.9698419350359553e-15	5.0	1.0	720.0	True	not established: contrasting initial conditions not tested	80	80
+p01-s02-c0026	D1	250	20	False	False	3.4416648425767256	3.4416648425767256	1.224647978520571	1.1598834425185516	105.2483801270321	False	not established: contrasting initial conditions not tested		
+p01-s02-c0026	D2	250	20	False	False	4.25312739609645	4.25312739609645	0.8613928890227003	1.1936915952572946	110.90885865661218	False	not established: contrasting initial conditions not tested		
+p01-s02-c0026	evenness	250	20	False	False	1.8510988069217749	1.8510988069217749	0.02	1.1598834425185516	105.86304293748033	False	not established: contrasting initial conditions not tested		
+p01-s02-c0026	TV	250	20	False	False	1.114589822558133	1.007218461833212	0.05	1.2028401048478987	131.73911718749702	False	not established: contrasting initial conditions not tested		
