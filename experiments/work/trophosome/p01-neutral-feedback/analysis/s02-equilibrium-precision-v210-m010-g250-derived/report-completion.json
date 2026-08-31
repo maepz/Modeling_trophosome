@@ -2,70 +2,85 @@
   "analysis_audit": "PASS",
   "assets_path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/figures/phase1-second-pilot-v210-m010-g250-report",
   "complete": true,
-  "completed_at": "2026-08-27T00:39:10.054029+00:00",
+  "completed_at": "2026-08-28T12:52:31.008986+00:00",
   "experiment_id": "phase1-second-pilot-v210-m010-g250",
-  "input_fingerprint_sha256": "53f60c70065a57646c8cfc6b9c14b8915534184f6cc6679560f66f06b87307f8",
+  "input_fingerprint_sha256": "cb44dcfb2f1a503bc7ddc59558a8751b983710fbb034ca72fffbfaaa5ab66de5",
   "markdown_path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/phase1-second-pilot-v210-m010-g250-report.md",
   "outputs": [
     {
-      "bytes": 1280847,
+      "bytes": 3250131,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/output/pdf/phase1-second-pilot-v210-m010-g250-report.pdf",
-      "sha256": "18ce8bf80cb9150f4b9ee46651a0d1499012d433831769962930b2fe98c26c23"
+      "sha256": "32bc70f9d6eb11fcf46d02aec411e27b8c5df708a239e131177c9e3675511429"
     },
     {
-      "bytes": 4084,
+      "bytes": 6594,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/phase1-second-pilot-v210-m010-g250-report.md",
-      "sha256": "7049b24a879340335805567663783a1b5839a5e8aaa30927e5c632093b6750c1"
+      "sha256": "127d79486c31fb0a319aec82a4d8419f086ff635ba4b4c0b5e3233aa1ca05afa"
     },
     {
-      "bytes": 1788,
+      "bytes": 2256,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s02-equilibrium-precision-v210-m010-g250-derived/analysis-summary.json",
-      "sha256": "6ba9e2adf159370c1daf7a42623725c1fe5ec8f802334f0a59056e70497f0a89"
+      "sha256": "66069b7ba5d6433c0a11311c6a942db8c837a32e9333f691806b4b06e6c79976"
     },
     {
-      "bytes": 256,
+      "bytes": 257,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s02-equilibrium-precision-v210-m010-g250-derived/analysis-audit.json",
-      "sha256": "f91a90b057740a919a3bf41e9543b521651c61e68194749a833022799d11b963"
+      "sha256": "ed875349f6ccce18cc877fdf2ca1e480be0cd79db74b9ba5ee088643deb537af"
     },
     {
-      "bytes": 6141215,
+      "bytes": 10235506,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s02-equilibrium-precision-v210-m010-g250-derived/environment-trajectories.tsv",
-      "sha256": "100d7e91e5f27f446793cea97388b1ddc6d8dbaf41989f1721fed9e6e227fdff"
+      "sha256": "c675339e5b56b75d0f8fd40ae22bd15f0c3478785c0d350bf8280578b51b0dd8"
     },
     {
-      "bytes": 240444,
+      "bytes": 400650,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s02-equilibrium-precision-v210-m010-g250-derived/run-window-summaries.tsv",
-      "sha256": "21650555d1fc85c02caaf6014bd03e736d9cc0b88f6b2987c55f1a8c23e10c3e"
+      "sha256": "38e1ff662fefdd2649788b6a0c8ae6d98885ba991c2a80ce99685a7905305fb9"
     },
     {
-      "bytes": 6003,
+      "bytes": 6015,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s02-equilibrium-precision-v210-m010-g250-derived/stationarity-screen.tsv",
-      "sha256": "3ae52f64d95eff8a3b434914f938a6b0afe6a8fc2e1cb2998c3f0ef77245f23e"
+      "sha256": "4fb08d6c15065f310b71dcb82a77f1bce76aed876efb1f81b513d79c90b5dd81"
     },
     {
-      "bytes": 40802,
+      "bytes": 40880,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s02-equilibrium-precision-v210-m010-g250-derived/stationarity-history.tsv",
-      "sha256": "51d833666edbf651804ec3ec9e4c8be96b730509d35017349d394e4fa1a0a53b"
+      "sha256": "3cf33af350c56307fb46033846b23493a69d449177aac871dd69f2ea5888961d"
     },
     {
-      "bytes": 2574,
+      "bytes": 8881,
+      "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s02-equilibrium-precision-v210-m010-g250-derived/separated-stability-diagnostic.tsv",
+      "sha256": "7609c0b0cabbd851a422f648771cd6b4e71ab14669f92d943b82dcc896176a59"
+    },
+    {
+      "bytes": 2576,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/experiments/work/trophosome/p01-neutral-feedback/analysis/s02-equilibrium-precision-v210-m010-g250-derived/precision-recommendations.tsv",
-      "sha256": "949895169c17822ac7e30fcbc7f130ac304867cbfb9f3fa1a257b8bb5b565bd6"
+      "sha256": "c42dcd59007522c1c9cddaebf3a45ac874ec40e590cd257fb2e6fbd314c49cd5"
     },
     {
-      "bytes": 987770,
+      "bytes": 932699,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/figures/phase1-second-pilot-v210-m010-g250-report/environmental-trajectories.png",
-      "sha256": "49643f07aebf20f323147bfb6588db064d943e60857aacf8b06331d42235ce8f"
+      "sha256": "501416ec7b1e977eaa5181adad8e82c1a23bc59a1dad5a398e58662438f35877"
     },
     {
-      "bytes": 137466,
+      "bytes": 1492680,
+      "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/figures/phase1-second-pilot-v210-m010-g250-report/individual-seed-trajectories.png",
+      "sha256": "5283a4223b7e38e6396f96cdd177f599e8d5766b48bf26c664e1a7a50d36fdc8"
+    },
+    {
+      "bytes": 100561,
+      "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/figures/phase1-second-pilot-v210-m010-g250-report/separated-stability-diagnostic.png",
+      "sha256": "09be8cafe5a45b610867b53494d3ddaaf644a40dcfecbb702ef9ba9ea1648af2"
+    },
+    {
+      "bytes": 140430,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/figures/phase1-second-pilot-v210-m010-g250-report/stationarity-screen.png",
-      "sha256": "cbbf289f21fdfa5cf8f8d0304fafc8efc9c7ddf1c22c15d53bf0a3156560d486"
+      "sha256": "c177971d241e12b57c72253e7f48d435c7ea9401fb7f08e639c1683be6c32c80"
     },
     {
-      "bytes": 105468,
+      "bytes": 104831,
       "path": "/data/qiulab/CRF_project/work/Modeling_trophosome/docs/figures/phase1-second-pilot-v210-m010-g250-report/continuing-fluctuations.png",
-      "sha256": "992768b64eba527c08fa2f1b1b0b8e8bb1cb98db8b65941a620c3c5550dcb4df"
+      "sha256": "bb4ff1b9f61128bcc9ca2d6e88a39f9044df01ec883c35f8208eab3673c1c9d1"
     },
     {
       "bytes": 93736,

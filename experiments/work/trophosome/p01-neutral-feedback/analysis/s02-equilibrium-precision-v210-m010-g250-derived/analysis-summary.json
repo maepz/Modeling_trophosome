@@ -26,35 +26,37 @@
   ],
   "mutation_materialization": {
     "configured_limit_per_transition": 100000,
-    "generated_lineages": 15199651,
+    "generated_lineages": 25331574,
     "largest_realized_count_per_transition": 6
   },
-  "populations": 72,
+  "populations": 120,
   "precision_contrasts_exceeding_cap": 0,
   "precision_recommendation_maximum": 20,
   "resources": {
     "maximum_peak_rss_mib": 106.484375,
-    "summed_elapsed_hours": 33.766422810592694,
-    "summed_output_gib": 7.953777038492262
+    "summed_elapsed_hours": 56.503401813892125,
+    "summed_output_gib": 13.255788727663457
   },
-  "seed_blocks": 12,
+  "seed_blocks": 20,
   "separated_stability_diagnostic": {
     "bootstrap_resamples": 5000,
     "classification_counts": {
-      "stability_unresolved": 8,
-      "stable_with_negligible_heterogeneity": 22
+      "stability_unresolved": 7,
+      "stable_with_negligible_heterogeneity": 23
     },
     "diagnostic_version": "1.0.0",
     "rhat_and_ess_role": "secondary diagnostics; not classification criteria",
     "scope": "post-hoc exploratory"
   },
   "software_git_commits": [
-    "754269bb75da5bf560548fa72d1a227e5f449ee3"
+    "754269bb75da5bf560548fa72d1a227e5f449ee3",
+    "c16d15b4b3dd2188f05a65781cf6dac920b57a85"
   ],
   "source_sha256": [
+    "74d8fbcaa7d752417df5e28c0f57654b912689a8aaebe6d37886f6876e2b3b1e",
     "a779690b1a83ba3bb84d79a2d67707e55d15d65f71ad21a32d5a4c77fc6e50b3"
   ],
-  "stationarity_responses_passing": 5,
+  "stationarity_responses_passing": 6,
   "stationarity_responses_total": 30,
   "variant_id": "v210-m010-g250"
 }
