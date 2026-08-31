@@ -1,8 +1,8 @@
 # Phase 1 second pilot: stationarity and precision
 
-**Report date:** 2026-08-27  
+**Report date:** 2026-08-28  
 **Analysis audit:** `PASS`  
-**Populations:** 72 (6 cells x 12 matched seed blocks)  
+**Populations:** 120 (6 cells x 20 matched seed blocks)  
 **Host passages:** 250
 
 ## What this pilot asks
@@ -11,7 +11,7 @@ This second pilot asks whether environmental diversity appears statistically sta
 
 ## Main result
 
-5 of 30 cell-response screens passed; 0 of 6 cells passed all five responses.
+6 of 30 cell-response screens passed; 0 of 6 cells passed all five responses.
 
 Passing this screen supports late-run stationarity, not definitive equilibrium. The experiment starts all runs from the same environmental composition, so it does not test convergence from different starting communities.
 
@@ -21,7 +21,7 @@ Passing this screen supports late-run stationarity, not definitive equilibrium. 
 |---|---|---:|---:|---:|---:|---:|---:|
 | c0021 | no return | 100 | 0 | 0 | 0 | 1/5 | not by 250 |
 | c0022 | baseline host passage | 100 | 0.01 | 1,000,000,000 | 0 | 1/5 | not by 250 |
-| c0023 | within-host mutation | 100 | 0.01 | 1,000,000,000 | 1e-10 | 0/5 | not by 250 |
+| c0023 | within-host mutation | 100 | 0.01 | 1,000,000,000 | 1e-10 | 1/5 | not by 250 |
 | c0024 | host pooling | 10,000 | 0.0001 | 1,000,000,000 | 0 | 1/5 | not by 250 |
 | c0025 | weak feedback | 100 | 0.001 | 100,000,000 | 0 | 1/5 | not by 250 |
 | c0026 | strong feedback | 100 | 0.1 | 10,000,000,000 | 0 | 1/5 | not by 250 |
@@ -38,7 +38,7 @@ Independent populations are not expected to converge to an identical diversity v
 
 ## Post-hoc separated stability diagnostic
 
-After separating temporal trends, stability of the seed-block distribution, and the magnitude of between-seed spread, 22 of 30 responses were classified as statistically stable, 8 remained unresolved, and 0 showed clear biologically meaningful continuing change. This diagnostic is exploratory because it was added after inspection of the registered pilot results.
+After separating temporal trends, stability of the seed-block distribution, and the magnitude of between-seed spread, 23 of 30 responses were classified as statistically stable, 7 remained unresolved, and 0 showed clear biologically meaningful continuing change. This diagnostic is exploratory because it was added after inspection of the registered pilot results.
 
 ![Separated stability diagnostic](figures/phase1-second-pilot-v210-m010-g250-report/separated-stability-diagnostic.png)
 
@@ -63,8 +63,8 @@ The largest recommendation is 20 matched replicates. Recommendations target a 95
 ## Quality control and computational resources
 
 - Analysis audit: `PASS`.
-- Summed elapsed time: 33.77 hours.
-- Output volume: 7.95 GiB.
+- Summed elapsed time: 56.50 hours.
+- Output volume: 13.26 GiB.
 - Highest recorded process-tree memory: 106.5 MiB.
 - Every run was checked for 251 environmental states, constant reservoir size, migration counts, committed completion metadata, configuration hashes, and final-state checksums.
 
