@@ -1,0 +1,26 @@
+cell_id	cell	stratum	H	f	e	R	alpha	alpha_target	escape_range	source_role	u	U	m	host_generations	host_counts_mode	purpose
+p01-s02-c0021	c0021	no-return-control	100	0	0	0	0	0	no-return-control	reused-control	0	0.0	0.1	100	full	Shared no-return control; extract Stage 2 passage 100
+p01-s03-c0027	c0027	mutation-free	100	0.00001	10000	1000000	0.000999000999001	0.001	primary-range	new-grid-cell	0	0.0	0.1	100	full	Host abundance x feedback; mutation-free
+p01-s03-c0028	c0028	mutation-enabled	100	0.00001	10000	1000000	0.000999000999001	0.001	primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	full	Host abundance x feedback; mutation-enabled
+p01-s03-c0029	c0029	mutation-free	100	0.000101	101000	10100000	0.00999900999901	0.01	primary-range	new-grid-cell	0	0.0	0.1	100	full	Host abundance x feedback; mutation-free
+p01-s03-c0030	c0030	mutation-enabled	100	0.000101	101000	10100000	0.00999900999901	0.01	primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	full	Host abundance x feedback; mutation-enabled
+p01-s03-c0031	c0031	mutation-free	100	0.0011111	1111100	111110000	0.0999990999991	0.1	primary-range	new-grid-cell	0	0.0	0.1	100	full	Host abundance x feedback; mutation-free
+p01-s03-c0032	c0032	mutation-enabled	100	0.0011111	1111100	111110000	0.0999990999991	0.1	primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	full	Host abundance x feedback; mutation-enabled
+p01-s03-c0033	c0033	mutation-free	100	0.99	990000000	99000000000	0.99	0.99	above-primary-range	new-grid-cell	0	0.0	0.1	100	full	Host abundance x feedback; mutation-free
+p01-s03-c0034	c0034	mutation-enabled	100	0.99	990000000	99000000000	0.99	0.99	above-primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	full	Host abundance x feedback; mutation-enabled
+p01-s03-c0035	c0035	mutation-free	1000	0.000001	1000	1000000	0.000999000999001	0.001	below-primary-range	new-grid-cell	0	0.0	0.1	100	panel	Host abundance x feedback; mutation-free
+p01-s03-c0036	c0036	mutation-enabled	1000	0.000001	1000	1000000	0.000999000999001	0.001	below-primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	panel	Host abundance x feedback; mutation-enabled
+p01-s03-c0037	c0037	mutation-free	1000	0.0000101	10100	10100000	0.00999900999901	0.01	primary-range	new-grid-cell	0	0.0	0.1	100	panel	Host abundance x feedback; mutation-free
+p01-s03-c0038	c0038	mutation-enabled	1000	0.0000101	10100	10100000	0.00999900999901	0.01	primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	panel	Host abundance x feedback; mutation-enabled
+p01-s03-c0039	c0039	mutation-free	1000	0.00011111	111110	111110000	0.0999990999991	0.1	primary-range	new-grid-cell	0	0.0	0.1	100	panel	Host abundance x feedback; mutation-free
+p01-s03-c0040	c0040	mutation-enabled	1000	0.00011111	111110	111110000	0.0999990999991	0.1	primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	panel	Host abundance x feedback; mutation-enabled
+p01-s03-c0041	c0041	mutation-free	1000	0.099	99000000	99000000000	0.99	0.99	above-primary-range	new-grid-cell	0	0.0	0.1	100	panel	Host abundance x feedback; mutation-free
+p01-s03-c0042	c0042	mutation-enabled	1000	0.099	99000000	99000000000	0.99	0.99	above-primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	panel	Host abundance x feedback; mutation-enabled
+p01-s03-c0043	c0043	mutation-free	10000	1e-7	100	1000000	0.000999000999001	0.001	below-primary-range	new-grid-cell	0	0.0	0.1	100	panel	Host abundance x feedback; mutation-free
+p01-s03-c0044	c0044	mutation-enabled	10000	1e-7	100	1000000	0.000999000999001	0.001	below-primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	panel	Host abundance x feedback; mutation-enabled
+p01-s03-c0045	c0045	mutation-free	10000	0.00000101	1010	10100000	0.00999900999901	0.01	below-primary-range	new-grid-cell	0	0.0	0.1	100	panel	Host abundance x feedback; mutation-free
+p01-s03-c0046	c0046	mutation-enabled	10000	0.00000101	1010	10100000	0.00999900999901	0.01	below-primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	panel	Host abundance x feedback; mutation-enabled
+p01-s03-c0047	c0047	mutation-free	10000	0.000011111	11111	111110000	0.0999990999991	0.1	primary-range	new-grid-cell	0	0.0	0.1	100	panel	Host abundance x feedback; mutation-free
+p01-s03-c0048	c0048	mutation-enabled	10000	0.000011111	11111	111110000	0.0999990999991	0.1	primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	panel	Host abundance x feedback; mutation-enabled
+p01-s03-c0049	c0049	mutation-free	10000	0.0099	9900000	99000000000	0.99	0.99	primary-range	new-grid-cell	0	0.0	0.1	100	panel	Host abundance x feedback; mutation-free
+p01-s03-c0050	c0050	mutation-enabled	10000	0.0099	9900000	99000000000	0.99	0.99	primary-range	new-grid-cell	1e-10	50.6775749305	0.1	100	panel	Host abundance x feedback; mutation-enabled

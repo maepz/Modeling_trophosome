@@ -16,6 +16,17 @@ parallel compute jobs.
 
 ## Phase 1 first pilot
 
+For the current Stage 3 first wave, see
+[the frozen design](../docs/phase1-stage3-wave1.md) and
+[HPC commands](../scripts/hpc/README.md#phase-1-stage-3-first-mapping-wave).
+Its 288 new populations use the separate directory
+`s03-parameter-map-wave1-v210-m010-g100`, cells `p01-s03-c0027` through `c0050`,
+and exploratory seed blocks `sb0001` through `sb0012` (seeds 666-677).
+The 72 frozen Stage 2 passage-100 endpoints are not new simulations: twelve
+c0021 populations form the shared control and sixty are supplementary references.
+There are 25 primary conditions, including that control. The generator
+checks only its own registry rows and preserves all pilot rows.
+
 The staged 20-cell design (12 core cells followed by eight gated extension
 cells) is listed in
 `work/trophosome/p01-neutral-feedback/design/phase1-first-pilot-cells.tsv`.

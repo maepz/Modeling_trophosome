@@ -37,6 +37,14 @@ the biological system that motivated the software.
 
 ## Start here: run the small example
 
+For the agreed **Phase 1 Stage 3, part one** on the HPC (24 new conditions,
+288 new populations plus a reused 12-population control), use the [Stage 3 server workflow](scripts/hpc/README.md#phase-1-stage-3-first-mapping-wave).
+It starts with three safety runs, resumes interrupted work, and creates a PDF
+and editable report only after all 288 new populations pass their audit. The
+[frozen design and interpretation](docs/phase1-stage3-wave1.md) distinguish this
+100-passage experiment from an equilibrium test. The grid crosses H=100/1,000/10,000,
+feedback targets 0.001/0.01/0.1/0.99, and mutation off/on.
+
 Python 3.11 or newer is required. The commands below are entered in a terminal
 opened in the downloaded `Modeling_trophosome` folder.
 

@@ -328,3 +328,151 @@ python scripts/build_phase1_second_pilot_report.py \
 Without `--force`, an unchanged report is skipped using a fingerprint of the
 120 completion records, design, manifest, analysis code, and report code. To run
 simulations without trying the automatic report, add `--no-report`.
+
+## Phase 1 Stage 3: first mapping wave
+
+This is the first **main parameter-mapping batch**, not a rerun of either pilot.
+The [frozen part-one design](../../docs/phase1-stage3-wave1.md) contains 24 new cells
+(`c0027`-`c0050`) x twelve matched seed blocks (`sb0001`-`sb0012`) = 288 new populations,
+all at 100 passages, `m=0.1`, and at most 10,000 hosts. The shared no-return
+control reuses twelve Stage 2 c0021 passage-100 outcomes, giving 25 primary
+conditions and 300 primary populations. Five other Stage 2 conditions are
+supplementary only. No reused pilot is rerun. Selection remains off
+in both habitats. Model/software/output versions remain 2.1.0/0.7.0/2.3.0.
+
+### 1. Update and verify the environment
+
+After the Stage 3 preparation commit has been pushed, connect to the server,
+enter the existing repository and update it:
+
+Finish any active Stage 2 jobs before updating this checkout. Checkpoints are
+tied to their original source fingerprint; if an older run still needs to be
+resumed, keep its original revision in a separate checkout until it finishes.
+
+```bash
+cd /home/qiulab/data/CRF_project/work/Modeling_trophosome
+git pull --ff-only
+eval "$(mamba shell hook -s bash)"
+mamba activate trophosome
+python -m pip install -e '.[report]'
+trophosome --version
+git status --short
+```
+
+The version should be `0.7.0` and Git status should be empty before launching.
+If Git reports local changes or a pull conflict, stop and inspect them rather
+than overwriting them. Reuse the existing `layout.local.json`; if missing,
+follow [the one-time storage setup](#create-the-machine-local-storage-layout).
+There is no need to regenerate the frozen TOMLs on the HPC.
+
+### 2. Prepare the 288 isolated run directories (no simulation)
+
+```bash
+python scripts/prepare_phase1_stage3_wave1.py --verify
+bash scripts/hpc/launch_phase1_stage3_wave1.sh --prepare-only
+bash scripts/hpc/launch_phase1_stage3_wave1.sh --dry-run
+```
+
+Expected: 317 frozen files verified and a preflight listing 288 new populations.
+All new raw outputs go under the configured scratch root, in
+`p01-neutral-feedback/s03-parameter-map-wave1-v210-m010-g100/`.
+Existing Stage 1 and Stage 2 outputs are untouched.
+The old unlaunched g250 matrix has been replaced. Do not reuse its TOMLs or
+scratch paths; verify that the launcher prints **100 passages** before launch.
+
+### 3. Run three safety populations first
+
+Use the site's permitted compute session/allocation. On the previously probed
+server, which did not expose a scheduler, use `tmux`:
+
+```bash
+tmux new -s trophosome-stage3-wave1
+bash scripts/hpc/launch_phase1_stage3_wave1.sh --smoke-only --jobs 3
+```
+
+This runs c0034 (H=100, mutation on, 99% release), c0049 (H=10,000, mutation
+off), and c0050 (H=10,000, mutation on), all at alpha=0.99, with `sb0001`.
+They are three of the 288 planned new populations. Detach with
+`Ctrl-b`, then `d`; reconnect with:
+
+```bash
+tmux attach -t trophosome-stage3-wave1
+```
+
+### 4. Review the measured resource check
+
+After the three safety populations finish:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave1.sh --check-smoke
+```
+
+Look for `"passed": true`. The check audits all three completions and estimates
+full-wave runtime/storage from their measurements with a 2x safety margin.
+Mutation-enabled costs interpolate between H=100 and H=10,000; mutation-free
+costs scale from H=10,000. No-return and supplementary references add no new runs.
+It requires at most 48 projected hours per population, less than 350 GiB
+projected output and sufficient free scratch space. Confirm your user quota
+and compute allocation separately. These are projections, not hard runtime
+limits or a guarantee of a 48-hour entire batch. If the screen fails, review
+its complete output before proceeding; do not bypass the check.
+A resumed safety population also needs review because the existing timing
+record covers only the most recent attempt.
+
+### 5. Finish the first wave
+
+In the same persistent compute session:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave1.sh
+```
+
+The launcher verifies the safety gate again, audits and skips the three
+completed safety runs, then runs the remaining 285 populations. By default,
+eight populations run simultaneously, with two host workers each. To lower
+the load, use `--jobs 4` (or set `TROPHOSOME_STAGE3_JOBS=4`). Never exceed your
+CPU allocation; population-manager processes also use some CPU.
+
+`Ctrl-c` requests a graceful stop. Repeating the same command resumes from
+the latest valid checkpoints and skips audited completed populations. Two
+recovery checkpoints are retained while a run is active, targeting one per
+hour at completed host-passage boundaries. Per-run `run.out`, `run.err`, and
+`execution-summary.json` files are in scratch, not the repository.
+
+### 6. Automatic and stand-alone reports
+
+When all 288 new populations and the frozen references pass the audit, the
+launcher automatically creates:
+
+```text
+output/pdf/phase1-stage3-wave1-v210-m010-g100-report.pdf
+docs/phase1-stage3-wave1-v210-m010-g100-report.md
+docs/figures/phase1-stage3-wave1-v210-m010-g100-report/
+```
+
+The self-contained PDF and editable companion include diversity at passage
+100, Shannon/Simpson and Hill indices, individual TV trajectories, paired
+H-by-feedback interactions and precision/late-drift checks. The report avoids
+assuming equilibrium. All comparisons reuse the matching Stage 2 passage-100
+endpoints, never passage 250. Off-grid references are displayed at their actual
+alpha values, not relabelled as 0.1 or 0.99.
+
+Rebuild it at any time after completion, without launching simulations:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave1.sh --report-only
+```
+
+Or, from the activated environment:
+
+```bash
+python scripts/build_phase1_stage3_wave1_report.py --repository "$(pwd -P)"
+```
+
+Both paths re-audit the data on every build. Do not pipe them through `head`.
+`--no-report` defers automatic reporting if necessary; a report failure never
+requires rerunning valid simulations. Derived analysis tables and the report
+completion record live in
+`experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/`.
+No raw files are automatically deleted. Review the report before archiving
+results or selecting the next adaptive batch.

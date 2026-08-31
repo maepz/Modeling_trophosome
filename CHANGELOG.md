@@ -8,6 +8,17 @@ output schema have independent versions recorded in every simulation.
 
 ### Added
 
+- The frozen Stage 3 part-one matrix: 24 new cells, twelve matched seed blocks,
+  288 new populations, 100 passages, and a reused twelve-population no-return
+  control (25 primary conditions, 300 primary populations). Crosses H=100,
+  1,000, 10,000 with alpha targets 0.001, 0.01, 0.1, 0.99 and u=0/10^-10.
+  Exact total return is matched across H, with target/realized alpha recorded.
+  Includes three gated HPC safety runs, checkpoint/resume launching, frozen
+  passage-100 Stage 2 references, seed-paired H-by-feedback TV interactions,
+  Shannon/Simpson indices, late-time drift/precision checks, and
+  automatic or stand-alone PDF/Markdown reporting. No scientific transition
+  rules or model/output version numbers changed.
+
 - An optional fixed, non-depleting regional source that exchanges an exact
   configured fraction of the focal environmental population after host return.
 - Aligned focal and regional root-strain vectors, including focal-only,

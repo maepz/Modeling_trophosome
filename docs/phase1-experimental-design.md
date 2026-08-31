@@ -623,6 +623,18 @@ it remains exploratory and cannot be presented as a confirmatory test.
 
 ### Stage 3: exploratory parameter mapping
 
+**Frozen part one (2026-08-31):** 24 new cells (`c0027`-`c0050`) and twelve
+matched exploratory seed blocks (`sb0001`-`sb0012`) give 288 new populations.
+Reusing twelve c0021 populations gives 25 primary conditions and 300 primary
+populations. H=100, 1,000, 10,000 is crossed with alpha targets
+0.001, 0.01, 0.1, 0.99 and u=0/10^-10. Total return is matched exactly across H;
+requested and realized alpha are both recorded. Each comparison uses
+**100 host passages as a finite-time horizon**, not an assumption of
+equilibrium. Five additional Stage 2 conditions are supplementary references.
+These choices supersede both the unlaunched 18-cell proposal and the provisional
+space-filling recommendations below for part one. Exact inputs and safeguards
+are in [phase1-stage3-wave1.md](phase1-stage3-wave1.md).
+
 Do not run the complete `H × e × u` factorial. Instead:
 
 1. Place 18--24 maximin space-filling cells across `log H`, `log alpha`, and
