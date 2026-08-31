@@ -342,8 +342,9 @@ in both habitats. Model/software/output versions remain 2.1.0/0.7.0/2.3.0.
 
 ### 1. Update and verify the environment
 
-After the Stage 3 preparation commit has been pushed, connect to the server,
-enter the existing repository and update it:
+The current part-one design is frozen in commit `d0fc904`; use that revision
+or a later revision containing it. Connect to the server, enter the existing
+repository and update it:
 
 Finish any active Stage 2 jobs before updating this checkout. Checkpoints are
 tied to their original source fingerprint; if an older run still needs to be

@@ -27,7 +27,7 @@ long-term composition of the environmental population.
 The model is not restricted to tubeworms or to symbionts housed in a trophosome.
 It can represent other host--microbial associations when symbionts are acquired
 horizontally from an environmental source and their life cycle can reasonably be
-approximated by the four stages above.
+approximated by the five stages above.
 
 The infection bottleneck, within-host population size, time spent in the host,
 host abundance, symbiont release and environmental assumptions must be
@@ -37,13 +37,9 @@ the biological system that motivated the software.
 
 ## Start here: run the small example
 
-For the agreed **Phase 1 Stage 3, part one** on the HPC (24 new conditions,
-288 new populations plus a reused 12-population control), use the [Stage 3 server workflow](scripts/hpc/README.md#phase-1-stage-3-first-mapping-wave).
-It starts with three safety runs, resumes interrupted work, and creates a PDF
-and editable report only after all 288 new populations pass their audit. The
-[frozen design and interpretation](docs/phase1-stage3-wave1.md) distinguish this
-100-passage experiment from an equilibrium test. The grid crosses H=100/1,000/10,000,
-feedback targets 0.001/0.01/0.1/0.99, and mutation off/on.
+New to the software? Start with the small example below. For the current
+research batch, go to [Phase 1 Stage 3: host abundance and feedback](#phase-1-stage-3-host-abundance-and-feedback)
+or the complete [HPC instructions](scripts/hpc/README.md#phase-1-stage-3-first-mapping-wave).
 
 Python 3.11 or newer is required. The commands below are entered in a terminal
 opened in the downloaded `Modeling_trophosome` folder.
@@ -197,7 +193,90 @@ regardless of elapsed time. After successful completion, the software verifies
 the outputs and final states and deletes all recovery checkpoints. Failed or
 interrupted runs retain them for `--resume`.
 
-## Generate a pilot report
+## Phase 1 Stage 3: host abundance and feedback
+
+The current batch asks: **does increasing the number of hosts offset the
+environmental changes caused by stronger host feedback, and does mutation
+alter that relationship?** The frozen preparation commit is `d0fc904`.
+
+- **24 new conditions x 12 matched seed blocks = 288 new populations**, each
+  followed for **100 host passages**.
+- Host abundance: **100, 1,000 or 10,000** hosts.
+- Host-feedback targets: **0.001, 0.01, 0.1 or 0.99**, crossed with mutation
+  off or a whole-genome mutation probability of **10^-10 per bacterial
+  generation**. Feedback is measured before regional migration; it is not the
+  fraction released by each host. Total returned cells are matched exactly
+  across host abundances, and both target and realized feedback are recorded.
+- Regional migration remains **m=0.1**, and selection is off in both habitats.
+- The twelve existing Stage 2 no-return populations supply the shared control
+  **at passage 100**, giving **25 primary conditions and 300 primary
+  populations**. Five other Stage 2 conditions are supplementary references,
+  not extra replicates of the primary grid. No pilot is rerun.
+
+Some combinations require release fractions outside the original biological
+range; the [full design](docs/phase1-stage3-wave1.md) labels these as
+extended-range mechanistic tests. These are exploratory, fixed-time results,
+not an assumption that equilibrium has been reached. This batch replaces the
+**unlaunched** 18-cell, six-seed, 250-passage proposal; do not use its old TOMLs
+or `g250` scratch paths for Stage 3.
+
+### Run the batch on the HPC
+
+First follow the [server setup and storage instructions](scripts/hpc/README.md#phase-1-stage-3-first-mapping-wave)
+for the `trophosome` mamba environment. Finish older jobs before updating their
+checkout: checkpoint recovery requires the original source version. Use a
+persistent compute session such as the documented `tmux` workflow.
+
+From the repository directory, run these steps in order:
+
+```bash
+git pull --ff-only
+bash scripts/hpc/launch_phase1_stage3_wave1.sh --prepare-only
+bash scripts/hpc/launch_phase1_stage3_wave1.sh --smoke-only --jobs 3
+bash scripts/hpc/launch_phase1_stage3_wave1.sh --check-smoke
+```
+
+Preparation does not simulate. It should report **288 populations and 100
+passages**. The three safety runs are **c0034, c0049 and c0050**, each with
+`sb0001`; they are included in the 288. Inspect the resource check and proceed
+only if it reports `"passed": true` and the projected resources fit your HPC
+allocation and quota. Then finish the batch:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave1.sh
+```
+
+The launcher audits and skips the three completed safety runs, then runs the
+remaining **285 populations**. It defaults to eight simultaneous populations
+with two host workers each; `--jobs 4` reduces the load. Repeating the command
+resumes interrupted populations from valid checkpoints and skips completed
+ones. No simulation is started by updating the repository itself.
+
+### Read or rebuild the batch report
+
+After all 288 new populations and the frozen references pass their audit, the
+launcher automatically creates the PDF, editable Markdown and figures:
+
+```text
+output/pdf/phase1-stage3-wave1-v210-m010-g100-report.pdf
+docs/phase1-stage3-wave1-v210-m010-g100-report.md
+docs/figures/phase1-stage3-wave1-v210-m010-g100-report/
+```
+
+The report covers environmental composition and diversity, individual
+trajectories, paired host-abundance/feedback/mutation comparisons, and
+precision and late-time drift checks. Rebuild it without running simulations:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave1.sh --report-only
+```
+
+A reporting error does not require rerunning valid simulations. Raw outputs
+are not deleted automatically; review and archive them before changing
+retention. Full analysis definitions and the frozen matrix are in
+[the Stage 3 design](docs/phase1-stage3-wave1.md).
+
+## Generate an earlier pilot report
 
 A completed pilot matrix can be converted into a self-contained biological PDF
 with `trophosome report`. The command also creates an editable Markdown copy and
@@ -207,7 +286,7 @@ adding future experimental cells.
 
 The maintained Phase 1 server workflows, including checkpoint/resume behavior
 and automatic or stand-alone reports, are documented in the
-[HPC workflow guide](scripts/hpc/README.md). The current second pilot uses six
+[HPC workflow guide](scripts/hpc/README.md). The earlier second pilot uses six
 sentinel conditions, 20 matched populations per condition after its eight-seed
 closure batch, and 250 repeated host passages.
 
