@@ -1,0 +1,21 @@
+{
+  "TV_contrast": "Difference in distance from the initial community, not distance between mutant IDs from different runs.",
+  "audit_status": "PASS",
+  "cells": 25,
+  "data_origin": "simulation",
+  "experiment_id": "phase1-stage3-wave1-v210-m010-g100",
+  "interpretation": "Exploratory finite-time outcomes, not equilibrium claims.",
+  "more_seeds_flags": 4,
+  "new_cells": 24,
+  "next_step": "Review paired H x feedback TV interactions, precision, and late drift before choosing additional seeds, intermediate cells, or longer validation runs. No automatic launches.",
+  "populations": 288,
+  "primary_endpoint": 100,
+  "primary_populations_including_reused_control": 300,
+  "primary_response": "TV",
+  "reference_populations": 72,
+  "reused_control_populations": 12,
+  "seeds_per_cell": 12,
+  "supplementary_reference_populations": 60,
+  "total_output_gib": 131.35679743159562,
+  "uncertainty": "90% Student-t intervals across twelve independent seed blocks; not multiplicity-adjusted"
+}

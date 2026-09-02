@@ -1,0 +1,159 @@
+{
+  "analysis_audit": "PASS",
+  "complete": true,
+  "completed_at": "2026-09-01T14:32:35.841997+00:00",
+  "experiment_id": "phase1-stage3-wave1-v210-m010-g100",
+  "input_and_output_sha256": "b3257a4d08392795800aee98118a31607f87eb3d1f40751981fecc4ce7a9e7df",
+  "inputs": [
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/manifests/phase1-stage3-wave1-v210-m010-g100-manifest.json",
+      "sha256": "a5255a45e3e044caed9af6e6803d0c18bb9f593512c6e1c38466cd8fe72f4141"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/design/phase1-stage3-wave1-v210-m010-g100-reference-endpoints.tsv",
+      "sha256": "7d2d61e4b853fcd4a861d0fcfea8914dadcfdc252289129e295fa4a979c3e8ba"
+    },
+    {
+      "path": "scripts/analyse_phase1_stage3_wave1.py",
+      "sha256": "dd6d027874612d66ab910848eaaf8b02ede14cf6b81ca892925b9b26259b9b42"
+    },
+    {
+      "path": "scripts/prepare_phase1_stage3_wave1.py",
+      "sha256": "fa3c704431f843acaed1335f492b7ab69ef80a5ed56c5d0730ab19d54cd4dcd1"
+    },
+    {
+      "path": "scripts/run_phase1_stage3_wave1.py",
+      "sha256": "111fd6923b849db9517bee66111e817a0c6e71449f9bf0591420d6deda5b4c3d"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/analyse_first_pilot.py",
+      "sha256": "8903b1172f8ce69d3c2572dccbf9cd992f1155f90ea8885965bdd0fd9162cdb7"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/analyse_second_pilot.py",
+      "sha256": "77899f1513f138eaac0fc39261543bd97c9df8927507e0683814f308ae47c59f"
+    },
+    {
+      "path": "src/trophosome/stage3_report.py",
+      "sha256": "0958b70a11c53d44c973237b12720d4287d8cffc7cde87e5661ae3b460c93541"
+    },
+    {
+      "path": "src/trophosome/second_pilot_report.py",
+      "sha256": "20fb0cd9aac389daadae9dc1aa24600c3a07121a5db147b4d7648c2b527285a0"
+    },
+    {
+      "path": "scripts/build_phase1_stage3_wave1_report.py",
+      "sha256": "865dd1de8b27758ca17c1a76c575200984c9d3dc3192481f2a584b89d29e2993"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "output/pdf/phase1-stage3-wave1-v210-m010-g100-report.pdf",
+      "sha256": "4352f297b6606fac762ff011a1e35b954698bba0dc0611da2a926a07965ef04b"
+    },
+    {
+      "path": "docs/phase1-stage3-wave1-v210-m010-g100-report.md",
+      "sha256": "cbfc2b8a7ac31dac876fd7c76b4754f5d089303854bc56607c1d752f82e80897"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/host-feedback-tv.png",
+      "sha256": "a43563a0fe2dba4d3478c954aa73db1885985d8db8ff6eff7d70d08a420af44d"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/host-feedback-tv.svg",
+      "sha256": "2c404c9ca448411cebd0384ea13c82120905c62531b2e21659aa137149085481"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/passage100-diversity.png",
+      "sha256": "acaa0cd150724badcb67a04afe27a3d819db10b283465f4e692a1be2193978d7"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/passage100-diversity.svg",
+      "sha256": "0c8749c03a5424759a92a3bb2fc94a634458ad4e918f5985a983be971bb9b6eb"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/trajectories-mutation-free.png",
+      "sha256": "254f061340246197e7fd868cab63f83152e0ab812172486a843736a012ec4908"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/trajectories-mutation-free.svg",
+      "sha256": "9ad0a6236b98f6f718610a659cbed6cbf8826d310afb2ceaa1b0cd5291a9e2df"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/trajectories-mutation-enabled.png",
+      "sha256": "c9b07238ed2d5a52daff1c1ae59d01e2820c61485f5ffa60199eeda4d7916d6d"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/trajectories-mutation-enabled.svg",
+      "sha256": "ae1d04ddad2d5a28e19c39d4bca4d29ff7d79c213498d4c56b1bdeb3da8a2854"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/paired-comparisons.png",
+      "sha256": "5030c22ef8d76631d7f1a8d35c5fe3965065f6667b95d9606e1cd64088df5444"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/paired-comparisons.svg",
+      "sha256": "d3f87735c15c722342b635a771996f2d38fcd7e0473c602466563672675547ca"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/paired-tv-interactions.png",
+      "sha256": "d50b9f0f041496a4a57c06c1bd9c8778fbff8f01183ba5692c6af2cddfa302ee"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave1-v210-m010-g100-report/paired-tv-interactions.svg",
+      "sha256": "63c991349231fdc5a0f5f8d26162465a2141da69c2c28f4ab48a18024cbbf463"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/cell-summaries.tsv",
+      "sha256": "df13e3b0ea1f902974931c4d649b0e3033745082be2a0775a023275d9874168e"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/classifications.tsv",
+      "sha256": "8884edc6f3b098d7dc55018901b3265033af1fea4748beb1b893d467a1e3122d"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/environment-trajectories.tsv",
+      "sha256": "d4c7c831d6e88af27607ec3bbd28cdfe120185a0348e9cad1cf1074cfc785316"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/late-tv-drift.tsv",
+      "sha256": "26e11bf9b89a38285dd25d9b42f47b261bdc61513bb8d935345701662fc882ba"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/paired-contrasts.tsv",
+      "sha256": "1afb19cc3449e1b89239c08e3f7666c63429c287096c637f396ae75a20985581"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/resource-summary.tsv",
+      "sha256": "93dbf8bd805dad9f8475c07764b68756216eee0feeff8864fdd6794a6d33b5d9"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/reused-reference-endpoints.tsv",
+      "sha256": "7d2d61e4b853fcd4a861d0fcfea8914dadcfdc252289129e295fa4a979c3e8ba"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/run-endpoints.tsv",
+      "sha256": "e1b4aa75e79e921f82a74157ed556f1a5b92a3e457dc157a5f7308ce7a5d00f1"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/run-tail-summaries.tsv",
+      "sha256": "471adeb8e02099b603bf01fa743216d1c53b1624e2f622733e04e5d94a1dfdc7"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/supplementary-reference-summaries.tsv",
+      "sha256": "20f3e5ad7f09cbfa432044d167dcb97913c63c6ef9e25a0fe74451f9363cdb4b"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/tv-interactions.tsv",
+      "sha256": "8f1d22f6e94eed661ed0fa7aa839c6069f1eb56f178edbac019681a2a137fe33"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/analysis-summary.json",
+      "sha256": "0688e9557f00f80d0c637a77d53e496e8ffe3e1c5b882fa1658a3f601d53e9b1"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave1-v210-m010-g100-derived/analysis-audit.json",
+      "sha256": "e016f994b1c339a27cf9e0bc9d6b3f7807d64559490f02ae93c6a637057affae"
+    }
+  ]
+}
