@@ -805,10 +805,30 @@ def run_simulation(
     repository: str | Path,
     *,
     resume: bool = False,
+    pause_after_generation: int | None = None,
 ) -> tuple[HostGenerationSummary, ...]:
-    """Run or safely resume exact-count replicates at host-generation boundaries."""
+    """Run, pause, or safely resume at exact host-generation boundaries.
+
+    ``pause_after_generation`` is an execution control rather than a biological
+    parameter.  It leaves a verified recovery checkpoint and does not write a
+    completion record, allowing an adaptive experiment to inspect a common
+    interim horizon and later continue the identical stochastic trajectory.
+    """
 
     config.validate()
+    if pause_after_generation is not None:
+        if isinstance(pause_after_generation, bool) or not isinstance(
+            pause_after_generation, int
+        ):
+            raise ValueError("pause_after_generation must be an integer")
+        if not 1 <= pause_after_generation <= config.host.host_generations:
+            raise ValueError(
+                "pause_after_generation must be between 1 and host_generations"
+            )
+        if config.replicates != 1:
+            raise ValueError(
+                "pause_after_generation currently requires exactly one replicate"
+            )
     output = Path(output_directory)
     output.mkdir(parents=True, exist_ok=True)
     repository_path = Path(repository)
@@ -868,7 +888,22 @@ def run_simulation(
         all_summaries = [
             _summary_from_dict(item) for item in checkpoint.metadata["summaries"]
         ]
+        checkpoint_generation = int(checkpoint.metadata["last_completed_generation"])
+        if (
+            pause_after_generation is not None
+            and pause_after_generation < checkpoint_generation
+        ):
+            raise ValueError(
+                "pause_after_generation precedes the newest recovery checkpoint"
+            )
+        if (
+            pause_after_generation is not None
+            and pause_after_generation == checkpoint_generation
+            and checkpoint_generation < config.host.host_generations
+        ):
+            return tuple(all_summaries)
         _record_resume(output, checkpoint, config)
+        (output / "pause.json").unlink(missing_ok=True)
         csv_outputs = _open_csv_outputs(output, fields_by_name, append=True)
     else:
         run_artifacts = [
@@ -1381,10 +1416,15 @@ def run_simulation(
                         output / f"final_environment_rep{replicate:03d}.npz",
                         environment,
                     )
+                pause_requested = (
+                    pause_after_generation is not None
+                    and host_generation == pause_after_generation
+                    and not at_replicate_end
+                )
                 checkpoint_due = (
                     time.monotonic() - last_checkpoint_time >= checkpoint_interval
                 )
-                if checkpoint_due or at_replicate_end:
+                if checkpoint_due or at_replicate_end or pause_requested:
                     offsets = _sync_csv_outputs(csv_outputs)
                     depths = np.asarray(
                         [
@@ -1407,7 +1447,7 @@ def run_simulation(
                         restart_hash,
                         source_hash,
                     )
-                    write_recovery_checkpoint(
+                    checkpoint_path = write_recovery_checkpoint(
                         output / "checkpoints",
                         metadata,
                         environment,
@@ -1415,6 +1455,29 @@ def run_simulation(
                         config.output.checkpoint_keep,
                     )
                     last_checkpoint_time = time.monotonic()
+                    if pause_requested:
+                        _atomic_json(
+                            output / "pause.json",
+                            {
+                                "pause_record_schema_version": "1.0.0",
+                                "status": "paused",
+                                "paused_at": datetime.now(UTC).isoformat(),
+                                "last_completed_generation": host_generation,
+                                "configured_host_generations": (
+                                    config.host.host_generations
+                                ),
+                                "config_sha256": config_hash,
+                                "restart_config_sha256": restart_hash,
+                                "source_sha256": source_hash,
+                                "software_version": __version__,
+                                "model_spec_version": MODEL_SPEC_VERSION,
+                                "output_schema_version": OUTPUT_SCHEMA_VERSION,
+                                "checkpoint": checkpoint_path.name,
+                                "checkpoint_sha256": _sha256_file(checkpoint_path),
+                                "output_sizes": offsets,
+                            },
+                        )
+                        return tuple(all_summaries)
 
         output_sizes = _sync_csv_outputs(csv_outputs)
         expected_summary_count = config.replicates * config.host.host_generations
@@ -1441,6 +1504,7 @@ def run_simulation(
                 "final_environment_sha256": final_hashes,
             },
         )
+        (output / "pause.json").unlink(missing_ok=True)
         remove_recovery_checkpoints(output / "checkpoints")
         return tuple(all_summaries)
     finally:

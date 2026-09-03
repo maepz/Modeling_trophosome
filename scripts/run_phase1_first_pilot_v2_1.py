@@ -56,6 +56,7 @@ from trophosome.config import load_config
 
 MANIFEST_NAME = f"phase1-first-pilot-{VARIANT_TAG}-runs.tsv"
 EXPECTED_SEED_BLOCKS = {"sb0001", "sb0002", "sb0003"}
+FROZEN_SOURCE_PATHS = ("src/trophosome", "pyproject.toml")
 
 
 def _load_rows(repository: Path) -> tuple[Path, Path, list[dict[str, str]]]:
@@ -230,7 +231,14 @@ def _prepare_scratch(
 
 def _require_frozen_source(repository: Path, allow_dirty_source: bool) -> None:
     result = subprocess.run(
-        ["git", "status", "--porcelain"],
+        [
+            "git",
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+            "--",
+            *FROZEN_SOURCE_PATHS,
+        ],
         cwd=repository,
         capture_output=True,
         text=True,
@@ -248,8 +256,10 @@ def _require_frozen_source(repository: Path, allow_dirty_source: bool) -> None:
         preview = "\n".join(changed[:12])
         suffix = "\n..." if len(changed) > 12 else ""
         raise RuntimeError(
-            "the source tree is not frozen. Commit the model and generated pilot "
-            "files before launching, or deliberately pass --allow-dirty-source.\n"
+            "the maintained trophosome source is not frozen. Commit changes under "
+            "src/trophosome or pyproject.toml before launching, or deliberately "
+            "pass --allow-dirty-source. Unrelated results, reports, notebooks and "
+            "legacy directories are not part of this check.\n"
             f"{preview}{suffix}"
         )
 

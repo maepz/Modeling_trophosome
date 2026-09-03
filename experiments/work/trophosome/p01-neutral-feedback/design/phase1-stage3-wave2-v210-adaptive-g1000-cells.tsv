@@ -1,0 +1,41 @@
+cell_id	cell	panel	H	B	f	e	R	alpha	alpha_target	m	u	initial_horizon	maximum_horizon	host_counts_mode	initial_source_role	reused_source_cell_id	adaptive_eligible	purpose
+p01-s03-c0051	c0051	H-by-B	100	1	0.01	10000000	1000000000	0.5	0.5	0.1	0	100	1000	full	new-simulation		false	Host pooling: H=100, B=1
+p01-s03-c0052	c0052	H-by-B	100	5	0.01	10000000	1000000000	0.5	0.5	0.1	0	100	1000	full	new-simulation		false	Host pooling: H=100, B=5
+p01-s03-c0053	c0053	H-by-B	100	10	0.01	10000000	1000000000	0.5	0.5	0.1	0	100	1000	full	reused-passage-100	p01-s02-c0022	false	Host pooling: H=100, B=10
+p01-s03-c0054	c0054	H-by-B	100	50	0.01	10000000	1000000000	0.5	0.5	0.1	0	100	1000	full	new-simulation		false	Host pooling: H=100, B=50
+p01-s03-c0055	c0055	H-by-B	1000	1	0.001	1000000	1000000000	0.5	0.5	0.1	0	100	1000	panel	new-simulation		false	Host pooling: H=1000, B=1
+p01-s03-c0056	c0056	H-by-B	1000	5	0.001	1000000	1000000000	0.5	0.5	0.1	0	100	1000	panel	new-simulation		false	Host pooling: H=1000, B=5
+p01-s03-c0057	c0057	H-by-B	1000	10	0.001	1000000	1000000000	0.5	0.5	0.1	0	100	1000	panel	new-simulation		false	Host pooling: H=1000, B=10
+p01-s03-c0058	c0058	H-by-B	1000	50	0.001	1000000	1000000000	0.5	0.5	0.1	0	100	1000	panel	new-simulation		false	Host pooling: H=1000, B=50
+p01-s03-c0059	c0059	H-by-B	10000	1	0.0001	100000	1000000000	0.5	0.5	0.1	0	100	1000	panel	new-simulation		false	Host pooling: H=10000, B=1
+p01-s03-c0060	c0060	H-by-B	10000	5	0.0001	100000	1000000000	0.5	0.5	0.1	0	100	1000	panel	new-simulation		false	Host pooling: H=10000, B=5
+p01-s03-c0061	c0061	H-by-B	10000	10	0.0001	100000	1000000000	0.5	0.5	0.1	0	100	1000	panel	reused-passage-100	p01-s02-c0024	false	Host pooling: H=10000, B=10
+p01-s03-c0062	c0062	H-by-B	10000	50	0.0001	100000	1000000000	0.5	0.5	0.1	0	100	1000	panel	new-simulation		false	Host pooling: H=10000, B=50
+p01-s03-c0063	c0063	alpha-by-m	1000	10	0	0	0	0	0	0	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0, m=0
+p01-s03-c0064	c0064	alpha-by-m	1000	10	0	0	0	0	0	0.001	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0, m=0.001
+p01-s03-c0065	c0065	alpha-by-m	1000	10	0	0	0	0	0	0.01	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0, m=0.01
+p01-s03-c0066	c0066	alpha-by-m	1000	10	0	0	0	0	0	0.1	0	100	1000	panel	reused-passage-100	p01-s02-c0021	false	Feedback by regional exchange: alpha=0, m=0.1
+p01-s03-c0067	c0067	alpha-by-m	1000	10	0	0	0	0	0	0.5	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0, m=0.5
+p01-s03-c0068	c0068	alpha-by-m	1000	10	0	0	0	0	0	0.9	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0, m=0.9
+p01-s03-c0069	c0069	alpha-by-m	1000	10	0	0	0	0	0	0.99	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0, m=0.99
+p01-s03-c0070	c0070	alpha-by-m	1000	10	0.0000101	10100	10100000	0.00999900999901	0.01	0	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0.01, m=0
+p01-s03-c0071	c0071	alpha-by-m	1000	10	0.0000101	10100	10100000	0.00999900999901	0.01	0.001	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0.01, m=0.001
+p01-s03-c0072	c0072	alpha-by-m	1000	10	0.0000101	10100	10100000	0.00999900999901	0.01	0.01	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0.01, m=0.01
+p01-s03-c0073	c0073	alpha-by-m	1000	10	0.0000101	10100	10100000	0.00999900999901	0.01	0.1	0	100	1000	panel	reused-passage-100	p01-s03-c0037	false	Feedback by regional exchange: alpha=0.01, m=0.1
+p01-s03-c0074	c0074	alpha-by-m	1000	10	0.0000101	10100	10100000	0.00999900999901	0.01	0.5	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0.01, m=0.5
+p01-s03-c0075	c0075	alpha-by-m	1000	10	0.0000101	10100	10100000	0.00999900999901	0.01	0.9	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0.01, m=0.9
+p01-s03-c0076	c0076	alpha-by-m	1000	10	0.0000101	10100	10100000	0.00999900999901	0.01	0.99	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0.01, m=0.99
+p01-s03-c0077	c0077	alpha-by-m	1000	10	0.00011111	111110	111110000	0.0999990999991	0.1	0	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0.1, m=0
+p01-s03-c0078	c0078	alpha-by-m	1000	10	0.00011111	111110	111110000	0.0999990999991	0.1	0.001	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0.1, m=0.001
+p01-s03-c0079	c0079	alpha-by-m	1000	10	0.00011111	111110	111110000	0.0999990999991	0.1	0.01	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0.1, m=0.01
+p01-s03-c0080	c0080	alpha-by-m	1000	10	0.00011111	111110	111110000	0.0999990999991	0.1	0.1	0	100	1000	panel	reused-passage-100	p01-s03-c0039	false	Feedback by regional exchange: alpha=0.1, m=0.1
+p01-s03-c0081	c0081	alpha-by-m	1000	10	0.00011111	111110	111110000	0.0999990999991	0.1	0.5	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0.1, m=0.5
+p01-s03-c0082	c0082	alpha-by-m	1000	10	0.00011111	111110	111110000	0.0999990999991	0.1	0.9	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0.1, m=0.9
+p01-s03-c0083	c0083	alpha-by-m	1000	10	0.00011111	111110	111110000	0.0999990999991	0.1	0.99	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0.1, m=0.99
+p01-s03-c0084	c0084	alpha-by-m	1000	10	0.099	99000000	99000000000	0.99	0.99	0	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0.99, m=0
+p01-s03-c0085	c0085	alpha-by-m	1000	10	0.099	99000000	99000000000	0.99	0.99	0.001	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0.99, m=0.001
+p01-s03-c0086	c0086	alpha-by-m	1000	10	0.099	99000000	99000000000	0.99	0.99	0.01	0	100	1000	panel	new-simulation		true	Feedback by regional exchange: alpha=0.99, m=0.01
+p01-s03-c0087	c0087	alpha-by-m	1000	10	0.099	99000000	99000000000	0.99	0.99	0.1	0	100	1000	panel	reused-passage-100	p01-s03-c0041	false	Feedback by regional exchange: alpha=0.99, m=0.1
+p01-s03-c0088	c0088	alpha-by-m	1000	10	0.099	99000000	99000000000	0.99	0.99	0.5	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0.99, m=0.5
+p01-s03-c0089	c0089	alpha-by-m	1000	10	0.099	99000000	99000000000	0.99	0.99	0.9	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0.99, m=0.9
+p01-s03-c0090	c0090	alpha-by-m	1000	10	0.099	99000000	99000000000	0.99	0.99	0.99	0	100	1000	panel	new-simulation		false	Feedback by regional exchange: alpha=0.99, m=0.99

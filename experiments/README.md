@@ -14,6 +14,29 @@ Initialize or relocate the machine-specific directory structure with
 `scripts/manage_project_layout.py`. Do not edit the normalized registries from
 parallel compute jobs.
 
+## Phase 1 Stage 3 Wave 2
+
+Wave 2 is frozen as two neutral passage-100 experiments: a 12-cell host-number
+by infection-bottleneck panel and a 28-cell host-feedback by regional-exchange
+panel. Six exact earlier trajectories are reused, leaving 34 new conditions and
+408 new populations across 12 matched seed blocks. See
+[`docs/phase1-stage3-wave2.md`](../docs/phase1-stage3-wave2.md) for the matrices,
+equivalence contrasts and interpretation.
+
+New configurations have a maximum of 1,000 passages but initially pause at
+passage 100. Only pre-specified low-immigration conditions may resume to 500
+and then 1,000 under immutable, checksum-backed decisions. This retains one
+continuous stochastic trajectory and keeps passage 100 as the complete primary
+analysis. Prepare or verify the portable files with:
+
+```bash
+python scripts/prepare_phase1_stage3_wave2.py --write
+python scripts/prepare_phase1_stage3_wave2.py --verify
+```
+
+No command above launches the model. Server commands are documented under
+[`scripts/hpc/README.md`](../scripts/hpc/README.md#phase-1-stage-3-wave-2).
+
 ## Phase 1 first pilot
 
 For the current Stage 3 first wave, see
@@ -98,10 +121,12 @@ bash scripts/hpc/launch_phase1_first_pilot_v2_1.sh
 
 The launcher checks the scientific-model, software and output-schema versions,
 validates every selected TOML and checksum, creates machine-local run manifests,
-and refuses to start simulations from an uncommitted source tree. Repeating the
-last command skips complete populations and resumes interrupted populations
-that have a valid checkpoint. Runtime, peak memory and console logs are written
-inside each population's scratch directory.
+and refuses to start simulations when the maintained model package or
+`pyproject.toml` has uncommitted changes. Unrelated result, report, notebook and
+legacy directories do not affect that source guard. Repeating the last command
+skips complete populations and resumes interrupted populations that have a
+valid checkpoint. Runtime, peak memory and console logs are written inside each
+population's scratch directory.
 
 Set `TROPHOSOME_PILOT_JOBS` to change the number of simultaneous populations.
 For example, `TROPHOSOME_PILOT_JOBS=4` uses at most eight host workers. The

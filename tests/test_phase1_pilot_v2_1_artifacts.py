@@ -18,6 +18,57 @@ VARIANT = "v210-m010"
 
 
 class Phase1PilotV21ArtifactTests(unittest.TestCase):
+    def test_hpc_launcher_uses_an_already_active_environment_without_mamba(
+        self,
+    ) -> None:
+        launcher = REPOSITORY / "scripts/hpc/launch_phase1_first_pilot_v2_1.sh"
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary = Path(temporary_directory)
+            environment_bin = temporary / "trophosome" / "bin"
+            environment_bin.mkdir(parents=True)
+            capture_path = temporary / "python-arguments.txt"
+
+            fake_python = environment_bin / "python"
+            fake_python.write_text(
+                "#!/bin/bash\nprintf '%s\\n' \"$@\" > \"$FAKE_PYTHON_CAPTURE\"\n",
+                encoding="utf-8",
+            )
+            fake_python.chmod(0o755)
+
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "CONDA_DEFAULT_ENV": "trophosome",
+                    "CONDA_PREFIX": str(environment_bin.parent),
+                    "FAKE_PYTHON_CAPTURE": str(capture_path),
+                    "PATH": f"{environment_bin}:/usr/bin:/bin",
+                    "TROPHOSOME_MAMBA_ENV": "trophosome",
+                    "TROPHOSOME_PILOT_JOBS": "5",
+                }
+            )
+            environment.pop("MAMBA_DEFAULT_ENV", None)
+            environment.pop("MAMBA_EXE", None)
+            subprocess.run(
+                ["/bin/bash", str(launcher), "--dry-run"],
+                cwd=REPOSITORY,
+                env=environment,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(
+                capture_path.read_text(encoding="utf-8").splitlines(),
+                [
+                    str(REPOSITORY / "scripts/run_phase1_first_pilot_v2_1.py"),
+                    "--repository",
+                    str(REPOSITORY),
+                    "--jobs",
+                    "5",
+                    "--dry-run",
+                ],
+            )
+
     def test_hpc_launcher_activates_environment_without_mamba_run(self) -> None:
         launcher = REPOSITORY / "scripts/hpc/launch_phase1_first_pilot_v2_1.sh"
         with tempfile.TemporaryDirectory() as temporary_directory:

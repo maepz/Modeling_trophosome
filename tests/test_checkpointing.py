@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from dataclasses import replace
@@ -252,6 +253,90 @@ class CheckpointRestartTests(unittest.TestCase):
             self.assertFalse((output / "checkpoints").exists())
             with self.assertRaises(FileExistsError):
                 simulation.run_simulation(config, output, REPOSITORY)
+
+    def test_planned_pauses_resume_the_identical_trajectory(self) -> None:
+        config = self._config(generations=5)
+        with tempfile.TemporaryDirectory() as baseline_directory:
+            with tempfile.TemporaryDirectory() as staged_directory:
+                baseline = Path(baseline_directory)
+                staged = Path(staged_directory)
+                simulation.run_simulation(config, baseline, REPOSITORY)
+
+                first = simulation.run_simulation(
+                    config,
+                    staged,
+                    REPOSITORY,
+                    pause_after_generation=2,
+                )
+                self.assertEqual(len(first), 2)
+                pause = json.loads((staged / "pause.json").read_text())
+                self.assertEqual(pause["last_completed_generation"], 2)
+                self.assertFalse((staged / "completion.json").exists())
+                self.assertTrue(
+                    (staged / "checkpoints" / pause["checkpoint"]).is_file()
+                )
+
+                repeated = simulation.run_simulation(
+                    config,
+                    staged,
+                    REPOSITORY,
+                    resume=True,
+                    pause_after_generation=2,
+                )
+                self.assertEqual(first, repeated)
+
+                second = simulation.run_simulation(
+                    config,
+                    staged,
+                    REPOSITORY,
+                    resume=True,
+                    pause_after_generation=4,
+                )
+                self.assertEqual(len(second), 4)
+                pause = json.loads((staged / "pause.json").read_text())
+                self.assertEqual(pause["last_completed_generation"], 4)
+
+                final = simulation.run_simulation(
+                    config,
+                    staged,
+                    REPOSITORY,
+                    resume=True,
+                    pause_after_generation=5,
+                )
+                self.assertEqual(len(final), 5)
+                self.assertFalse((staged / "pause.json").exists())
+                self.assertTrue((staged / "completion.json").is_file())
+                self._assert_scientific_outputs_equal(baseline, staged)
+
+    def test_planned_pause_rejects_ambiguous_or_backward_targets(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            multi = self._config(replicates=2, generations=3)
+            with self.assertRaisesRegex(ValueError, "exactly one replicate"):
+                simulation.run_simulation(
+                    multi,
+                    output,
+                    REPOSITORY,
+                    pause_after_generation=1,
+                )
+
+        config = self._config(generations=4)
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            simulation.run_simulation(
+                config,
+                output,
+                REPOSITORY,
+                pause_after_generation=3,
+            )
+            with self.assertRaisesRegex(ValueError, "precedes"):
+                simulation.run_simulation(
+                    config,
+                    output,
+                    REPOSITORY,
+                    resume=True,
+                    pause_after_generation=2,
+                )
 
 
 if __name__ == "__main__":

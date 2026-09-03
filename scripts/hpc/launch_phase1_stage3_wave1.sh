@@ -6,26 +6,8 @@ REPOSITORY="$(cd "$SCRIPT_DIR/../.." && pwd)"
 MAMBA_ENVIRONMENT="${TROPHOSOME_MAMBA_ENV:-trophosome}"
 WAVE_JOBS="${TROPHOSOME_STAGE3_JOBS:-8}"
 
-if ! MAMBA_EXECUTABLE="$(command -v mamba)"; then
-  echo "mamba was not found in PATH." >&2
-  exit 2
-fi
-if ! MAMBA_SHELL_HOOK="$("$MAMBA_EXECUTABLE" shell hook -s bash)"; then
-  echo "Could not initialise mamba for this shell." >&2
-  exit 2
-fi
-eval "$MAMBA_SHELL_HOOK"
-# Conda compiler activation hooks read optional unset backup variables.
-set +u
-MAMBA_ACTIVATION_STATUS=0
-mamba activate "$MAMBA_ENVIRONMENT" || MAMBA_ACTIVATION_STATUS=$?
-set -u
-if ((MAMBA_ACTIVATION_STATUS != 0)); then
-  echo "Could not activate mamba environment: $MAMBA_ENVIRONMENT" >&2
-  exit 2
-fi
-if ! PYTHON_EXECUTABLE="$(command -v python)"; then
-  echo "Python was not found after activation." >&2
+source "$SCRIPT_DIR/_activate_environment.sh"
+if ! trophosome_select_python "$MAMBA_ENVIRONMENT"; then
   exit 2
 fi
 

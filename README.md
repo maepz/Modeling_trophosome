@@ -38,8 +38,8 @@ the biological system that motivated the software.
 ## Start here: run the small example
 
 New to the software? Start with the small example below. For the current
-research batch, go to [Phase 1 Stage 3: host abundance and feedback](#phase-1-stage-3-host-abundance-and-feedback)
-or the complete [HPC instructions](scripts/hpc/README.md#phase-1-stage-3-first-mapping-wave).
+research batch, go to [Phase 1 Stage 3 Wave 2](#phase-1-stage-3-wave-2)
+or the complete [HPC instructions](scripts/hpc/README.md#phase-1-stage-3-wave-2).
 
 Python 3.11 or newer is required. The commands below are entered in a terminal
 opened in the downloaded `Modeling_trophosome` folder.
@@ -94,6 +94,21 @@ Resume verifies the scientific configuration and exact source code, removes any
 incomplete rows written after the last safe host-generation boundary, and then
 continues from the newest valid checkpoint. CPU worker and batching settings may
 be changed when moving the same run between a Mac and an HPC node.
+
+A staged experiment can request an exact, planned pause without changing the
+biological configuration:
+
+```bash
+trophosome run configs/my_experiment.toml --output results/my_experiment \
+  --pause-after-generation 100
+trophosome run configs/my_experiment.toml --output results/my_experiment \
+  --resume --pause-after-generation 500
+```
+
+The TOML's `host_generations` is the maximum horizon. A planned pause writes
+`pause.json` and keeps a verified checkpoint; it does not write
+`completion.json`. This execution option currently requires one replicate per
+run, which is the layout used by the HPC experiment manifests.
 
 For reminders at any time, use:
 
@@ -175,6 +190,10 @@ The main result tables are ordinary CSV files:
 | `final_environment_repNNN.npz` | Final environmental strain state for each replicate |
 | `completion.json` | Verification record containing output sizes and final-state checksums |
 
+During a planned staged run, `pause.json` records the exact completed passage,
+checkpoint checksum and committed table sizes. It is replaced at the next pause
+and removed after final completion.
+
 The presence and size of `host_adult_counts.csv` are controlled by
 `host_counts_mode`: `summary` omits detailed adult counts, `panel` retains a
 reproducible sample of hosts, and `full` retains every host. Use `panel` for most
@@ -193,7 +212,7 @@ regardless of elapsed time. After successful completion, the software verifies
 the outputs and final states and deletes all recovery checkpoints. Failed or
 interrupted runs retain them for `--resume`.
 
-## Phase 1 Stage 3: host abundance and feedback
+## Phase 1 Stage 3 Wave 1: host abundance and feedback
 
 The current batch asks: **does increasing the number of hosts offset the
 environmental changes caused by stronger host feedback, and does mutation
@@ -275,6 +294,32 @@ A reporting error does not require rerunning valid simulations. Raw outputs
 are not deleted automatically; review and archive them before changing
 retention. Full analysis definitions and the frozen matrix are in
 [the Stage 3 design](docs/phase1-stage3-wave1.md).
+
+## Phase 1 Stage 3 Wave 2
+
+Wave 2 asks two follow-up questions: whether many severe infection bottlenecks
+can collectively produce a representative host return, and whether regional
+immigration erases or stabilizes host-induced environmental change.
+
+- The **12-condition H-by-B panel** crosses 100, 1,000 and 10,000 hosts with
+  bottlenecks of 1, 5, 10 and 50 cells at fixed total return.
+- The **28-condition alpha-by-m panel** crosses feedback targets 0, 0.01, 0.1
+  and 0.99 with regional exchange 0, 0.001, 0.01, 0.1, 0.5, 0.9 and 0.99.
+- Twelve matched seed blocks give 480 passage-100 populations. Five exact
+  earlier conditions and one environmentally equivalent no-return control are
+  reused, so 408 populations are newly simulated.
+- Mutation and both forms of selection remain off.
+
+Passage 100 is the complete primary endpoint. New runs pause there with a
+verified checkpoint. Only pre-specified low-immigration conditions can later
+continue to passage 500 and, after a second recorded assessment, passage 1,000.
+Continuation resumes the same stochastic trajectory rather than rerunning the
+population. The assessment records checksums and never launches the next stage
+without a separate command.
+
+The [full Wave 2 design](docs/phase1-stage3-wave2.md) gives every cell ID,
+matched equivalence comparison and adaptive rule. The copy-paste server
+commands are in the [HPC workflow guide](scripts/hpc/README.md#phase-1-stage-3-wave-2).
 
 ## Generate an earlier pilot report
 

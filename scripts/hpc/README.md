@@ -21,6 +21,115 @@ HPC mamba and machine profiles.
 Use `--output PATH` to select another report location and `--quiet` to suppress
 the console copy.
 
+## How the launchers select Python
+
+Every maintained Phase 1 launcher can be called either before or after the
+`trophosome` environment is activated. If that environment is already active,
+the launcher uses its Python directly and does not require the `mamba` command
+to remain in `PATH`. If it is not active, the launcher initializes mamba,
+activates `trophosome`, and then uses that environment's Python. It therefore
+is not necessary to deactivate the environment for `--prepare-only` or
+`--dry-run`, nor to reactivate it before the full launch.
+
+Before a simulation starts, the launcher checks for uncommitted changes under
+`src/trophosome` and in `pyproject.toml`. Frozen experiment files are checked
+separately by their recorded checksums. Unrelated historical results, reports,
+notebooks and legacy directories may appear in `git status`, but they no longer
+trigger the model-source safety error. A genuine source-code change still does.
+
+## Phase 1 Stage 3 Wave 2
+
+Wave 2 tests host number by infection bottleneck and host feedback by regional
+exchange. Its complete passage-100 analysis has 40 conditions and 12 matched
+seed blocks: 408 new populations plus 72 exact reused populations. The adaptive
+continuation is bounded at passages 500 and 1,000 and is described biologically
+in [`docs/phase1-stage3-wave2.md`](../../docs/phase1-stage3-wave2.md).
+
+After pulling the frozen revision, activate the `trophosome` environment and
+confirm that the maintained model source is clean. Reuse the machine-local
+`layout.local.json` described below.
+
+```bash
+eval "$(mamba shell hook -s bash)"
+mamba activate trophosome
+cd /home/qiulab/data/CRF_project/work/Modeling_trophosome
+git status --short
+trophosome --version
+python scripts/prepare_phase1_stage3_wave2.py --verify
+```
+
+Review and prepare the initial batch without simulating:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --prepare-only
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --dry-run
+```
+
+The dry run must report 408 new populations toward passage 100. Run the three
+included safety populations and assess their observed time and storage:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --smoke-only
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --check-smoke
+```
+
+If the safety gate passes, start the full initial batch inside `tmux`:
+
+```bash
+tmux new -s trophosome-stage3-wave2-g100
+bash scripts/hpc/launch_phase1_stage3_wave2.sh
+```
+
+The initial launcher stops every new trajectory cleanly at passage 100. When
+all 408 states pass their checksum audit, it freezes the outcome-dependent
+passage-100 decision. It does not start the next boundary. Review it with:
+
+```bash
+python -m json.tool \
+  experiments/work/trophosome/p01-neutral-feedback/analysis/\
+s03-parameter-map-wave2-v210-adaptive-g1000-derived/\
+adaptive-horizon-decision-g100.json
+```
+
+Then review the authorized continuation without running it:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --horizon 500 --dry-run
+```
+
+Start only those selected populations, preferably in a new `tmux` session:
+
+```bash
+tmux new -s trophosome-stage3-wave2-g500
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --horizon 500
+```
+
+After the passage-500 states are audited, the launcher freezes the second
+decision. Inspect it and then explicitly launch the final authorized subset:
+
+```bash
+python -m json.tool \
+  experiments/work/trophosome/p01-neutral-feedback/analysis/\
+s03-parameter-map-wave2-v210-adaptive-g1000-derived/\
+adaptive-horizon-decision-g500.json
+
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --horizon 1000 --dry-run
+tmux new -s trophosome-stage3-wave2-g1000
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --horizon 1000
+```
+
+To rebuild a missing decision without simulating, use `--assess-only` with
+`--horizon 100` or `500`. If the decision already exists, the assessor refuses
+to replace a different result. Repeating a launcher safely skips a trajectory
+that already reached the requested boundary and resumes a valid checkpoint for
+an interrupted one.
+
+`Ctrl-c` requests a clean stop; repeat the same command to resume. Do not edit
+the model package (`src/trophosome/` or `pyproject.toml`) between boundaries,
+because every continuation verifies the source checksum stored in its
+checkpoint. Set `TROPHOSOME_STAGE3_WAVE2_JOBS` to change the default eight
+simultaneous populations after reviewing the safety measurements.
+
 ## Launch the model-2.1 first pilot
 
 The fixed-regional-pool pilot uses:

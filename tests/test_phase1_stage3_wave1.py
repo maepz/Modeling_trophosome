@@ -186,7 +186,14 @@ class Stage3DesignTests(unittest.TestCase):
         )
 
     def test_all_runs_match_counts_seeds_and_retention(self):
-        work, _, rows = runner.load_rows(REPOSITORY)
+        work = REPOSITORY / "experiments/work/trophosome"
+        manifest = (
+            work
+            / "p01-neutral-feedback/manifests"
+            / f"{design.EXPERIMENT_ID}-runs.tsv"
+        )
+        with manifest.open(newline="", encoding="utf-8") as handle:
+            rows = list(csv.DictReader(handle, delimiter="\t"))
         self.assertEqual(len(rows), 288)
         self.assertEqual(len({r["scratch_relative_path"] for r in rows}), 288)
         self.assertNotIn(design.CONTROL_ID, {r["cell_id"] for r in rows})
@@ -210,6 +217,43 @@ class Stage3DesignTests(unittest.TestCase):
             )
             self.assertEqual(config.output.environment_counts_mode, "all")
             self.assertEqual(config.execution.workers, 2)
+
+    def test_source_freeze_ignores_unrelated_worktree_directories(self):
+        completed = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="", stderr=""
+        )
+        with patch(
+            "run_phase1_first_pilot_v2_1.subprocess.run", return_value=completed
+        ) as git_status:
+            runner._require_frozen_source(REPOSITORY, False)
+        self.assertEqual(
+            git_status.call_args.args[0],
+            [
+                "git",
+                "status",
+                "--porcelain",
+                "--untracked-files=all",
+                "--",
+                "src/trophosome",
+                "pyproject.toml",
+            ],
+        )
+
+    def test_source_freeze_still_rejects_dirty_model_code(self):
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=" M src/trophosome/simulation.py\n",
+            stderr="",
+        )
+        with (
+            patch(
+                "run_phase1_first_pilot_v2_1.subprocess.run",
+                return_value=completed,
+            ),
+            self.assertRaisesRegex(RuntimeError, "maintained trophosome source"),
+        ):
+            runner._require_frozen_source(REPOSITORY, False)
 
     def test_frozen_references_do_not_require_mutable_stage2_outputs(self):
         with tempfile.TemporaryDirectory() as directory:

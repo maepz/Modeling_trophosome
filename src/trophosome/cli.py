@@ -119,6 +119,11 @@ Example:
 Resume an interrupted run:
   trophosome run configs/my_experiment.toml --output results/my_experiment --resume
 
+Pause a one-replicate run at a planned passage, then continue it later:
+  trophosome run configs/long.toml --output results/long --pause-after-generation 100
+  trophosome run configs/long.toml --output results/long --resume \
+    --pause-after-generation 500
+
 Recommended first run:
   trophosome validate configs/smoke.toml
   trophosome run configs/smoke.toml --output results/smoke
@@ -169,6 +174,16 @@ See the README for a guide to all output tables and configuration parameters.
         help=(
             "continue from the newest valid recovery checkpoint, safely "
             "discarding any incomplete rows written after it"
+        ),
+    )
+    run.add_argument(
+        "--pause-after-generation",
+        type=int,
+        metavar="PASSAGE",
+        help=(
+            "stop cleanly after this host passage, retaining a verified "
+            "checkpoint so the same trajectory can later continue with "
+            "--resume; intended for staged or adaptive experiments"
         ),
     )
     report = commands.add_parser(
@@ -283,12 +298,16 @@ def main(argv: list[str] | None = None) -> int:
         args.output,
         args.repository,
         resume=args.resume,
+        pause_after_generation=args.pause_after_generation,
     )
+    paused = args.output.joinpath("pause.json").is_file()
     print(
         json.dumps(
             {
                 "output": str(args.output.resolve()),
                 "host_generations": len(summaries),
+                "host_generations_completed": len(summaries),
+                "status": "paused" if paused else "complete",
                 "warnings": config.feasibility_warnings(),
             },
             indent=2,
