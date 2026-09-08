@@ -56,9 +56,9 @@ outgoing-mail command or scheduler notification facility should be used.
 
 Notifications are sent for real simulations, including `--smoke-only`, but not
 for `--prepare-only`, `--dry-run`, `--check-smoke`, `--assess-only`,
-`--summarize-only` or `--report-only`. The email records the exit status, host,
-elapsed time, Git revision and exact command. A mail-delivery failure never
-changes the completed simulation's exit status. Set
+`--summarize-only`, `--dbrda-only` or `--report-only`. The email records the
+exit status, host, elapsed time, Git revision and exact command. A mail-delivery
+failure never changes the completed simulation's exit status. Set
 `TROPHOSOME_NOTIFY_EMAIL=off` to disable messages.
 
 ## Phase 1 Stage 3 Wave 2
@@ -132,6 +132,26 @@ The compiled files are:
 
 Only these portable derived files need to be committed or copied back from the
 HPC. Do not add the raw scratch directories to Git.
+
+Compile the master X explanatory matrix, Y passage-100 ancestral-lineage
+frequency matrix, Y′ pairwise-TV matrix, and passage 0--100 ancestral-lineage
+trajectory table for PRC with:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --dbrda-only
+```
+
+This command reads the completed Stage 2, Wave 1 and Wave 2 scratch outputs. It
+traces retained Wave 1 mutants to their original ancestral lineages at every
+required passage, validates the common sample order and complete trajectories,
+and writes the portable table set under
+`s03-parameter-map-dbrda-g100-derived/`. The master X table identifies the
+Wave 1, Wave 2A and Wave 2B subsets; do not analyse the unfiltered master
+distance matrix or combine all cells in one PRC. See the
+[community-analysis input guide](../../docs/phase1-stage3-dbrda-inputs.md) for
+definitions and the
+[annotated R Markdown workflow](../../docs/phase1-stage3-community-analysis.Rmd)
+for db-RDA, Hellinger RDA, and PRC code.
 
 Rebuild the current adaptive-horizon report at any time without accessing
 scratch or launching simulations:

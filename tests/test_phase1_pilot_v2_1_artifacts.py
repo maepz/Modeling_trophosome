@@ -33,6 +33,21 @@ class Phase1PilotV21ArtifactTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 1)
 
+    def test_dbrda_only_is_not_classified_as_a_simulation_job(self) -> None:
+        helper = REPOSITORY / "scripts/hpc/_completion_email.sh"
+        result = subprocess.run(
+            [
+                "/bin/bash",
+                "-c",
+                f"source {helper!s}; trophosome_invocation_is_job --dbrda-only",
+            ],
+            cwd=REPOSITORY,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 1)
+
     def test_completion_email_preserves_failure_status_and_reports_context(
         self,
     ) -> None:

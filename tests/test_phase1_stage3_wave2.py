@@ -246,6 +246,19 @@ class Wave2DesignTests(unittest.TestCase):
         self.assertIn("analyse_phase1_stage3_wave2.py", command[1])
         self.assertIn("--repository", command)
 
+    def test_dbrda_only_dispatches_the_matrix_compiler_without_scratch_setup(
+        self,
+    ) -> None:
+        completed = subprocess.CompletedProcess([], 0)
+        with (
+            patch.object(sys, "argv", ["run_phase1_stage3_wave2.py", "--dbrda-only"]),
+            patch.object(runner.subprocess, "run", return_value=completed) as launched,
+        ):
+            self.assertEqual(runner.main(), 0)
+        command = launched.call_args.args[0]
+        self.assertIn("compile_phase1_stage3_dbrda_inputs.py", command[1])
+        self.assertIn("--repository", command)
+
 
 class AdaptiveDecisionTests(unittest.TestCase):
     def _stable_values(self) -> dict[tuple[str, str, int], float]:

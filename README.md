@@ -330,6 +330,20 @@ rerunning any population:
 bash scripts/hpc/launch_phase1_stage3_wave2.sh --summarize-only
 ```
 
+The master X explanatory table, Y passage-100 ancestral-composition table, Y′
+pairwise-TV matrix, and passage 0--100 trajectory table for PRC can also be
+compiled from the existing HPC scratch results without rerunning simulations:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --dbrda-only
+```
+
+Their definitions and safeguards are documented in the
+[Stage 3 community-analysis input guide](docs/phase1-stage3-dbrda-inputs.md).
+A tutorial-style
+[R Markdown workflow](docs/phase1-stage3-community-analysis.Rmd) covers db-RDA,
+Hellinger RDA, and principal response curves.
+
 The adaptive report can be rebuilt without accessing scratch or running
 simulations:
 

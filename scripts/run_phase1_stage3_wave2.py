@@ -497,6 +497,13 @@ def main() -> int:
         help="audit passage-100 scratch results and compile portable tables",
     )
     mode.add_argument(
+        "--dbrda-only",
+        action="store_true",
+        help=(
+            "make endpoint X/Y/TV and passage 0-100 PRC tables; do not simulate"
+        ),
+    )
+    mode.add_argument(
         "--report-only",
         action="store_true",
         help="rebuild the self-contained passage-100 adaptive report; do not simulate",
@@ -512,6 +519,17 @@ def main() -> int:
             [
                 os.path.abspath(args.python),
                 str(repository / "scripts/analyse_phase1_stage3_wave2.py"),
+                "--repository",
+                str(repository),
+            ],
+            check=False,
+        )
+        return completed.returncode
+    if args.dbrda_only:
+        completed = subprocess.run(
+            [
+                os.path.abspath(args.python),
+                str(repository / "scripts/compile_phase1_stage3_dbrda_inputs.py"),
                 "--repository",
                 str(repository),
             ],

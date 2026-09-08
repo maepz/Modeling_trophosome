@@ -8,7 +8,7 @@ trophosome_invocation_is_job() {
   local argument
   for argument in "$@"; do
     case "$argument" in
-      --prepare-only|--dry-run|--check-smoke|--assess-only|--summarize-only|--report-only)
+      --prepare-only|--dry-run|--check-smoke|--assess-only|--summarize-only|--dbrda-only|--report-only)
         return 1
         ;;
     esac

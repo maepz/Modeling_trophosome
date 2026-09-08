@@ -1,0 +1,671 @@
+---
+title: "Phase 1 Stage 3 community-composition analyses"
+subtitle: "A tutorial for db-RDA, Hellinger RDA, and principal response curves"
+author: "Trophosome project"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    code_folding: show
+params:
+  data_dir: "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-dbrda-g100-derived"
+  nperm: 9999
+  random_seed: 20260908
+  run_models: true
+---
+
+# Purpose
+
+This notebook analyses **whole environmental-community composition**. It uses
+three complementary methods:
+
+1. **distance-based redundancy analysis (db-RDA)** asks whether experimental
+   factors explain total-variation differences among passage-100 communities;
+2. **Hellinger RDA** asks the same endpoint questions in a transformed lineage-
+   abundance table and makes lineage contributions easier to inspect;
+3. **principal response curves (PRC)** ask how selected treatment trajectories
+   depart from a declared reference trajectory through passages 0--100.
+
+The response columns are the 100 frozen ancestral lineages. Every mutant is
+traced back to its ancestral root, and its abundance is added to that root.
+This makes columns comparable across simulations. These analyses therefore
+describe **ancestral-lineage composition**, not mutant richness or the survival
+of individual mutant strains.
+
+The endpoint methods and PRC answer different questions. The endpoint methods
+compare communities at passage 100. PRC uses the complete trajectory and asks
+when and how treatments diverge from a reference. PRC should be run on a small,
+biologically coherent comparison, not on all 65 Stage 3 cells at once.
+
+# 1. Set up R
+
+Install the packages once if necessary. This chunk is deliberately not run
+when the document is knitted.
+
+```{r install-packages, eval=FALSE}
+install.packages(c("vegan", "permute", "ggplot2", "knitr", "rmarkdown"))
+```
+
+```{r setup, include=FALSE}
+required_packages <- c("vegan", "permute", "ggplot2", "knitr")
+missing_packages <- required_packages[
+  !vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)
+]
+if (length(missing_packages) > 0) {
+  stop(
+    "Install these R packages before knitting: ",
+    paste(missing_packages, collapse = ", ")
+  )
+}
+
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 8,
+  fig.height = 5,
+  dpi = 120
+)
+
+# Find the repository whether knitting starts from the repository root or docs/.
+find_repository <- function(start = getwd()) {
+  candidate <- normalizePath(start, mustWork = TRUE)
+  repeat {
+    if (
+      file.exists(file.path(candidate, "README.md")) &&
+      dir.exists(file.path(candidate, "experiments", "work", "trophosome"))
+    ) {
+      return(candidate)
+    }
+    parent <- dirname(candidate)
+    if (identical(parent, candidate)) {
+      stop("Could not locate the Modeling_trophosome repository.")
+    }
+    candidate <- parent
+  }
+}
+
+repository <- find_repository()
+derived <- file.path(repository, params$data_dir)
+analysis_output <- file.path(derived, "r-community-analysis")
+dir.create(analysis_output, recursive = TRUE, showWarnings = FALSE)
+set.seed(params$random_seed)
+```
+
+The permutation count defaults to `r params$nperm`. During code development,
+set `nperm` to 99 for speed. Restore 9,999 or more for reported analyses and
+record the random seed.
+
+# 2. Read the compiled tables
+
+The compiler creates one master endpoint triplet and one additional trajectory
+table:
+
+- **X** contains experimental variables and provenance;
+- **Y** contains passage-100 ancestral-lineage frequencies;
+- **Y-prime** contains pairwise total-variation distances calculated from Y;
+- the **PRC trajectory table** contains the same lineage frequencies at every
+  passage from 0 through 100.
+
+```{r read-endpoint-tables}
+paths <- c(
+  X = file.path(derived, "x-explanatory-g100.tsv"),
+  Y = file.path(derived, "y-ancestral-frequencies-g100.tsv"),
+  D_TV = file.path(derived, "yprime-tv-g100.tsv"),
+  PRC = file.path(derived, "prc-ancestral-trajectories-g0-g100.tsv.gz")
+)
+
+missing_files <- paths[!file.exists(paths)]
+if (length(missing_files) > 0) {
+  stop(
+    "The compiler output is incomplete. Missing: ",
+    paste(basename(missing_files), collapse = ", ")
+  )
+}
+
+X <- read.delim(paths[["X"]], check.names = FALSE, stringsAsFactors = FALSE)
+Y_table <- read.delim(
+  paths[["Y"]], check.names = FALSE, stringsAsFactors = FALSE
+)
+D_table <- read.delim(
+  paths[["D_TV"]], check.names = FALSE, stringsAsFactors = FALSE
+)
+
+Y <- as.matrix(Y_table[, -1, drop = FALSE])
+storage.mode(Y) <- "double"
+rownames(Y) <- Y_table$sample_id
+
+D_TV_matrix <- as.matrix(D_table[, -1, drop = FALSE])
+storage.mode(D_TV_matrix) <- "double"
+rownames(D_TV_matrix) <- D_table$sample_id
+colnames(D_TV_matrix) <- names(D_table)[-1]
+```
+
+The compressed PRC table is larger, so it is read in a cached chunk. A second
+knit can then reuse the cached result.
+
+```{r read-prc-table, cache=TRUE}
+PRC_table <- read.delim(
+  gzfile(paths[["PRC"]]),
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
+lineage_columns <- grep("^ancestral_[0-9]{3}$", names(PRC_table), value = TRUE)
+```
+
+# 3. Audit before analysing
+
+These checks intentionally stop the notebook if row order, dimensions, or
+frequency sums are wrong. Silent misalignment would produce a convincing but
+incorrect ordination.
+
+```{r audit-inputs}
+stopifnot(!anyDuplicated(X$sample_id))
+stopifnot(identical(X$sample_id, Y_table$sample_id))
+stopifnot(identical(X$sample_id, D_table$sample_id))
+stopifnot(identical(X$sample_id, names(D_table)[-1]))
+stopifnot(identical(rownames(D_TV_matrix), colnames(D_TV_matrix)))
+stopifnot(ncol(Y) == 100L, length(lineage_columns) == 100L)
+stopifnot(all(Y >= 0), all(abs(rowSums(Y) - 1) < 1e-12))
+stopifnot(all(D_TV_matrix >= 0), all(D_TV_matrix <= 1 + 1e-12))
+stopifnot(max(abs(D_TV_matrix - t(D_TV_matrix))) < 1e-12)
+stopifnot(max(abs(diag(D_TV_matrix))) < 1e-12)
+
+# Recalculate a small sample of distances independently.
+check_indices <- unique(round(seq(1, nrow(Y), length.out = min(12, nrow(Y)))))
+for (i in check_indices) {
+  for (j in check_indices) {
+    expected <- 0.5 * sum(abs(Y[i, ] - Y[j, ]))
+    stopifnot(abs(D_TV_matrix[i, j] - expected) < 1e-12)
+  }
+}
+
+# Each analysis population must contribute exactly passages 0,...,100 to PRC.
+stopifnot(!anyDuplicated(PRC_table$trajectory_sample_id))
+stopifnot(all(PRC_table[, lineage_columns] >= 0))
+stopifnot(
+  all(abs(rowSums(PRC_table[, lineage_columns, drop = FALSE]) - 1) < 1e-12)
+)
+trajectory_sizes <- table(PRC_table$population_sample_id)
+stopifnot(all(trajectory_sizes == 101L))
+trajectory_passages <- split(
+  PRC_table$passage, PRC_table$population_sample_id, drop = TRUE
+)
+stopifnot(all(vapply(
+  trajectory_passages,
+  function(z) identical(sort(as.integer(z)), 0:100),
+  logical(1)
+)))
+
+data.frame(
+  table = c("X endpoint", "Y endpoint", "Y-prime", "PRC trajectory"),
+  rows = c(nrow(X), nrow(Y), nrow(D_TV_matrix), nrow(PRC_table)),
+  columns = c(ncol(X), ncol(Y), ncol(D_TV_matrix), ncol(PRC_table))
+)
+```
+
+# 4. Preserve the experimental design when subsetting
+
+The master tables contain three different experiments. Always subset X first,
+then use its `sample_id` values to subset Y and both axes of Y-prime.
+
+```{r endpoint-helper}
+as_logical_flag <- function(x) {
+  tolower(as.character(x)) == "true"
+}
+
+subset_endpoint <- function(analysis_set, primary_only = TRUE) {
+  keep <- X$analysis_set == analysis_set
+  if (primary_only) {
+    keep <- keep & as_logical_flag(X$include_primary_dbrda)
+  }
+  design <- X[keep, , drop = FALSE]
+  ids <- design$sample_id
+  if (length(ids) == 0) stop("The requested endpoint subset is empty.")
+  if (!all(ids %in% rownames(Y))) stop("Some X sample IDs are absent from Y.")
+  if (!all(ids %in% rownames(D_TV_matrix))) {
+    stop("Some X sample IDs are absent from Y-prime.")
+  }
+  list(
+    X = design,
+    Y = Y[ids, , drop = FALSE],
+    D_TV = stats::as.dist(D_TV_matrix[ids, ids, drop = FALSE])
+  )
+}
+
+wave1 <- subset_endpoint("wave1_h_alpha_u")
+wave2a <- subset_endpoint("wave2a_h_by_b")
+wave2b <- subset_endpoint("wave2b_alpha_by_m")
+
+stopifnot(nrow(wave1$X) == 288L)
+stopifnot(nrow(wave2a$X) == 144L)
+stopifnot(nrow(wave2b$X) == 336L)
+```
+
+Wave 1's 12 no-return controls remain in the master tables but are not in its
+primary (H \times \alpha \times u) factorial model. When \(\alpha=0\), host
+abundance and mutation rate cannot act through host return, so attaching an
+arbitrary H or u label to that control would distort the factorial test. Use
+those controls for paired treatment-versus-control contrasts and selected PRCs.
+
+# 5. Permutations: what is the independent replicate?
+
+The independent replicate is a **simulated population identified by a seed
+block**, not a lineage, host, or passage. The same 12 seed blocks occur in all
+treatments. Endpoint permutations are therefore restricted within seed block.
+The seed block is also conditioned out of the ordination so seed-specific
+starting/drift differences are not attributed to the treatments.
+
+```{r endpoint-model-helper}
+prepare_design <- function(design) {
+  design$seed_block_id <- factor(design$seed_block_id)
+  design$mutation_enabled <- factor(
+    as_logical_flag(design$mutation_enabled),
+    levels = c(FALSE, TRUE),
+    labels = c("mutation off", "mutation on")
+  )
+  design$log10_alpha <- ifelse(
+    design$alpha_target > 0,
+    log10(design$alpha_target),
+    NA_real_
+  )
+  design$alpha_factor <- factor(
+    design$alpha_target,
+    levels = sort(unique(design$alpha_target))
+  )
+  design$m_factor <- factor(design$m, levels = sort(unique(design$m)))
+  design
+}
+
+fit_endpoint_pair <- function(endpoint, right_hand_side) {
+  design <- prepare_design(endpoint$X)
+  D_TV <- endpoint$D_TV
+  Y_hellinger <- vegan::decostand(endpoint$Y, method = "hellinger")
+
+  # The formula environment must contain D_TV and Y_hellinger.
+  db_formula <- stats::as.formula(
+    paste("D_TV ~", right_hand_side, "+ Condition(seed_block_id)"),
+    env = environment()
+  )
+  rda_formula <- stats::as.formula(
+    paste("Y_hellinger ~", right_hand_side, "+ Condition(seed_block_id)"),
+    env = environment()
+  )
+
+  list(
+    design = design,
+    permutations = permute::how(
+      nperm = params$nperm,
+      blocks = design$seed_block_id
+    ),
+    dbrda = vegan::dbrda(db_formula, data = design),
+    hellinger_rda = vegan::rda(rda_formula, data = design)
+  )
+}
+
+ordination_tests <- function(model, permutation_design) {
+  set.seed(params$random_seed)
+  global <- anova(model, permutations = permutation_design)
+  set.seed(params$random_seed)
+  sequential <- anova(
+    model, by = "terms", permutations = permutation_design
+  )
+  set.seed(params$random_seed)
+  marginal <- anova(
+    model, by = "margin", permutations = permutation_design
+  )
+  list(
+    global = global,
+    sequential = sequential,
+    marginal = marginal,
+    adjusted_R2 = vegan::RsquareAdj(model)
+  )
+}
+```
+
+The global test asks whether the explanatory set matters at all. The sequential
+(`by = "terms"`) table depends on the order of terms and should follow a
+predeclared biological hierarchy. The marginal table asks what a term adds
+after the other eligible terms; a main effect contained in an interaction is
+not separately marginal in the usual sense. For formal claims about a specific
+interaction, compare predeclared nested models rather than selecting terms
+after seeing their P-values.
+
+# 6. Endpoint db-RDA
+
+db-RDA uses the compiled total-variation distance directly. Because each Y row
+sums to one, this is numerically the same as Bray--Curtis dissimilarity here.
+The principal output is the permutation test and explained variation; an
+ordination plot is a visualization, not an independent hypothesis test.
+
+The primary formulas are:
+
+| Experiment | Formula | Reason |
+|---|---|---|
+| Wave 1 | `log10_H * log10_alpha * mutation_enabled` | tests abundance, feedback, mutation, and their interactions |
+| Wave 2A | `log10_H * log10_B` | tests whether H and bottleneck B have independent or interactive effects |
+| Wave 2B | `alpha_factor * m_factor` | preserves a potentially nonlinear surface and includes alpha = 0 |
+
+```{r fit-endpoint-models, eval=params$run_models}
+fits <- list(
+  wave1 = fit_endpoint_pair(
+    wave1, "log10_H * log10_alpha * mutation_enabled"
+  ),
+  wave2a = fit_endpoint_pair(wave2a, "log10_H * log10_B"),
+  wave2b = fit_endpoint_pair(wave2b, "alpha_factor * m_factor")
+)
+```
+
+Start by inspecting Wave 1. Repeat the same calls for `wave2a` and `wave2b`.
+
+```{r test-wave1-dbrda, eval=params$run_models}
+wave1_db_tests <- ordination_tests(
+  fits$wave1$dbrda, fits$wave1$permutations
+)
+wave1_db_tests
+```
+
+```{r dbrda-site-plot, eval=params$run_models, fig.cap="Wave 1 passage-100 communities in the first two constrained db-RDA dimensions. Points are population replicates."}
+site_plot <- function(model, design, colour_variable, title) {
+  site_scores <- as.data.frame(
+    vegan::scores(model, display = "sites", choices = 1:2, scaling = 2)
+  )
+  if (ncol(site_scores) < 2) {
+    stop("The fitted model has fewer than two constrained axes.")
+  }
+  names(site_scores)[1:2] <- c("Axis1", "Axis2")
+  site_scores$colour <- factor(design[[colour_variable]])
+  ggplot2::ggplot(
+    site_scores,
+    ggplot2::aes(x = Axis1, y = Axis2, colour = colour)
+  ) +
+    ggplot2::geom_point(alpha = 0.75, size = 2) +
+    ggplot2::theme_bw() +
+    ggplot2::labs(title = title, colour = colour_variable)
+}
+
+site_plot(
+  fits$wave1$dbrda,
+  fits$wave1$design,
+  "alpha_target",
+  "Wave 1 db-RDA: colour shows host-return fraction"
+)
+```
+
+Total variation is not guaranteed to be Euclidean, so a db-RDA can contain
+negative unconstrained eigenvalues. Record their size. If they are appreciable,
+repeat the fit with a declared correction such as `add = "lingoes"` and report
+whether conclusions change; do not silently switch distances or corrections.
+
+```{r inspect-negative-eigenvalues, eval=params$run_models}
+all_eigenvalues <- vegan::eigenvals(fits$wave1$dbrda, model = "all")
+negative_fraction <- sum(abs(all_eigenvalues[all_eigenvalues < 0])) /
+  sum(abs(all_eigenvalues))
+negative_fraction
+```
+
+# 7. Endpoint Hellinger RDA
+
+The Hellinger transform is the square root of each lineage's relative
+abundance. It reduces the leverage of very abundant lineages and makes
+Euclidean RDA suitable for community-composition data containing many zeros.
+It is a valuable companion analysis, not a replacement for the prespecified
+total-variation db-RDA.
+
+```{r test-wave1-hellinger, eval=params$run_models}
+wave1_hellinger_tests <- ordination_tests(
+  fits$wave1$hellinger_rda, fits$wave1$permutations
+)
+wave1_hellinger_tests
+```
+
+```{r hellinger-site-plot, eval=params$run_models, fig.cap="Wave 1 passage-100 communities in the first two constrained Hellinger-RDA dimensions."}
+site_plot(
+  fits$wave1$hellinger_rda,
+  fits$wave1$design,
+  "alpha_target",
+  "Wave 1 Hellinger RDA: colour shows host-return fraction"
+)
+```
+
+Lineage scores indicate which ancestral lineages contribute most strongly to
+the displayed axes. Label only the largest scores; labelling all 100 lineages
+usually makes an unreadable figure.
+
+```{r top-lineage-scores, eval=params$run_models}
+lineage_scores <- as.data.frame(
+  vegan::scores(
+    fits$wave1$hellinger_rda,
+    display = "species",
+    choices = 1:2,
+    scaling = 2
+  )
+)
+lineage_scores$lineage <- rownames(lineage_scores)
+lineage_scores$magnitude <- sqrt(
+  lineage_scores[[1]]^2 + lineage_scores[[2]]^2
+)
+head(lineage_scores[order(-lineage_scores$magnitude), ], 12)
+```
+
+# 8. Principal response curves
+
+PRC is a special partial RDA of treatment-by-time effects after conditioning
+on time. The first level of the treatment factor is the reference treatment,
+and time must be an unordered factor. See the official
+[vegan PRC documentation](https://vegandevs.github.io/vegan/reference/prc.html).
+
+Here PRC uses Hellinger-transformed ancestral frequencies. This keeps its
+community geometry consistent with the Hellinger RDA and limits domination by
+the most abundant ancestral lineages. A raw-frequency PRC can be added as a
+prespecified sensitivity analysis.
+
+## 8.1 Select one coherent comparison
+
+This example asks: **at migration m = 0.1 and H = 1,000, how do three positive
+host-return levels depart from the matched no-return trajectory?** It selects
+Wave 2B cells c0066, c0073, c0080, and c0087. Each treatment has one population
+for every seed block and 101 repeated observations within that population.
+
+```{r select-prc-comparison}
+select_prc_comparison <- function(
+  analysis_set, cell_labels, reference_cell
+) {
+  cells <- names(cell_labels)
+  if (!reference_cell %in% cells) stop("Reference cell is not in cell_labels.")
+  selected <- PRC_table[
+    PRC_table$analysis_set == analysis_set & PRC_table$cell %in% cells,
+    ,
+    drop = FALSE
+  ]
+  if (nrow(selected) == 0) stop("The requested PRC subset is empty.")
+
+  treatment_order <- c(reference_cell, setdiff(cells, reference_cell))
+  selected$treatment <- factor(
+    unname(cell_labels[selected$cell]),
+    levels = unname(cell_labels[treatment_order])
+  )
+  selected$seed_block_id <- factor(selected$seed_block_id)
+  selected$time <- factor(selected$passage, levels = 0:100, ordered = FALSE)
+  selected <- selected[
+    order(
+      selected$seed_block_id,
+      selected$population_sample_id,
+      selected$passage
+    ),
+    ,
+    drop = FALSE
+  ]
+
+  # Check the experimental unit: one complete population trajectory per
+  # seed-block-by-treatment combination.
+  population_index <- unique(selected[
+    , c("population_sample_id", "seed_block_id", "treatment")
+  ])
+  stopifnot(all(table(
+    population_index$seed_block_id, population_index$treatment
+  ) == 1L))
+  stopifnot(all(table(selected$population_sample_id) == 101L))
+  stopifnot(levels(selected$treatment)[1] == cell_labels[[reference_cell]])
+  selected
+}
+
+wave2b_m010_prc <- select_prc_comparison(
+  analysis_set = "wave2b_alpha_by_m",
+  cell_labels = c(
+    c0066 = "no host return",
+    c0073 = "alpha = 0.01",
+    c0080 = "alpha = 0.1",
+    c0087 = "alpha = 0.99"
+  ),
+  reference_cell = "c0066"
+)
+
+unique(wave2b_m010_prc[
+  , c("cell", "treatment", "H", "alpha_target", "m", "u")
+])
+```
+
+Other useful, separate PRCs include:
+
+- Wave 1 host return at fixed H = 1,000 and u = 0: no-return c0021 versus
+  c0035, c0037, c0039, and c0041;
+- Wave 2A bottleneck size at fixed H = 1,000: c0055--c0058, with one declared
+  B value as the reference;
+- Wave 2B migration at fixed alpha = 0.1: c0077--c0083, with m = 0 as the
+  reference.
+
+These answer different biological contrasts and should not be merged into a
+single omnibus PRC.
+
+## 8.2 Fit and test the PRC
+
+Treatment labels were assigned to whole simulated populations. Therefore,
+permutations must move **complete trajectories** between treatment labels
+within each matched seed block. The 101 passages are repeated measurements,
+not 101 independent replicates. `Within(type = "none")` preserves their order;
+`Plots(...)` identifies the whole population trajectory; `blocks` prevents
+exchange across seed blocks. The permutation grammar is documented by
+[permute](https://gavinsimpson.github.io/permute/reference/how.html).
+
+```{r fit-prc, eval=params$run_models}
+prc_response <- as.matrix(
+  wave2b_m010_prc[, lineage_columns, drop = FALSE]
+)
+storage.mode(prc_response) <- "double"
+prc_response_hellinger <- vegan::decostand(
+  prc_response, method = "hellinger"
+)
+
+prc_model <- vegan::prc(
+  prc_response_hellinger,
+  treatment = wave2b_m010_prc$treatment,
+  time = wave2b_m010_prc$time
+)
+
+prc_permutations <- permute::how(
+  nperm = params$nperm,
+  within = permute::Within(type = "none"),
+  plots = permute::Plots(
+    strata = factor(wave2b_m010_prc$population_sample_id),
+    type = "free"
+  ),
+  blocks = wave2b_m010_prc$seed_block_id
+)
+
+set.seed(params$random_seed)
+prc_test <- anova(
+  prc_model,
+  permutations = prc_permutations,
+  first = TRUE
+)
+prc_test
+```
+
+`first = TRUE` tests the first PRC axis, the axis shown in the usual PRC plot.
+The official [`anova.cca` documentation](https://vegandevs.github.io/vegan/reference/anova.cca.html)
+describes global, axis, term, and marginal permutation tests.
+
+## 8.3 Plot and interpret the PRC
+
+```{r plot-prc, eval=params$run_models, fig.cap="Principal response curves for host-return treatments relative to the matched no-return trajectory at m = 0.1. Only the ancestral lineages with the largest absolute weights are labelled."}
+prc_lineage_scores <- vegan::scores(
+  prc_model, display = "species", choices = 1
+)
+top_lineages <- order(abs(prc_lineage_scores[, 1]), decreasing = TRUE)[1:12]
+
+plot(
+  prc_model,
+  select = top_lineages,
+  legpos = "topright",
+  xlab = "Host-population passage",
+  ylab = "Treatment deviation from the no-return trajectory"
+)
+```
+
+Read this figure in two parts:
+
+- a treatment curve at zero resembles the reference community after removing
+  changes shared by every treatment at that passage;
+- a curve farther from zero shows a larger multivariate departure;
+- ancestral lineages with large positive weights tend to follow the direction
+  of a positive treatment curve, and lineages with large negative weights tend
+  to move oppositely;
+- the overall sign of a constrained axis is arbitrary, so reversing every sign
+  would not change the biological result.
+
+Do not interpret a single curve peak as a separate significant event unless a
+time-specific contrast was prespecified. The formal PRC test evaluates the
+multivariate trajectory contrast as a whole.
+
+# 9. Save a reproducible result bundle
+
+Save models, permutation-test tables, parameter settings, and session details.
+This avoids relying on figures alone and makes the exact analysis auditable.
+
+```{r save-results, eval=params$run_models}
+result_bundle <- list(
+  parameters = params,
+  endpoint_fits = fits,
+  wave1_dbrda_tests = wave1_db_tests,
+  wave1_hellinger_tests = wave1_hellinger_tests,
+  prc_comparison = unique(wave2b_m010_prc[
+    , c("cell", "treatment", "H", "alpha_target", "m", "u")
+  ]),
+  prc_model = prc_model,
+  prc_test = prc_test,
+  session_info = sessionInfo()
+)
+
+saveRDS(
+  result_bundle,
+  file.path(analysis_output, "phase1-stage3-community-analysis.rds")
+)
+capture.output(
+  sessionInfo(),
+  file = file.path(analysis_output, "R-session-info.txt")
+)
+```
+
+# 10. Reporting checklist
+
+For every reported analysis, state:
+
+1. the analysis set and exact cells included;
+2. whether the response was total-variation distance or Hellinger-transformed
+   ancestral-lineage frequency;
+3. the model formula and any distance correction;
+4. that seed block was conditioned and permutations were restricted within
+   seed block;
+5. the number of population replicates and permutations;
+6. the global test, relevant predeclared term/interaction tests, effect size,
+   and adjusted explained variation;
+7. for PRC, the reference treatment and confirmation that whole trajectories,
+   rather than individual passages, were permuted;
+8. the software versions and random seed.
+
+If several PRCs or planned contrasts are formally tested, specify the family of
+tests in advance and adjust for multiplicity (for example, Holm correction).
+Exploratory curves can still be shown, but they should be labelled exploratory.
