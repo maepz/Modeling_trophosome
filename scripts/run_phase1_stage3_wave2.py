@@ -491,12 +491,28 @@ def main() -> int:
         action="store_true",
         help="freeze the adaptive decision from existing results; do not simulate",
     )
+    mode.add_argument(
+        "--report-only",
+        action="store_true",
+        help="rebuild the self-contained passage-100 adaptive report; do not simulate",
+    )
     args = parser.parse_args()
     if args.jobs < 1 or args.monitor_interval <= 0:
         parser.error("jobs and monitor interval must be positive")
     if args.smoke_only and args.horizon != INITIAL_HORIZON:
         parser.error("smoke-only applies only to the passage-100 batch")
     repository = args.repository.resolve()
+    if args.report_only:
+        completed = subprocess.run(
+            [
+                os.path.abspath(args.python),
+                str(repository / "scripts/build_phase1_stage3_wave2_report.py"),
+                "--repository",
+                str(repository),
+            ],
+            check=False,
+        )
+        return completed.returncode
     differences = verify_files(repository)
     if differences:
         raise SystemExit("Frozen Wave 2 inputs differ:\n" + "\n".join(differences))
@@ -651,6 +667,16 @@ def main() -> int:
     complete_batch = not args.cell and not args.seed_block
     if complete_batch and not args.no_assessment and args.horizon < MAXIMUM_HORIZON:
         write_or_verify(repository, args.horizon, verify=False)
+        if args.horizon == INITIAL_HORIZON:
+            subprocess.run(
+                [
+                    os.path.abspath(args.python),
+                    str(repository / "scripts/build_phase1_stage3_wave2_report.py"),
+                    "--repository",
+                    str(repository),
+                ],
+                check=True,
+            )
     return 0
 
 

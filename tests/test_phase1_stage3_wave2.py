@@ -17,6 +17,7 @@ from trophosome.simulation import run_simulation
 REPOSITORY = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY / "scripts"))
 import assess_phase1_stage3_wave2_horizon as assessment  # noqa: E402
+import build_phase1_stage3_wave2_report as reporting  # noqa: E402
 import prepare_phase1_stage3_wave2 as design  # noqa: E402
 import run_phase1_stage3_wave2 as runner  # noqa: E402
 from run_phase1_first_pilot import _sha256  # noqa: E402
@@ -278,6 +279,37 @@ class AdaptiveDecisionTests(unittest.TestCase):
         self.assertIn(treatment.cell_id, decision["selected_cell_ids"])
         self.assertIn(control.cell_id, decision["selected_cell_ids"])
         self.assertIn("unresolved-raw-TV", decision["reasons"][treatment.cell_id])
+
+
+class Wave2ReportTests(unittest.TestCase):
+    def test_passage100_report_is_self_contained_and_audited(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            outputs = reporting.build(
+                REPOSITORY,
+                pdf=root / "report.pdf",
+                markdown=root / "report.md",
+                assets=root / "figures",
+                completion=root / "report-completion.json",
+            )
+
+            self.assertEqual(len(outputs), 5)
+            self.assertTrue((root / "report.pdf").read_bytes().startswith(b"%PDF"))
+            markdown = (root / "report.md").read_text(encoding="utf-8")
+            self.assertIn("adaptive-decision report", markdown)
+            self.assertIn("not mean that every trajectory was flat", markdown)
+            self.assertIn("cannot answer the primary H-by-B comparison", markdown)
+            completion = json.loads(
+                (root / "report-completion.json").read_text(encoding="utf-8")
+            )
+            self.assertTrue(completion["complete"])
+            self.assertEqual(
+                completion["scope"], "passage-100-adaptive-horizon-decision"
+            )
+            self.assertEqual(len(completion["inputs"]), 3)
+            self.assertEqual(len(completion["outputs"]), 4)
+            for figure in ("late-window-tv.png", "stability-diagnostics.png"):
+                self.assertGreater((root / "figures" / figure).stat().st_size, 10_000)
 
 
 if __name__ == "__main__":

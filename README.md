@@ -321,6 +321,19 @@ The [full Wave 2 design](docs/phase1-stage3-wave2.md) gives every cell ID,
 matched equivalence comparison and adaptive rule. The copy-paste server
 commands are in the [HPC workflow guide](scripts/hpc/README.md#phase-1-stage-3-wave-2).
 
+The passage-100 launcher now creates an adaptive-horizon PDF and editable
+Markdown report after the frozen decision has been written. It can be rebuilt
+without accessing scratch or running simulations:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --report-only
+```
+
+Long-running HPC launchers can also email their final success or failure
+status. Set `TROPHOSOME_NOTIFY_EMAIL` and send a test before launching a batch;
+the [HPC workflow guide](scripts/hpc/README.md#completion-emails) explains the
+one-time setup and supported server mail commands.
+
 ## Generate an earlier pilot report
 
 A completed pilot matrix can be converted into a self-contained biological PDF

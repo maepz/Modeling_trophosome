@@ -37,6 +37,29 @@ separately by their recorded checksums. Unrelated historical results, reports,
 notebooks and legacy directories may appear in `git status`, but they no longer
 trigger the model-source safety error. A genuine source-code change still does.
 
+## Completion emails
+
+Long-running launcher commands can send a short success or failure email after
+the final audit and any automatic report have finished. The address is read
+from `TROPHOSOME_NOTIFY_EMAIL`; if that variable is unset, the launcher uses
+the repository's Git author email. Configure and test it before starting a long
+job:
+
+```bash
+export TROPHOSOME_NOTIFY_EMAIL="your.address@example.org"
+bash scripts/hpc/test_completion_email.sh
+```
+
+The server must provide one of `mailx`, `mail` or `sendmail`. The test reports a
+clear error if none is available; in that case, ask the HPC administrator which
+outgoing-mail command or scheduler notification facility should be used.
+
+Notifications are sent for real simulations, including `--smoke-only`, but not
+for `--prepare-only`, `--dry-run`, `--check-smoke`, `--assess-only` or
+`--report-only`. The email records the exit status, host, elapsed time, Git
+revision and exact command. A mail-delivery failure never changes the completed
+simulation's exit status. Set `TROPHOSOME_NOTIFY_EMAIL=off` to disable messages.
+
 ## Phase 1 Stage 3 Wave 2
 
 Wave 2 tests host number by infection bottleneck and host feedback by regional
@@ -79,6 +102,19 @@ If the safety gate passes, start the full initial batch inside `tmux`:
 tmux new -s trophosome-stage3-wave2-g100
 bash scripts/hpc/launch_phase1_stage3_wave2.sh
 ```
+
+At the end of the complete passage-100 batch, the launcher freezes the adaptive
+decision and builds the self-contained adaptive-horizon report. Rebuild that
+report at any time without accessing scratch or launching simulations:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --report-only
+```
+
+The PDF is written to `output/pdf/` and its editable Markdown companion to
+`docs/`. This report covers the adaptive time-horizon decision. A full H-by-B,
+alpha-by-m and diversity report still requires portable derived endpoint tables
+from the HPC scratch results.
 
 The initial launcher stops every new trajectory cleanly at passage 100. When
 all 408 states pass their checksum audit, it freezes the outcome-dependent

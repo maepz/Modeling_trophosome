@@ -265,7 +265,8 @@ done
 section "Background-job and monitoring commands"
 for utility in \
     nohup setsid tmux screen flock ps pgrep pkill nice renice ionice timeout \
-    time rsync git mamba micromamba conda python python3 pip pip3
+    time rsync git mamba micromamba conda python python3 pip pip3 \
+    mail mailx sendmail
 do
     printf '%-16s %s\n' "$utility" "$(command_path "$utility")"
 done

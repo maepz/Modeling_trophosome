@@ -1,0 +1,39 @@
+{
+  "complete": true,
+  "scope": "passage-100-adaptive-horizon-decision",
+  "experiment_id": "phase1-stage3-wave2-v210-adaptive-g1000",
+  "completed_at": "2026-09-08T03:00:33.714797+00:00",
+  "inputs": [
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/adaptive-horizon-decision-g100.json",
+      "sha256": "6a4066afe476b4da979130a51efffa9b903b9bbed4749ab1a3b8d9113dc508de"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/adaptive-horizon-diagnostics-g100.tsv",
+      "sha256": "9c0bbf1c12c51ea23be40a3ed0229fb8ba732ba03be9cea2b05674dfac1d8a27"
+    },
+    {
+      "path": "experiments/work/trophosome/p01-neutral-feedback/design/phase1-stage3-wave2-v210-adaptive-g1000-cells.tsv",
+      "sha256": "3e2cb7e6d5c4ddaa2804383ea23cb23dca0106dc237dd258c6600271a8064f35"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "output/pdf/phase1-stage3-wave2-v210-adaptive-g1000-passage100-report.pdf",
+      "sha256": "950523a7d6acc72351e1e0b6c07c091de6a5d96600d666b3d360f4d44d3d14d8"
+    },
+    {
+      "path": "docs/phase1-stage3-wave2-v210-adaptive-g1000-passage100-report.md",
+      "sha256": "13ffc9df65713c0ae5bf05b4e0ca1aad556afb07b35308b33978890b13ccfe94"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave2-v210-adaptive-g1000-passage100-report/late-window-tv.png",
+      "sha256": "22d529432a09518bdbd332e7990e86d2837df695a5531151caac026f7a0844b2"
+    },
+    {
+      "path": "docs/figures/phase1-stage3-wave2-v210-adaptive-g1000-passage100-report/stability-diagnostics.png",
+      "sha256": "9811dd1cae1e19e9ed35deac2b236c6c0112048efadf2feee4db7c79d008f57b"
+    }
+  ],
+  "limitation": "Full H-by-B, alpha-by-m and diversity analyses require derived tables from HPC scratch outputs."
+}

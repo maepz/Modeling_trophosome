@@ -18,6 +18,59 @@ VARIANT = "v210-m010"
 
 
 class Phase1PilotV21ArtifactTests(unittest.TestCase):
+    def test_completion_email_preserves_failure_status_and_reports_context(
+        self,
+    ) -> None:
+        helper = REPOSITORY / "scripts/hpc/_completion_email.sh"
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary = Path(temporary_directory)
+            command_directory = temporary / "commands"
+            command_directory.mkdir()
+            arguments_path = temporary / "mail-arguments.txt"
+            body_path = temporary / "mail-body.txt"
+            fake_mail = command_directory / "mailx"
+            fake_mail.write_text(
+                "#!/bin/bash\n"
+                "printf '%s\\n' \"$@\" > \"$FAKE_MAIL_ARGUMENTS\"\n"
+                "/bin/cat > \"$FAKE_MAIL_BODY\"\n",
+                encoding="utf-8",
+            )
+            fake_mail.chmod(0o755)
+            environment = os.environ.copy()
+            environment.update(
+                {
+                    "FAKE_MAIL_ARGUMENTS": str(arguments_path),
+                    "FAKE_MAIL_BODY": str(body_path),
+                    "PATH": f"{command_directory}:/usr/bin:/bin",
+                    "TROPHOSOME_NOTIFY_EMAIL": "biologist@example.org",
+                }
+            )
+            result = subprocess.run(
+                [
+                    "/bin/bash",
+                    "-c",
+                    (
+                        f"source {helper!s}; "
+                        "trophosome_run_with_completion_email "
+                        f"'Synthetic failure' {REPOSITORY!s} /bin/bash -c 'exit 7'"
+                    ),
+                ],
+                cwd=REPOSITORY,
+                env=environment,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(result.returncode, 7)
+            arguments = arguments_path.read_text(encoding="utf-8")
+            self.assertIn("trophosome FAILED: Synthetic failure", arguments)
+            self.assertIn("biologist@example.org", arguments)
+            body = body_path.read_text(encoding="utf-8")
+            self.assertIn("Status: FAILED (exit 7)", body)
+            self.assertIn("Git revision:", body)
+            self.assertIn("Command:", body)
+
     def test_hpc_launcher_uses_an_already_active_environment_without_mamba(
         self,
     ) -> None:
