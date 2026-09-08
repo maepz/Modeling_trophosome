@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+import math
 import shutil
 import subprocess
 import sys
@@ -16,6 +17,7 @@ from trophosome.simulation import run_simulation
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPOSITORY / "scripts"))
+import analyse_phase1_stage3_wave2 as wave2_analysis  # noqa: E402
 import assess_phase1_stage3_wave2_horizon as assessment  # noqa: E402
 import build_phase1_stage3_wave2_report as reporting  # noqa: E402
 import prepare_phase1_stage3_wave2 as design  # noqa: E402
@@ -229,6 +231,21 @@ class Wave2DesignTests(unittest.TestCase):
                 [],
             )
 
+    def test_summarize_only_dispatches_the_wave2_analysis_without_scratch_setup(
+        self,
+    ) -> None:
+        completed = subprocess.CompletedProcess([], 0)
+        with (
+            patch.object(
+                sys, "argv", ["run_phase1_stage3_wave2.py", "--summarize-only"]
+            ),
+            patch.object(runner.subprocess, "run", return_value=completed) as launched,
+        ):
+            self.assertEqual(runner.main(), 0)
+        command = launched.call_args.args[0]
+        self.assertIn("analyse_phase1_stage3_wave2.py", command[1])
+        self.assertIn("--repository", command)
+
 
 class AdaptiveDecisionTests(unittest.TestCase):
     def _stable_values(self) -> dict[tuple[str, str, int], float]:
@@ -310,6 +327,178 @@ class Wave2ReportTests(unittest.TestCase):
             self.assertEqual(len(completion["outputs"]), 4)
             for figure in ("late-window-tv.png", "stability-diagnostics.png"):
                 self.assertGreater((root / "figures" / figure).stat().st_size, 10_000)
+
+
+class Wave2AnalysisTests(unittest.TestCase):
+    def test_frozen_reuse_supplies_all_72_passage100_populations(self) -> None:
+        phase = REPOSITORY / "experiments/work/trophosome/p01-neutral-feedback"
+        matrix = wave2_analysis._read_tsv(
+            phase
+            / "design/phase1-stage3-wave2-v210-adaptive-g1000-cells.tsv"
+        )
+        cells = {row["cell_id"]: row for row in matrix}
+        trajectories, inputs = wave2_analysis._reused_rows(phase, cells)
+
+        self.assertEqual(len(trajectories), 6 * 12 * 101)
+        self.assertEqual(len(inputs), 6 * 12)
+        self.assertEqual(
+            len(
+                {
+                    (row["cell_id"], row["seed_block_id"], row["generation"])
+                    for row in trajectories
+                }
+            ),
+            len(trajectories),
+        )
+        self.assertTrue(all(row["source_run_id"] for row in trajectories))
+
+    def test_environment_and_host_prefixes_are_summarized_without_later_rows(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            environment = output / "environment_counts.csv"
+            with environment.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(
+                    handle,
+                    fieldnames=("replicate", "generation", "strain_id", "count"),
+                )
+                writer.writeheader()
+                for generation in range(102):
+                    writer.writerow(
+                        {
+                            "replicate": 0,
+                            "generation": generation,
+                            "strain_id": 0,
+                            "count": 500_000_000 + generation,
+                        }
+                    )
+                    writer.writerow(
+                        {
+                            "replicate": 0,
+                            "generation": generation,
+                            "strain_id": 1,
+                            "count": 500_000_000 - generation,
+                        }
+                    )
+            summary = output / "host_generation_summary.csv"
+            with summary.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(
+                    handle,
+                    fieldnames=(
+                        "replicate",
+                        "host_generation",
+                        "realized_host_feedback",
+                        "mean_adult_richness",
+                        "mean_adult_gene_diversity",
+                    ),
+                )
+                writer.writeheader()
+                for generation in range(1, 102):
+                    writer.writerow(
+                        {
+                            "replicate": 0,
+                            "host_generation": generation,
+                            "realized_host_feedback": 0.5,
+                            "mean_adult_richness": 2.0,
+                            "mean_adult_gene_diversity": 0.5,
+                        }
+                    )
+            (output / "pause.json").write_text(
+                json.dumps({"last_completed_generation": 101}), encoding="utf-8"
+            )
+            run = {
+                "run_id": "synthetic-run",
+                "cell_id": "synthetic-cell",
+                "seed_block_id": "sb0001",
+            }
+            cell = {
+                "cell_id": "synthetic-cell",
+                "cell": "synthetic",
+                "panel": "H-by-B",
+                "H": "100",
+                "B": "10",
+                "alpha_target": "0.5",
+                "alpha": "0.5",
+                "m": "0.1",
+            }
+            rows, input_record = wave2_analysis._new_run_rows(
+                run,
+                cell,
+                output,
+                {0: 500_000_000, 1: 500_000_000},
+            )
+
+            self.assertEqual(len(rows), 101)
+            self.assertAlmostEqual(rows[-1]["TV"], 100 / 1_000_000_000)
+            self.assertEqual(rows[-1]["realized_host_feedback"], 0.5)
+            self.assertEqual(input_record["reached_generation"], 101)
+            self.assertEqual(len(input_record["environment_prefix_sha256"]), 64)
+
+    def test_complete_design_derives_all_registered_summary_tables(self) -> None:
+        phase = REPOSITORY / "experiments/work/trophosome/p01-neutral-feedback"
+        matrix = wave2_analysis._read_tsv(
+            phase
+            / "design/phase1-stage3-wave2-v210-adaptive-g1000-cells.tsv"
+        )
+        trajectories = []
+        for cell in matrix:
+            alpha = float(cell["alpha_target"])
+            migration = float(cell["m"])
+            hosts = int(cell["H"])
+            bottleneck = int(cell["B"])
+            for seed_number, (seed, _master) in enumerate(design.SEED_BLOCKS):
+                for generation in range(101):
+                    progress = generation / 100
+                    seed_shift = (seed_number + 1) * 1e-5
+                    tv = (
+                        0.001
+                        + alpha
+                        * (1 - migration)
+                        * progress
+                        / math.sqrt(hosts * bottleneck)
+                        + seed_shift
+                    )
+                    trajectories.append(
+                        {
+                            "run_id": f"{cell['cell_id']}-{seed}",
+                            "cell_id": cell["cell_id"],
+                            "cell": cell["cell"],
+                            "seed_block_id": seed,
+                            "panel": cell["panel"],
+                            "H": hosts,
+                            "B": bottleneck,
+                            "HB": hosts * bottleneck,
+                            "alpha_target": alpha,
+                            "alpha": float(cell["alpha"]),
+                            "m": migration,
+                            "generation": generation,
+                            "source_role": cell["initial_source_role"],
+                            "source_run_id": "synthetic-source",
+                            "D0": 100,
+                            "shannon": math.log(30 - tv),
+                            "simpson": 1 - 1 / (20 - tv),
+                            "D1": 30 - tv,
+                            "D2": 20 - tv,
+                            "evenness": 0.8 - tv / 10,
+                            "TV": tv,
+                            "turnover": tv / 100,
+                            "realized_host_feedback": alpha,
+                            "mean_adult_richness": 3.0,
+                            "mean_adult_gene_diversity": 0.5,
+                        }
+                    )
+
+        tables = wave2_analysis._derive_tables(trajectories, matrix)
+
+        self.assertEqual(len(tables["environment-trajectories-g100"]), 480 * 101)
+        self.assertEqual(len(tables["run-endpoints-g100"]), 480)
+        self.assertEqual(len(tables["run-tail-summaries-g100"]), 480)
+        self.assertEqual(len(tables["cell-summaries-g100"]), 40 * 7)
+        self.assertEqual(len(tables["h-by-b-paired-contrasts"]), 4 * 7)
+        self.assertEqual(len(tables["alpha-by-m-contrasts"]), 3 * 7 * 7)
+        self.assertEqual(len(tables["alpha-by-m-interactions"]), 3 * 6 * 7)
+        self.assertTrue(tables["h-by-b-model-comparison"])
 
 
 if __name__ == "__main__":

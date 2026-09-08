@@ -55,10 +55,11 @@ clear error if none is available; in that case, ask the HPC administrator which
 outgoing-mail command or scheduler notification facility should be used.
 
 Notifications are sent for real simulations, including `--smoke-only`, but not
-for `--prepare-only`, `--dry-run`, `--check-smoke`, `--assess-only` or
-`--report-only`. The email records the exit status, host, elapsed time, Git
-revision and exact command. A mail-delivery failure never changes the completed
-simulation's exit status. Set `TROPHOSOME_NOTIFY_EMAIL=off` to disable messages.
+for `--prepare-only`, `--dry-run`, `--check-smoke`, `--assess-only`,
+`--summarize-only` or `--report-only`. The email records the exit status, host,
+elapsed time, Git revision and exact command. A mail-delivery failure never
+changes the completed simulation's exit status. Set
+`TROPHOSOME_NOTIFY_EMAIL=off` to disable messages.
 
 ## Phase 1 Stage 3 Wave 2
 
@@ -104,8 +105,36 @@ bash scripts/hpc/launch_phase1_stage3_wave2.sh
 ```
 
 At the end of the complete passage-100 batch, the launcher freezes the adaptive
-decision and builds the self-contained adaptive-horizon report. Rebuild that
-report at any time without accessing scratch or launching simulations:
+decision, compiles the complete passage-100 primary analysis tables, and builds
+the self-contained adaptive-horizon report. If an earlier run completed before
+the table compiler was available, compile the tables without simulating:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --summarize-only
+```
+
+This reads the 408 new scratch outputs and combines them with the 72 frozen
+reused trajectories. It writes portable TSV tables and an audit below
+`experiments/work/trophosome/p01-neutral-feedback/analysis/`
+`s03-parameter-map-wave2-v210-adaptive-g1000-derived/`. The operation is safe
+to repeat and does not alter checkpoints or raw outputs.
+
+The compiled files are:
+
+- `analysis-inputs-g100.tsv`: provenance and passage-100 prefix checksums;
+- `environment-trajectories-g100.tsv`: 48,480 environmental states;
+- `run-endpoints-g100.tsv` and `run-tail-summaries-g100.tsv`: one row per
+  population at the endpoint and over passages 51-100;
+- `cell-summaries-g100.tsv`: means and 90% intervals for all 40 conditions;
+- `h-by-b-paired-contrasts.tsv` and `h-by-b-model-comparison.tsv`;
+- `alpha-by-m-contrasts.tsv` and `alpha-by-m-interactions.tsv`; and
+- `analysis-audit-g100.json` and `analysis-summary-g100.json`.
+
+Only these portable derived files need to be committed or copied back from the
+HPC. Do not add the raw scratch directories to Git.
+
+Rebuild the current adaptive-horizon report at any time without accessing
+scratch or launching simulations:
 
 ```bash
 bash scripts/hpc/launch_phase1_stage3_wave2.sh --report-only

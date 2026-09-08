@@ -322,8 +322,16 @@ matched equivalence comparison and adaptive rule. The copy-paste server
 commands are in the [HPC workflow guide](scripts/hpc/README.md#phase-1-stage-3-wave-2).
 
 The passage-100 launcher now creates an adaptive-horizon PDF and editable
-Markdown report after the frozen decision has been written. It can be rebuilt
-without accessing scratch or running simulations:
+Markdown report after the frozen decision has been written. Batches completed
+before the full passage-100 table compiler was added can be summarized without
+rerunning any population:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --summarize-only
+```
+
+The adaptive report can be rebuilt without accessing scratch or running
+simulations:
 
 ```bash
 bash scripts/hpc/launch_phase1_stage3_wave2.sh --report-only

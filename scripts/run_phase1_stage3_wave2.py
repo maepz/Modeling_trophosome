@@ -492,6 +492,11 @@ def main() -> int:
         help="freeze the adaptive decision from existing results; do not simulate",
     )
     mode.add_argument(
+        "--summarize-only",
+        action="store_true",
+        help="audit passage-100 scratch results and compile portable tables",
+    )
+    mode.add_argument(
         "--report-only",
         action="store_true",
         help="rebuild the self-contained passage-100 adaptive report; do not simulate",
@@ -502,6 +507,17 @@ def main() -> int:
     if args.smoke_only and args.horizon != INITIAL_HORIZON:
         parser.error("smoke-only applies only to the passage-100 batch")
     repository = args.repository.resolve()
+    if args.summarize_only:
+        completed = subprocess.run(
+            [
+                os.path.abspath(args.python),
+                str(repository / "scripts/analyse_phase1_stage3_wave2.py"),
+                "--repository",
+                str(repository),
+            ],
+            check=False,
+        )
+        return completed.returncode
     if args.report_only:
         completed = subprocess.run(
             [
@@ -668,6 +684,15 @@ def main() -> int:
     if complete_batch and not args.no_assessment and args.horizon < MAXIMUM_HORIZON:
         write_or_verify(repository, args.horizon, verify=False)
         if args.horizon == INITIAL_HORIZON:
+            subprocess.run(
+                [
+                    os.path.abspath(args.python),
+                    str(repository / "scripts/analyse_phase1_stage3_wave2.py"),
+                    "--repository",
+                    str(repository),
+                ],
+                check=True,
+            )
             subprocess.run(
                 [
                     os.path.abspath(args.python),
