@@ -246,18 +246,49 @@ class Wave2DesignTests(unittest.TestCase):
         self.assertIn("analyse_phase1_stage3_wave2.py", command[1])
         self.assertIn("--repository", command)
 
-    def test_dbrda_only_dispatches_the_matrix_compiler_without_scratch_setup(
+    def test_community_only_dispatches_the_compiler_without_scratch_setup(
         self,
     ) -> None:
         completed = subprocess.CompletedProcess([], 0)
         with (
-            patch.object(sys, "argv", ["run_phase1_stage3_wave2.py", "--dbrda-only"]),
+            patch.object(
+                sys, "argv", ["run_phase1_stage3_wave2.py", "--community-only"]
+            ),
             patch.object(runner.subprocess, "run", return_value=completed) as launched,
         ):
             self.assertEqual(runner.main(), 0)
         command = launched.call_args.args[0]
         self.assertIn("compile_phase1_stage3_dbrda_inputs.py", command[1])
         self.assertIn("--repository", command)
+
+    def test_partial_community_modes_are_forwarded_to_the_compiler(self) -> None:
+        for mode in ("--endpoint-only", "--prc-only"):
+            completed = subprocess.CompletedProcess([], 0)
+            with (
+                self.subTest(mode=mode),
+                patch.object(sys, "argv", ["run_phase1_stage3_wave2.py", mode]),
+                patch.object(
+                    runner.subprocess, "run", return_value=completed
+                ) as launched,
+            ):
+                self.assertEqual(runner.main(), 0)
+                command = launched.call_args.args[0]
+                self.assertIn(mode, command)
+
+    def test_legacy_dbrda_mode_warns_and_uses_full_community_compiler(
+        self,
+    ) -> None:
+        completed = subprocess.CompletedProcess([], 0)
+        with (
+            patch.object(sys, "argv", ["run_phase1_stage3_wave2.py", "--dbrda-only"]),
+            patch.object(runner.subprocess, "run", return_value=completed) as launched,
+            patch("sys.stderr") as stderr,
+        ):
+            self.assertEqual(runner.main(), 0)
+        command = launched.call_args.args[0]
+        self.assertNotIn("--endpoint-only", command)
+        self.assertNotIn("--prc-only", command)
+        self.assertTrue(stderr.write.called)
 
 
 class AdaptiveDecisionTests(unittest.TestCase):

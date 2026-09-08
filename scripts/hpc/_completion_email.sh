@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-# Shared completion-email support for long-running HPC launchers. This file is
-# sourced by launch scripts; notification failures never change a model job's
-# exit status.
+# Shared completion-notification support for long-running HPC launchers. GitHub
+# is preferred because many compute nodes have no outgoing mail service. Local
+# email remains a fallback. Notification failures never change a job's status.
 
 trophosome_invocation_is_job() {
   local argument
   for argument in "$@"; do
     case "$argument" in
-      --prepare-only|--dry-run|--check-smoke|--assess-only|--summarize-only|--dbrda-only|--report-only)
+      --prepare-only|--dry-run|--check-smoke|--assess-only|--summarize-only|--community-only|--endpoint-only|--prc-only|--dbrda-only|--report-only)
         return 1
         ;;
     esac
@@ -72,10 +72,71 @@ trophosome_send_completion_email() {
   esac
 }
 
-trophosome_run_with_completion_email() {
+trophosome_github_notifications_enabled() {
+  case "${TROPHOSOME_GITHUB_NOTIFY-}" in
+    [Oo][Ff][Ff]|[Nn][Oo][Nn][Ee]|[Dd][Ii][Ss][Aa][Bb][Ll][Ee][Dd])
+      return 1
+      ;;
+  esac
+  return 0
+}
+
+trophosome_github_python() {
+  if [[ -n "${PYTHON_EXECUTABLE-}" ]]; then
+    printf '%s\n' "$PYTHON_EXECUTABLE"
+  elif command -v python >/dev/null 2>&1; then
+    command -v python
+  else
+    command -v python3
+  fi
+}
+
+trophosome_github_notification_is_configured() {
+  local repository="$1"
+  local python_command=""
+  if ! trophosome_github_notifications_enabled; then
+    return 1
+  fi
+  python_command="$(trophosome_github_python 2>/dev/null || true)"
+  if [[ -z "$python_command" ]]; then
+    return 1
+  fi
+  "$python_command" "$repository/scripts/hpc/send_github_completion.py" \
+    --repository "$repository" --check >/dev/null 2>&1
+}
+
+trophosome_send_github_completion() {
+  local repository="$1"
+  local label="$2"
+  local outcome="$3"
+  local status="$4"
+  local host="$5"
+  local started_utc="$6"
+  local finished_utc="$7"
+  local elapsed="$8"
+  local revision="$9"
+  shift 9
+  local command_text="$1"
+  local python_command=""
+  python_command="$(trophosome_github_python)"
+  "$python_command" "$repository/scripts/hpc/send_github_completion.py" \
+    --repository "$repository" \
+    --label "$label" \
+    --outcome "$outcome" \
+    --exit-status "$status" \
+    --host "$host" \
+    --started-utc "$started_utc" \
+    --finished-utc "$finished_utc" \
+    --elapsed-seconds "$elapsed" \
+    --revision "$revision" \
+    --command "$command_text"
+}
+
+trophosome_run_with_completion_notification() {
   local label="$1"
   local repository="$2"
   shift 2
+  local github_configured=0
   local recipient=""
   local transport=""
   local started_utc=""
@@ -91,14 +152,19 @@ trophosome_run_with_completion_email() {
   local host=""
   local revision=""
 
-  recipient="$(trophosome_notification_recipient "$repository" || true)"
-  if [[ -n "$recipient" ]]; then
-    if transport="$(trophosome_email_transport)"; then
-      echo "A completion email will be sent to $recipient using $transport." >&2
-    else
-      echo "Warning: completion email requested for $recipient, but no mail client is available." >&2
-      echo "Run scripts/hpc/test_completion_email.sh before a long job." >&2
-      recipient=""
+  if trophosome_github_notification_is_configured "$repository"; then
+    github_configured=1
+    echo "A completion notice will be requested through GitHub." >&2
+  else
+    recipient="$(trophosome_notification_recipient "$repository" || true)"
+    if [[ -n "$recipient" ]]; then
+      if transport="$(trophosome_email_transport)"; then
+        echo "A completion email will be sent to $recipient using $transport." >&2
+      else
+        echo "Warning: no GitHub notification token or local mail client is available." >&2
+        echo "Run scripts/hpc/configure_github_notifications.sh before a long job." >&2
+        recipient=""
+      fi
     fi
   fi
 
@@ -116,10 +182,16 @@ trophosome_run_with_completion_email() {
     outcome="FAILED"
   fi
 
-  if [[ -n "$recipient" ]]; then
-    printf -v command_text '%q ' "$@"
-    host="$(hostname 2>/dev/null || printf 'unknown')"
-    revision="$(git -C "$repository" rev-parse --short HEAD 2>/dev/null || printf 'unknown')"
+  printf -v command_text '%q ' "$@"
+  host="$(hostname 2>/dev/null || printf 'unknown')"
+  revision="$(git -C "$repository" rev-parse --short HEAD 2>/dev/null || printf 'unknown')"
+  if ((github_configured)); then
+    if ! trophosome_send_github_completion \
+      "$repository" "$label" "$outcome" "$status" "$host" \
+      "$started_utc" "$finished_utc" "$elapsed" "$revision" "$command_text"; then
+      echo "Warning: the job finished, but GitHub did not accept its completion notice." >&2
+    fi
+  elif [[ -n "$recipient" ]]; then
     subject="trophosome $outcome: $label"
     printf -v body '%s\n\nStatus: %s (exit %d)\nHost: %s\nStarted UTC: %s\nFinished UTC: %s\nElapsed seconds: %d\nGit revision: %s\nCommand: %s\n' \
       "$label finished." "$outcome" "$status" "$host" "$started_utc" \
@@ -129,4 +201,9 @@ trophosome_run_with_completion_email() {
     fi
   fi
   return "$status"
+}
+
+# Compatibility for older launch scripts and external wrappers.
+trophosome_run_with_completion_email() {
+  trophosome_run_with_completion_notification "$@"
 }

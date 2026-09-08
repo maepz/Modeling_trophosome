@@ -18,7 +18,7 @@ COMMAND=(
   --repository "$REPOSITORY" --jobs "$WAVE_JOBS" "$@"
 )
 if trophosome_invocation_is_job "$@"; then
-  trophosome_run_with_completion_email \
+  trophosome_run_with_completion_notification \
     "Phase 1 Stage 3 Wave 2" "$REPOSITORY" "${COMMAND[@]}"
 else
   exec "${COMMAND[@]}"

@@ -1,0 +1,119 @@
+name: HPC completion notification
+run-name: "HPC ${{ inputs.outcome }} — ${{ inputs.label }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      label:
+        description: Human-readable batch name
+        required: true
+        type: string
+      outcome:
+        description: Final HPC outcome
+        required: true
+        type: choice
+        options:
+          - SUCCESS
+          - FAILED
+          - TEST
+      exit_status:
+        description: Process exit status
+        required: true
+        type: string
+      host:
+        description: HPC host
+        required: true
+        type: string
+      started_utc:
+        description: UTC start time
+        required: true
+        type: string
+      finished_utc:
+        description: UTC finish time
+        required: true
+        type: string
+      elapsed_seconds:
+        description: Elapsed seconds
+        required: true
+        type: string
+      revision:
+        description: Git revision used by the HPC job
+        required: true
+        type: string
+      command:
+        description: HPC command
+        required: true
+        type: string
+
+permissions:
+  issues: write
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create completion notice
+        uses: actions/github-script@v7
+        env:
+          NOTICE_LABEL: ${{ inputs.label }}
+          NOTICE_OUTCOME: ${{ inputs.outcome }}
+          NOTICE_EXIT_STATUS: ${{ inputs.exit_status }}
+          NOTICE_HOST: ${{ inputs.host }}
+          NOTICE_STARTED_UTC: ${{ inputs.started_utc }}
+          NOTICE_FINISHED_UTC: ${{ inputs.finished_utc }}
+          NOTICE_ELAPSED_SECONDS: ${{ inputs.elapsed_seconds }}
+          NOTICE_REVISION: ${{ inputs.revision }}
+          NOTICE_COMMAND: ${{ inputs.command }}
+        with:
+          script: |
+            const notice = {
+              label: process.env.NOTICE_LABEL,
+              outcome: process.env.NOTICE_OUTCOME,
+              exitStatus: process.env.NOTICE_EXIT_STATUS,
+              host: process.env.NOTICE_HOST,
+              started: process.env.NOTICE_STARTED_UTC,
+              finished: process.env.NOTICE_FINISHED_UTC,
+              elapsed: process.env.NOTICE_ELAPSED_SECONDS,
+              revision: process.env.NOTICE_REVISION,
+              command: process.env.NOTICE_COMMAND,
+            };
+            const allowed = new Set(["SUCCESS", "FAILED", "TEST"]);
+            if (!allowed.has(notice.outcome)) {
+              core.setFailed(`Unsupported HPC outcome: ${notice.outcome}`);
+              return;
+            }
+            const icon = notice.outcome === "FAILED" ? "❌" : "✅";
+            const title = `${icon} HPC ${notice.outcome}: ${notice.label}`.slice(0, 256);
+            const body = [
+              `@${context.repo.owner}, the HPC job has finished.`,
+              "",
+              `| Field | Value |`,
+              `|---|---|`,
+              `| Outcome | **${notice.outcome}** |`,
+              `| Exit status | \`${notice.exitStatus}\` |`,
+              `| HPC host | \`${notice.host}\` |`,
+              `| Started (UTC) | ${notice.started} |`,
+              `| Finished (UTC) | ${notice.finished} |`,
+              `| Elapsed seconds | ${notice.elapsed} |`,
+              `| Git revision | \`${notice.revision}\` |`,
+              "",
+              "Command:",
+              "```text",
+              notice.command.slice(0, 8000),
+              "```",
+              "",
+              `Notification workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            ].join("\n");
+            const response = await github.rest.issues.create({
+              ...context.repo,
+              title,
+              body,
+            });
+            if (notice.outcome !== "FAILED") {
+              await github.rest.issues.update({
+                ...context.repo,
+                issue_number: response.data.number,
+                state: "closed",
+                state_reason: "completed",
+              });
+            }

@@ -19,13 +19,20 @@ columns of Y′. The audit fails rather than releasing a mismatched table set.
 ## Why there is one master matrix
 
 One master matrix avoids maintaining several copies of the same table. The
-`analysis_set` column in X identifies the three experimental subsets:
+`analysis_set` column in X identifies each experimental subset. The Wave 3
+release preserves the three earlier subsets and appends one new subset:
 
 | `analysis_set` | Biological experiment | Rows in the master set | Primary db-RDA rows |
 |---|---|---:|---:|
 | `wave1_h_alpha_u` | Host abundance × feedback × mutation | 300 | 288 |
 | `wave2a_h_by_b` | Host abundance × infection bottleneck | 144 | 144 |
 | `wave2b_alpha_by_m` | Feedback × regional migration | 336 | 336 |
+| `wave3_bridge` | 14 bridge cells + two-cell extension | 96 | 96 |
+
+The Wave 3 master therefore contains 876 analysis rows backed by 828 unique
+simulated populations. Its 96 new rows use six matched seed blocks. The older
+Wave 2 release remains a valid 780-row snapshot and is written to a separate
+directory.
 
 The 12 Wave 1 no-return populations are retained for paired comparisons but
 have `include_primary_dbrda = false`. They are excluded from the primary Wave 1
@@ -37,7 +44,7 @@ They therefore occur under a new analysis-cell identity, while
 `source_run_id` records the original simulation. `source_alias_count` reveals
 these cases. A source population is never duplicated within one analysis set.
 
-Do not fit one db-RDA to the unfiltered master matrix. The three experiments
+Do not fit one db-RDA to the unfiltered master matrix. The experiments
 have different designs, and the master set contains cross-experiment aliases
 of reused simulations. Subset X first, then use exactly those sample IDs to
 subset Y and both axes of Y′.
@@ -81,29 +88,66 @@ identical to Bray–Curtis dissimilarity.
 ## Creating the tables on the HPC
 
 The raw environmental and lineage tables are stored in the machine-local
-scratch directory, so the compiler must normally run on the HPC:
+scratch directory, so the compiler must normally run on the HPC. After Wave 3,
+use its launcher so all three waves are included:
 
 ```bash
-bash scripts/hpc/launch_phase1_stage3_wave2.sh --dbrda-only
+bash scripts/hpc/launch_phase1_stage3_wave3.sh --community-only
 ```
 
 This is a read-only analysis command. It does not launch simulations, change
 checkpoints, or request a completion email. It reads the scratch location from
-`experiments/work/trophosome/layout.local.json` and writes portable results to:
+`experiments/work/trophosome/layout.local.json` and writes the updated release
+to:
 
 ```text
 experiments/work/trophosome/p01-neutral-feedback/analysis/
-s03-parameter-map-dbrda-g100-derived/
+s03-parameter-map-community-wave3-g100-derived/
 ```
+
+Separate directories prevent an updated compilation from silently replacing
+the Wave 2 snapshot in `s03-parameter-map-community-g100-derived`. The direct
+compiler equivalent is
+`python scripts/compile_phase1_stage3_dbrda_inputs.py --through-wave 3`.
 
 The output directory also contains:
 
-- `dbrda-source-provenance-g100.tsv`, linking analysis rows to original runs;
-- `dbrda-input-audit-g100.json`, recording dimensions, definitions, checksums,
-  and whether compilation passed.
+- `community-source-provenance-g100.tsv`, linking analysis rows to original
+  runs;
+- `community-input-audit-g100.json`, recording dimensions, definitions,
+  performance information, checksums, and whether compilation passed.
 
 Only this portable derived directory needs to be copied or committed. Do not
 add raw scratch outputs to Git.
+
+The compiler uses four workers by default and reports progress, elapsed rate,
+cache hits, and estimated time remaining. Each completed source population is
+cached below machine-local scratch. If compilation is interrupted, repeat the
+same command and the validated sources are reused. The cache is invalidated
+automatically if a configuration, completion record, raw file size, passage
+range, or environmental capacity changes.
+
+On a shared filesystem, start with four workers rather than a large worker
+count. Override it only after observing storage performance:
+
+```bash
+TROPHOSOME_COMMUNITY_WORKERS=2 \
+  bash scripts/hpc/launch_phase1_stage3_wave3.sh --community-only
+```
+
+To create only one part of the output:
+
+```bash
+# Passage-100 X, Y and Y-prime only
+bash scripts/hpc/launch_phase1_stage3_wave3.sh --endpoint-only
+
+# Passage 0-100 PRC trajectory only
+bash scripts/hpc/launch_phase1_stage3_wave3.sh --prc-only
+```
+
+Both modes use the same cache. The PRC table uses fast gzip level 1 by default;
+change it with `TROPHOSOME_COMMUNITY_GZIP_LEVEL` if storage size matters more
+than compilation time. The decompressed table values are unchanged.
 
 ## Using the trajectory table for PRC
 
@@ -123,7 +167,7 @@ trajectories within matched seed blocks.
 ```r
 derived <- file.path(
   "experiments", "work", "trophosome", "p01-neutral-feedback", "analysis",
-  "s03-parameter-map-dbrda-g100-derived"
+  "s03-parameter-map-community-wave3-g100-derived"
 )
 
 X <- read.delim(
@@ -166,11 +210,21 @@ subset_stage3 <- function(set_name) {
 wave1 <- subset_stage3("wave1_h_alpha_u")
 wave2a <- subset_stage3("wave2a_h_by_b")
 wave2b <- subset_stage3("wave2b_alpha_by_m")
+wave3 <- subset_stage3("wave3_bridge")
 
 stopifnot(nrow(wave1$X) == 288)
 stopifnot(nrow(wave2a$X) == 144)
 stopifnot(nrow(wave2b$X) == 336)
+stopifnot(nrow(wave3$X) == 96)
 ```
+
+For the bridge-augmented analysis, first restrict every experiment to the six
+Wave 3 seed blocks and neutral (`u = 0`) populations. Combine the compatible
+Wave 1, Wave 2A, Wave 2B and Wave 3 rows, then retain each `source_run_id` only
+once. Use the retained `sample_id` values to subset both Y and Y-prime. The
+annotated R Markdown workflow implements these checks and stops if aliases have
+different biological parameter values. This produces 390 independent
+population rows: 65 conditions in each of the six matched seed blocks.
 
 For a Hellinger RDA, transform the matching Y subset with
 `vegan::decostand(Y, method = "hellinger")`. For the primary db-RDA, use the

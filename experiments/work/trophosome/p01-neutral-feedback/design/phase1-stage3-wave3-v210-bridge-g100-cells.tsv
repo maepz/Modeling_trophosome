@@ -1,0 +1,17 @@
+cell_id	cell	bridge_code	bridge_group	panel	design_tier	H	B	HB	f	e	R	alpha	alpha_target	m	u	host_generations	host_counts_mode	purpose
+p01-s03-c0091	c0091	A1	A	bridge-A-alpha-by-B	bridge-core	1000	1	1000	0.0000101	10100	10100000	0.00999900999901	0.01	0.1	0	100	panel	Weak feedback, severe bottleneck
+p01-s03-c0092	c0092	A2	A	bridge-A-alpha-by-B	bridge-core	1000	50	50000	0.0000101	10100	10100000	0.00999900999901	0.01	0.1	0	100	panel	Weak feedback, wide bottleneck
+p01-s03-c0093	c0093	A3	A	bridge-A-alpha-by-B	bridge-core	1000	1	1000	0.00011111	111110	111110000	0.0999990999991	0.1	0.1	0	100	panel	Intermediate feedback, severe bottleneck
+p01-s03-c0094	c0094	A4	A	bridge-A-alpha-by-B	bridge-core	1000	50	50000	0.00011111	111110	111110000	0.0999990999991	0.1	0.1	0	100	panel	Intermediate feedback, wide bottleneck
+p01-s03-c0095	c0095	A5	A	bridge-A-alpha-by-B	bridge-core	1000	1	1000	0.099	99000000	99000000000	0.99	0.99	0.1	0	100	panel	Strong feedback, severe bottleneck
+p01-s03-c0096	c0096	A6	A	bridge-A-alpha-by-B	bridge-core	1000	50	50000	0.099	99000000	99000000000	0.99	0.99	0.1	0	100	panel	Strong feedback, wide bottleneck
+p01-s03-c0097	c0097	B1	B	bridge-B-H-by-m	bridge-core	100	10	1000	0.0011111	1111100	111110000	0.0999990999991	0.1	0.01	0	100	full	Few hosts, weak immigration
+p01-s03-c0098	c0098	B2	B	bridge-B-H-by-m	bridge-core	100	10	1000	0.0011111	1111100	111110000	0.0999990999991	0.1	0.9	0	100	full	Few hosts, strong immigration
+p01-s03-c0099	c0099	B3	B	bridge-B-H-by-m	bridge-core	10000	10	100000	0.000011111	11111	111110000	0.0999990999991	0.1	0.01	0	100	panel	Many hosts, weak immigration
+p01-s03-c0100	c0100	B4	B	bridge-B-H-by-m	bridge-core	10000	10	100000	0.000011111	11111	111110000	0.0999990999991	0.1	0.9	0	100	panel	Many hosts, strong immigration
+p01-s03-c0101	c0101	C1	C	bridge-C-B-by-m	bridge-core	1000	1	1000	0.00011111	111110	111110000	0.0999990999991	0.1	0.01	0	100	panel	Severe bottleneck, weak immigration
+p01-s03-c0102	c0102	C2	C	bridge-C-B-by-m	bridge-core	1000	1	1000	0.00011111	111110	111110000	0.0999990999991	0.1	0.9	0	100	panel	Severe bottleneck, strong immigration
+p01-s03-c0103	c0103	C3	C	bridge-C-B-by-m	bridge-core	1000	50	50000	0.00011111	111110	111110000	0.0999990999991	0.1	0.01	0	100	panel	Wide bottleneck, weak immigration
+p01-s03-c0104	c0104	C4	C	bridge-C-B-by-m	bridge-core	1000	50	50000	0.00011111	111110	111110000	0.0999990999991	0.1	0.9	0	100	panel	Wide bottleneck, strong immigration
+p01-s03-c0105	c0105	D1	D	bridge-D-HB-by-alpha	two-cell-extension	10000	1	10000	0.00000101	1010	10100000	0.00999900999901	0.01	0.1	0	100	panel	Matched-HB extension at weak feedback
+p01-s03-c0106	c0106	D2	D	bridge-D-HB-by-alpha	two-cell-extension	10000	1	10000	0.0099	9900000	99000000000	0.99	0.99	0.1	0	100	panel	Matched-HB extension at strong feedback

@@ -38,8 +38,9 @@ the biological system that motivated the software.
 ## Start here: run the small example
 
 New to the software? Start with the small example below. For the current
-research batch, go to [Phase 1 Stage 3 Wave 2](#phase-1-stage-3-wave-2)
-or the complete [HPC instructions](scripts/hpc/README.md#phase-1-stage-3-wave-2).
+research batch, go to [Phase 1 Stage 3 Wave 3](#phase-1-stage-3-wave-3)
+or the complete
+[HPC instructions](scripts/hpc/README.md#phase-1-stage-3-wave-3-bridge-experiment).
 
 Python 3.11 or newer is required. The commands below are entered in a terminal
 opened in the downloaded `Modeling_trophosome` folder.
@@ -335,8 +336,13 @@ pairwise-TV matrix, and passage 0--100 trajectory table for PRC can also be
 compiled from the existing HPC scratch results without rerunning simulations:
 
 ```bash
-bash scripts/hpc/launch_phase1_stage3_wave2.sh --dbrda-only
+bash scripts/hpc/launch_phase1_stage3_wave2.sh --community-only
 ```
+
+The compiler uses four workers by default, reports progress and ETA, and saves
+validated per-population results in machine-local scratch so an interrupted
+compilation can resume. `--endpoint-only` and `--prc-only` compile just one
+part of the community-analysis set.
 
 Their definitions and safeguards are documented in the
 [Stage 3 community-analysis input guide](docs/phase1-stage3-dbrda-inputs.md).
@@ -351,10 +357,36 @@ simulations:
 bash scripts/hpc/launch_phase1_stage3_wave2.sh --report-only
 ```
 
-Long-running HPC launchers can also email their final success or failure
-status. Set `TROPHOSOME_NOTIFY_EMAIL` and send a test before launching a batch;
-the [HPC workflow guide](scripts/hpc/README.md#completion-emails) explains the
-one-time setup and supported server mail commands.
+Long-running HPC launchers can report their final success or failure through a
+GitHub notification, even when the compute server has no outgoing mail service.
+The [HPC workflow guide](scripts/hpc/README.md#completion-notifications-through-github)
+explains the one-time secure token setup and test.
+
+## Phase 1 Stage 3 Wave 3
+
+Wave 3 is a 16-condition bridge experiment: the proposed 14 core cells plus
+both extension cells. Six matched seed blocks give 96 new neutral populations,
+all followed to passage 100. The cells connect the earlier panels so the
+combined analysis can estimate feedback × bottleneck, host abundance ×
+migration, and bottleneck × migration more directly.
+
+The [full Wave 3 design](docs/phase1-stage3-wave3.md) explains the biological
+logic and lists every cell. Use the ordered
+[HPC workflow](scripts/hpc/README.md#phase-1-stage-3-wave-3-bridge-experiment)
+to verify, run three included safety populations, assess resource use, and
+launch the remaining batch.
+
+After Wave 3 completes, rebuild one updated master community dataset from the
+HPC scratch outputs:
+
+```bash
+bash scripts/hpc/launch_phase1_stage3_wave3.sh --community-only
+```
+
+This creates matched X, Y and Y-prime endpoint tables plus the PRC trajectory
+table for Waves 1--3. It does not rerun any simulation. The output is written
+to a new `s03-parameter-map-community-wave3-g100-derived` directory, leaving
+the earlier Wave 2-only release unchanged.
 
 ## Generate an earlier pilot report
 

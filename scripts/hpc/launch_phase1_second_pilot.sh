@@ -23,7 +23,7 @@ COMMAND=(
   "$@"
 )
 if trophosome_invocation_is_job "$@"; then
-  trophosome_run_with_completion_email \
+  trophosome_run_with_completion_notification \
     "Phase 1 second pilot" "$REPOSITORY" "${COMMAND[@]}"
 else
   exec "${COMMAND[@]}"

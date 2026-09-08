@@ -10,7 +10,7 @@ output:
     number_sections: true
     code_folding: show
 params:
-  data_dir: "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-dbrda-g100-derived"
+  data_dir: "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-community-wave3-g100-derived"
   nperm: 9999
   random_seed: 20260908
   run_models: true
@@ -37,7 +37,7 @@ of individual mutant strains.
 The endpoint methods and PRC answer different questions. The endpoint methods
 compare communities at passage 100. PRC uses the complete trajectory and asks
 when and how treatments diverge from a reference. PRC should be run on a small,
-biologically coherent comparison, not on all 65 Stage 3 cells at once.
+biologically coherent comparison, not on all 81 Stage 3 cells at once.
 
 # 1. Set up R
 
@@ -208,7 +208,7 @@ data.frame(
 
 # 4. Preserve the experimental design when subsetting
 
-The master tables contain three different experiments. Always subset X first,
+The Wave 3 master tables contain four experimental subsets. Always subset X first,
 then use its `sample_id` values to subset Y and both axes of Y-prime.
 
 ```{r endpoint-helper}
@@ -238,10 +238,12 @@ subset_endpoint <- function(analysis_set, primary_only = TRUE) {
 wave1 <- subset_endpoint("wave1_h_alpha_u")
 wave2a <- subset_endpoint("wave2a_h_by_b")
 wave2b <- subset_endpoint("wave2b_alpha_by_m")
+wave3 <- subset_endpoint("wave3_bridge")
 
 stopifnot(nrow(wave1$X) == 288L)
 stopifnot(nrow(wave2a$X) == 144L)
 stopifnot(nrow(wave2b$X) == 336L)
+stopifnot(nrow(wave3$X) == 96L)
 ```
 
 Wave 1's 12 no-return controls remain in the master tables but are not in its
@@ -250,13 +252,67 @@ abundance and mutation rate cannot act through host return, so attaching an
 arbitrary H or u label to that control would distort the factorial test. Use
 those controls for paired treatment-versus-control contrasts and selected PRCs.
 
+## 4.1 Build the bridge-augmented subset
+
+Wave 3 was designed to augment compatible neutral observations from Waves 1
+and 2, rather than to be fitted as an isolated 16-cell factorial. Use only the
+six seed blocks shared by Wave 3, keep mutation off, and represent each original
+simulated population once. The last rule matters because some earlier
+populations deliberately appear under more than one analysis-cell alias.
+
+```{r bridge-augmented-helper}
+bridge_seed_blocks <- sprintf("sb%04d", 1:6)
+bridge_sets <- c(
+  "wave1_h_alpha_u", "wave2a_h_by_b", "wave2b_alpha_by_m", "wave3_bridge"
+)
+bridge_keep <-
+  X$analysis_set %in% bridge_sets &
+  X$seed_block_id %in% bridge_seed_blocks &
+  X$u == 0 &
+  as_logical_flag(X$include_primary_dbrda)
+
+bridge_design <- X[bridge_keep, , drop = FALSE]
+
+# If one source appears through multiple analysis aliases, its biological
+# predictors must agree before one alias is retained.
+predictor_columns <- c("H", "B", "alpha", "m", "u")
+aliases <- split(bridge_design, bridge_design$source_run_id, drop = TRUE)
+aliases_agree <- vapply(
+  aliases,
+  function(z) nrow(unique(z[, predictor_columns, drop = FALSE])) == 1L,
+  logical(1)
+)
+stopifnot(all(aliases_agree))
+
+bridge_design <- bridge_design[
+  !duplicated(bridge_design$source_run_id), , drop = FALSE
+]
+bridge_ids <- bridge_design$sample_id
+bridge <- list(
+  X = bridge_design,
+  Y = Y[bridge_ids, , drop = FALSE],
+  D_TV = stats::as.dist(
+    D_TV_matrix[bridge_ids, bridge_ids, drop = FALSE]
+  )
+)
+
+stopifnot(!anyDuplicated(bridge$X$source_run_id))
+stopifnot(nrow(bridge$X) == 390L)
+stopifnot(all(table(bridge$X$seed_block_id) == 65L))
+table(bridge$X$analysis_set)
+```
+
+This is still one master X/Y/Y-prime release: `bridge` is only a checked view
+of it in memory. No additional copy of the matrices is maintained.
+
 # 5. Permutations: what is the independent replicate?
 
 The independent replicate is a **simulated population identified by a seed
-block**, not a lineage, host, or passage. The same 12 seed blocks occur in all
-treatments. Endpoint permutations are therefore restricted within seed block.
-The seed block is also conditioned out of the ordination so seed-specific
-starting/drift differences are not attributed to the treatments.
+block**, not a lineage, host, or passage. The earlier panels use 12 matched seed
+blocks; the bridge-augmented analysis uses the six blocks shared with Wave 3.
+Endpoint permutations are therefore restricted within seed block. The seed
+block is also conditioned out of the ordination so seed-specific starting/drift
+differences are not attributed to the treatments.
 
 ```{r endpoint-model-helper}
 prepare_design <- function(design) {
@@ -276,6 +332,10 @@ prepare_design <- function(design) {
     levels = sort(unique(design$alpha_target))
   )
   design$m_factor <- factor(design$m, levels = sort(unique(design$m)))
+  design$z_log10_H <- as.numeric(scale(log10(design$H)))
+  design$z_log10_B <- as.numeric(scale(log10(design$B)))
+  design$z_alpha <- as.numeric(scale(design$alpha))
+  design$z_m <- as.numeric(scale(design$m))
   design
 }
 
@@ -347,6 +407,7 @@ The primary formulas are:
 | Wave 1 | `log10_H * log10_alpha * mutation_enabled` | tests abundance, feedback, mutation, and their interactions |
 | Wave 2A | `log10_H * log10_B` | tests whether H and bottleneck B have independent or interactive effects |
 | Wave 2B | `alpha_factor * m_factor` | preserves a potentially nonlinear surface and includes alpha = 0 |
+| Wave 1--3 bridge | all four scaled main effects plus `H:alpha`, `H:B`, `alpha:m`, `alpha:B`, `H:m`, and `B:m` | uses the new bridge cells to estimate the predeclared pairwise interactions |
 
 ```{r fit-endpoint-models, eval=params$run_models}
 fits <- list(
@@ -354,11 +415,21 @@ fits <- list(
     wave1, "log10_H * log10_alpha * mutation_enabled"
   ),
   wave2a = fit_endpoint_pair(wave2a, "log10_H * log10_B"),
-  wave2b = fit_endpoint_pair(wave2b, "alpha_factor * m_factor")
+  wave2b = fit_endpoint_pair(wave2b, "alpha_factor * m_factor"),
+  bridge = fit_endpoint_pair(
+    bridge,
+    paste(
+      "z_log10_H + z_alpha + z_log10_B + z_m",
+      "+ z_log10_H:z_alpha + z_log10_H:z_log10_B",
+      "+ z_alpha:z_m + z_alpha:z_log10_B",
+      "+ z_log10_H:z_m + z_log10_B:z_m"
+    )
+  )
 )
 ```
 
-Start by inspecting Wave 1. Repeat the same calls for `wave2a` and `wave2b`.
+Start by inspecting Wave 1. Repeat the same calls for `wave2a`, `wave2b`, and
+the combined `bridge` analysis.
 
 ```{r test-wave1-dbrda, eval=params$run_models}
 wave1_db_tests <- ordination_tests(
@@ -535,7 +606,12 @@ Other useful, separate PRCs include:
 - Wave 2A bottleneck size at fixed H = 1,000: c0055--c0058, with one declared
   B value as the reference;
 - Wave 2B migration at fixed alpha = 0.1: c0077--c0083, with m = 0 as the
-  reference.
+  reference;
+- Wave 3 feedback × bottleneck at H = 1,000 and m = 0.1: c0091--c0096, using
+  one declared alpha/B combination as the reference;
+- Wave 3 host abundance × migration at alpha = 0.1 and B = 10: c0097--c0100;
+  and
+- Wave 3 bottleneck × migration at H = 1,000 and alpha = 0.1: c0101--c0104.
 
 These answer different biological contrasts and should not be merged into a
 single omnibus PRC.

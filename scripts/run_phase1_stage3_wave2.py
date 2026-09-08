@@ -497,11 +497,26 @@ def main() -> int:
         help="audit passage-100 scratch results and compile portable tables",
     )
     mode.add_argument(
-        "--dbrda-only",
+        "--community-only",
         action="store_true",
         help=(
-            "make endpoint X/Y/TV and passage 0-100 PRC tables; do not simulate"
+            "compile endpoint and PRC community tables from scratch outputs"
         ),
+    )
+    mode.add_argument(
+        "--endpoint-only",
+        action="store_true",
+        help="compile passage-100 X/Y/TV community tables only",
+    )
+    mode.add_argument(
+        "--prc-only",
+        action="store_true",
+        help="compile the passage 0-100 PRC community table only",
+    )
+    mode.add_argument(
+        "--dbrda-only",
+        action="store_true",
+        help=argparse.SUPPRESS,
     )
     mode.add_argument(
         "--report-only",
@@ -525,14 +540,24 @@ def main() -> int:
             check=False,
         )
         return completed.returncode
-    if args.dbrda_only:
+    if args.community_only or args.endpoint_only or args.prc_only or args.dbrda_only:
+        if args.dbrda_only:
+            print(
+                "Warning: --dbrda-only is deprecated; use --community-only.",
+                file=sys.stderr,
+            )
+        compiler_command = [
+            os.path.abspath(args.python),
+            str(repository / "scripts/compile_phase1_stage3_dbrda_inputs.py"),
+            "--repository",
+            str(repository),
+        ]
+        if args.endpoint_only:
+            compiler_command.append("--endpoint-only")
+        elif args.prc_only:
+            compiler_command.append("--prc-only")
         completed = subprocess.run(
-            [
-                os.path.abspath(args.python),
-                str(repository / "scripts/compile_phase1_stage3_dbrda_inputs.py"),
-                "--repository",
-                str(repository),
-            ],
+            compiler_command,
             check=False,
         )
         return completed.returncode
