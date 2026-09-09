@@ -2,7 +2,7 @@
   "complete": true,
   "scope": "passage-100-adaptive-horizon-decision",
   "experiment_id": "phase1-stage3-wave2-v210-adaptive-g1000",
-  "completed_at": "2026-09-08T03:00:33.714797+00:00",
+  "completed_at": "2026-09-08T04:11:51.579370+00:00",
   "inputs": [
     {
       "path": "experiments/work/trophosome/p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/adaptive-horizon-decision-g100.json",
@@ -20,7 +20,7 @@
   "outputs": [
     {
       "path": "output/pdf/phase1-stage3-wave2-v210-adaptive-g1000-passage100-report.pdf",
-      "sha256": "950523a7d6acc72351e1e0b6c07c091de6a5d96600d666b3d360f4d44d3d14d8"
+      "sha256": "5f55a3fd670bcd5edf362ab97e31d6c0cccdb4b9522cbb13fc738e31ed609863"
     },
     {
       "path": "docs/phase1-stage3-wave2-v210-adaptive-g1000-passage100-report.md",
@@ -28,11 +28,11 @@
     },
     {
       "path": "docs/figures/phase1-stage3-wave2-v210-adaptive-g1000-passage100-report/late-window-tv.png",
-      "sha256": "22d529432a09518bdbd332e7990e86d2837df695a5531151caac026f7a0844b2"
+      "sha256": "d9693a1b4b93a1f5c7d9996ae01fe27afb07c5c78f36d93f4fc9e310b008dde9"
     },
     {
       "path": "docs/figures/phase1-stage3-wave2-v210-adaptive-g1000-passage100-report/stability-diagnostics.png",
-      "sha256": "9811dd1cae1e19e9ed35deac2b236c6c0112048efadf2feee4db7c79d008f57b"
+      "sha256": "cbd81d5b7b4abedc5c9e177c094570e446d691e36668f5789f7110b98be38bbb"
     }
   ],
   "limitation": "Full H-by-B, alpha-by-m and diversity analyses require derived tables from HPC scratch outputs."

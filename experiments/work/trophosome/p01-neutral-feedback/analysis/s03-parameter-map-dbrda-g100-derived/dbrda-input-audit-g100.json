@@ -1,0 +1,15 @@
+{
+  "issues": [
+    "wave2b_alpha_by_m__c0063__sb0001__g100 <- p01-s03-c0063-v210-adaptive-g1000-sb0001: completion/pause marker is missing",
+    "wave2b_alpha_by_m__c0063__sb0002__g100 <- p01-s03-c0063-v210-adaptive-g1000-sb0002: completion/pause marker is missing",
+    "wave2b_alpha_by_m__c0063__sb0003__g100 <- p01-s03-c0063-v210-adaptive-g1000-sb0003: completion/pause marker is missing",
+    "wave2b_alpha_by_m__c0063__sb0004__g100 <- p01-s03-c0063-v210-adaptive-g1000-sb0004: completion/pause marker is missing",
+    "wave2b_alpha_by_m__c0063__sb0005__g100 <- p01-s03-c0063-v210-adaptive-g1000-sb0005: completion/pause marker is missing",
+    "wave2b_alpha_by_m__c0063__sb0006__g100 <- p01-s03-c0063-v210-adaptive-g1000-sb0006: completion/pause marker is missing",
+    "wave2b_alpha_by_m__c0063__sb0007__g100 <- p01-s03-c0063-v210-adaptive-g1000-sb0007: completion/pause marker is missing",
+    "wave2b_alpha_by_m__c0063__sb0008__g100 <- p01-s03-c0063-v210-adaptive-g1000-sb0008: completion/pause marker is missing"
+  ],
+  "note": "No complete X/Y/Yprime release was produced.",
+  "passage": 100,
+  "status": "FAIL"
+}

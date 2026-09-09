@@ -1,0 +1,58 @@
+{
+  "design_sha256": "3e2cb7e6d5c4ddaa2804383ea23cb23dca0106dc237dd258c6600271a8064f35",
+  "environmental_states": 48480,
+  "input_records": 480,
+  "issues": [],
+  "new_populations": 408,
+  "reused_populations": 72,
+  "scope": "complete passage-100 primary Wave 2 analysis",
+  "status": "PASS",
+  "tables": [
+    {
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/environment-trajectories-g100.tsv",
+      "rows": 48480,
+      "sha256": "ee8a47b8619d179d15a3032ed882ed90c8cd9be8c1ea7ac50686961cf0659a20"
+    },
+    {
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/run-endpoints-g100.tsv",
+      "rows": 480,
+      "sha256": "2b07434e21395514f0d2932751cde2ca20c257cb38f5cba103074f85d3a121d6"
+    },
+    {
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/run-tail-summaries-g100.tsv",
+      "rows": 480,
+      "sha256": "9fe995fd98c89415f5aa0def3a99b2cf55a5ed655c7c398ec17f900bd3b13bbf"
+    },
+    {
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/cell-summaries-g100.tsv",
+      "rows": 280,
+      "sha256": "73e3d31d7e46fc093373684a46c073ab92650bcdcf5440d71efc758829317738"
+    },
+    {
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/h-by-b-paired-contrasts.tsv",
+      "rows": 28,
+      "sha256": "dd9a50b33c9da32d61ac50ff0aea25cf5c2ad6bcec6a5d6701870de46a88ebd2"
+    },
+    {
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/h-by-b-model-comparison.tsv",
+      "rows": 13,
+      "sha256": "872e2314308ce49db9099b822ed9bd78b6a385e427fcb72c6729bcbee0036d01"
+    },
+    {
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/alpha-by-m-contrasts.tsv",
+      "rows": 147,
+      "sha256": "3003086c419947961edccec7e6964c2bd76b96006c1ca2a8e1ce57ff76046819"
+    },
+    {
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/alpha-by-m-interactions.tsv",
+      "rows": 126,
+      "sha256": "177ae5ed19cac8c105329594b5ac16020552745c033eb0c8e95ab30bb4370617"
+    },
+    {
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/analysis-inputs-g100.tsv",
+      "rows": 480,
+      "sha256": "64414d8aaeadb7cabb2b132243c5ae08489c8ad4bba63896241dd6f816625c8c"
+    }
+  ],
+  "total_populations": 480
+}

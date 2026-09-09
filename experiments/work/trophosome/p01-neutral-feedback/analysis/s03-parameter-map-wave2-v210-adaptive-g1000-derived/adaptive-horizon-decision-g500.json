@@ -1,0 +1,486 @@
+{
+  "adaptive_horizon_decision_schema_version": "1.0.0",
+  "experiment_id": "phase1-stage3-wave2-v210-adaptive-g1000",
+  "status": "frozen-outcome-dependent-decision",
+  "assessed_horizon": 500,
+  "continuation_horizon": 1000,
+  "selected_cell_ids": [
+    "p01-s03-c0063",
+    "p01-s03-c0064",
+    "p01-s03-c0077",
+    "p01-s03-c0078"
+  ],
+  "selected_cells": [
+    "c0063",
+    "c0064",
+    "c0077",
+    "c0078"
+  ],
+  "selected_populations": 48,
+  "reasons": {
+    "p01-s03-c0063": [
+      "pre-specified-anchor"
+    ],
+    "p01-s03-c0064": [
+      "pre-specified-anchor"
+    ],
+    "p01-s03-c0077": [
+      "pre-specified-anchor"
+    ],
+    "p01-s03-c0078": [
+      "pre-specified-anchor"
+    ]
+  },
+  "windows": [
+    [
+      401,
+      450
+    ],
+    [
+      451,
+      500
+    ]
+  ],
+  "stability_margin": "max(0.002 TV, 0.25 * absolute late-window mean)",
+  "uncertainty": "paired 90% Student-t interval across 12 seed blocks",
+  "input_fingerprints": [
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0001",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0002",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0003",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0004",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0005",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0006",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0007",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0008",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0009",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0010",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0011",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0063-v210-adaptive-g1000-sb0012",
+      "through_generation": "500",
+      "sha256": "d690941198f270cb8ebe33d823cd4a7053281b51eefd57dd001e510985f65fc9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0001",
+      "through_generation": "500",
+      "sha256": "21f7269db877a05c84bdb3dab57b3469653ed93651fed6af734ed02276942b56"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0002",
+      "through_generation": "500",
+      "sha256": "53ab02c31a66f256eb37602c29584c3a2875cc62c3682d27fe5a98e5725ef805"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0003",
+      "through_generation": "500",
+      "sha256": "27588193f2ce333db0ac9aeb1bd060224aa801a2e91d7ea8fc6c3c71bac7ba98"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0004",
+      "through_generation": "500",
+      "sha256": "b7da646e048ef6b22bc4a1b357b5e12d84d58104c69dab4b91320df102ab87d7"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0005",
+      "through_generation": "500",
+      "sha256": "f9e1aa03b84777d6f4d1d18602de435070178847a919fd238653b46a0251f4b0"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0006",
+      "through_generation": "500",
+      "sha256": "f183ad95897fb506fb3bbe22c66c7f6fec0894b571debb71cd7a24a6be14b280"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0007",
+      "through_generation": "500",
+      "sha256": "4b8c133edc3bf057c7c677bd29910efaf87ee87b8906533279c785896ffe70a3"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0008",
+      "through_generation": "500",
+      "sha256": "755aa428b8d53edf47dd5863ca8d2498a51050d8384332960c40f925cf42e8cc"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0009",
+      "through_generation": "500",
+      "sha256": "6627cee32d702b52ec859eb4dd170cdb46eae6af8cc992921bf3a36397422040"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0010",
+      "through_generation": "500",
+      "sha256": "e74969e5a5ec14a2615bd72eb1e01d5b512a3e876a6e991fd96ecdb84f192ddf"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0011",
+      "through_generation": "500",
+      "sha256": "1f6c8edff65b194ba48cd0ec61e66c6a6ca0ec34dafc981101c937e6c472b0e9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0064-v210-adaptive-g1000-sb0012",
+      "through_generation": "500",
+      "sha256": "8870af3864d8354bc0a93a86a46c7ced75a8ec43aa708d22c9388dc2033f6824"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0001",
+      "through_generation": "500",
+      "sha256": "eb14325e8017fbf23a92f41f7f82b5690bcb8c248c56825d994f6991548bef1b"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0002",
+      "through_generation": "500",
+      "sha256": "938f343adfe6274b68a07cb437eb490e22c3c85efdd927e5de67a838f049c774"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0003",
+      "through_generation": "500",
+      "sha256": "bf259f4d3f8ec2dc21d1d277b6934738785ff030ad4e1ee2543cbf7e76e405bf"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0004",
+      "through_generation": "500",
+      "sha256": "3b2256ccc2743a4f2fd76dd4d9aaef8862e560f960756604eecda57c64ae1f99"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0005",
+      "through_generation": "500",
+      "sha256": "57c87884abe233b13ae4a4afbee370db39faebae4c44595d96d5f24eac95c079"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0006",
+      "through_generation": "500",
+      "sha256": "85d2f1304be70626f505ab8daa50a57f96d655cd4aa174700286a937f0da6578"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0007",
+      "through_generation": "500",
+      "sha256": "eba52195d428cf3af30a6e9277fb16bb40eaa223c04e447b6ee85b942edd34e6"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0008",
+      "through_generation": "500",
+      "sha256": "d18e9490ea75cdce24b6f90eb178b3980492649c215845a5ccda7f6cc1e99b4f"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0009",
+      "through_generation": "500",
+      "sha256": "2f03fca9822c87d5017e677778a14d0aea0b06b8322095742e93e6bcd874285d"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0010",
+      "through_generation": "500",
+      "sha256": "18d3528933b0931f3e0f4695b4d61fbf620515d2d18ad9d74569233473751fb1"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0011",
+      "through_generation": "500",
+      "sha256": "1108b7533cd9a370c70b296e582d6f06256b175c0b6c451d9ba64e21961654e7"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0065-v210-adaptive-g1000-sb0012",
+      "through_generation": "500",
+      "sha256": "e1828a278a5d989c7eb0537fef8ca7916e37dfb917e1a25063224b0661c92159"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0001",
+      "through_generation": "500",
+      "sha256": "2f56ececcff6785bc9ff884cf71bd89730b341bd48926a2cdb33642dee9f857b"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0002",
+      "through_generation": "500",
+      "sha256": "56d4b97a53cccf5f25fee7b5b0a3e6834e3ff2c92cfb7f9ef150664d3dab0f97"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0003",
+      "through_generation": "500",
+      "sha256": "9b346788a3b36f749198f5a2a2d41c7b6cadb2794f95c3559d643cf1c3d3bc4b"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0004",
+      "through_generation": "500",
+      "sha256": "d5d09c2017bb65f8bfee17a1372474bb2da5c5690451c8a55763e5fc766b799e"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0005",
+      "through_generation": "500",
+      "sha256": "240233bb5546ce7132ccb97425480d3f2f37241735e13895843a075a0af830a2"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0006",
+      "through_generation": "500",
+      "sha256": "bc1df16795bf6800559e965b779440cd80f7d04905ab5db7f3cfda82ece88eb8"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0007",
+      "through_generation": "500",
+      "sha256": "bbd7872c13215dd81b3861647a866c51fec1135daf213b46352d28ca4a3e05ba"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0008",
+      "through_generation": "500",
+      "sha256": "642641c7f83a16883e1d57554cfe49dd8a5cc9b4fbc0cdd2cf86b5387c3e16cb"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0009",
+      "through_generation": "500",
+      "sha256": "0080aff57cadd8debd50d12454509dbd68f7253752958469253e196d6949c281"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0010",
+      "through_generation": "500",
+      "sha256": "d86a5f32978b2c11696ddee80059103a91f6c0939bdc921dd99049ff652061b2"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0011",
+      "through_generation": "500",
+      "sha256": "3c95c129d8f29c5745de85538589365e73bc8047efdd7a5b7cb84f7dcabbacea"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0077-v210-adaptive-g1000-sb0012",
+      "through_generation": "500",
+      "sha256": "766e136ee358f6ccc264a25761bb6cb163e0f51bb6557970ad8ab4b6c4afe92d"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0001",
+      "through_generation": "500",
+      "sha256": "f288f008959e1aa1a0703baf61bcf34cef399de4eff00063bb9cb148b577dd35"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0002",
+      "through_generation": "500",
+      "sha256": "5d5199508306b5ae74428374d0406bd5a5c18f73debd528af2cabec5b762e702"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0003",
+      "through_generation": "500",
+      "sha256": "2e28a7f2b5de6463885facb1ac1c2c2103adb3dea12962c13c57f407f16d0981"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0004",
+      "through_generation": "500",
+      "sha256": "60a3b6f924be55aa5d3a39e757d2cb0d2b680dd285fd251646d9116df7be85a6"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0005",
+      "through_generation": "500",
+      "sha256": "d76d0dbf0f299303c6628bb5a5b9d0ce5227d7f0b2425ffb8068ee0ef232eff0"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0006",
+      "through_generation": "500",
+      "sha256": "afd26dae024a826b40941cf861910eb6558f86e56388979f5d4dcf4d241099ab"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0007",
+      "through_generation": "500",
+      "sha256": "08701a757138d349314a0a2470030a4eeabc22d2710cc4ae6069b860c430b920"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0008",
+      "through_generation": "500",
+      "sha256": "5ca1e24fc42c2465ee64996a8432cee0ccb782cbc6f61b5ca3f7e778a22f738e"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0009",
+      "through_generation": "500",
+      "sha256": "1f5cc2b3d1cdfd8dc6ca8ba24c5020cabb5e421ca2f152961b9cf07e013843ed"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0010",
+      "through_generation": "500",
+      "sha256": "bb9c13333f63fa248ff64841d83d821248b3884bb20c25e8614432b92711a247"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0011",
+      "through_generation": "500",
+      "sha256": "2448ec540c0304505da0d0f39bed7b90a5607b3f46c89e5270ead37bdbdc7571"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0078-v210-adaptive-g1000-sb0012",
+      "through_generation": "500",
+      "sha256": "e7516120be4d3dad34fc39dd37c5abc9299c3ff345798e7903dd66a4eede45bc"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0001",
+      "through_generation": "500",
+      "sha256": "768e30aff87b07abcf0a65fa8dbb83af468b54082c311fc2632df8e9059f1c76"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0002",
+      "through_generation": "500",
+      "sha256": "c6e38267b4da489a683998287d16e81a95796bcdbff4a425ff816b561934d0e9"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0003",
+      "through_generation": "500",
+      "sha256": "a8b9209840e1746cf75a3409a40894f1fe7a2d3fd81c6208ec1ac0c57afd6291"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0004",
+      "through_generation": "500",
+      "sha256": "cc2a879cc94381719c329cae94f7c7de1e3c839107d5d98040a5572be820242f"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0005",
+      "through_generation": "500",
+      "sha256": "83470331d1c766a7bdbd4272863a16368e35b99201445554046ed4035fc89c89"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0006",
+      "through_generation": "500",
+      "sha256": "9d129c3c30508f01f1e03ce2384150ef27f1ce5fae27d696ce0f53fcee5758e5"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0007",
+      "through_generation": "500",
+      "sha256": "f0d0642662825f3cb783cdd40f1029f4334284f7217d910a3bf226310c3c710b"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0008",
+      "through_generation": "500",
+      "sha256": "78b0e22f028d2025a9488e6904b3507e4f0da450d09797a7e3d06fd056d7fc52"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0009",
+      "through_generation": "500",
+      "sha256": "775fdd7ee9f832a49a1e7eeb99d62dcb35e879e45a49c19c6ade219a1be8e47c"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0010",
+      "through_generation": "500",
+      "sha256": "33e9f044c2dfc16fd388e7bde2ed5d543dd8260cc8e0d365e6e55d125a7b2983"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0011",
+      "through_generation": "500",
+      "sha256": "cf3210edd265161002b0b65c5cb4d99a08296cfabe344cffd03a276f80cf5774"
+    },
+    {
+      "kind": "TV-trajectory-prefix",
+      "run_id": "p01-s03-c0079-v210-adaptive-g1000-sb0012",
+      "through_generation": "500",
+      "sha256": "5228d88898139d9fb9ecd032a008b99c0362448f89dd371fabc4c5a3ae272e26"
+    },
+    {
+      "kind": "previous-decision",
+      "path": "p01-neutral-feedback/analysis/s03-parameter-map-wave2-v210-adaptive-g1000-derived/adaptive-horizon-decision-g100.json",
+      "sha256": "6a4066afe476b4da979130a51efffa9b903b9bbed4749ab1a3b8d9113dc508de"
+    }
+  ],
+  "interpretation": "This decision controls exploratory time-horizon diagnostics only; passage 100 remains the primary Wave 2 endpoint."
+}
